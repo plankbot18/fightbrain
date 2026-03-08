@@ -845,6 +845,10 @@
     function selectEvent(event) {
       _selectedEvent = event;
       renderUpcomingView();
+      // Also filter Fight Analysis tab sections if already loaded
+      document.querySelectorAll('.analysis-event-section').forEach(el => {
+        el.style.display = (!event || el.dataset.event === event) ? '' : 'none';
+      });
     }
 
     function setUpcomingView(view) {
@@ -1610,7 +1614,8 @@
 
         let html = '';
         for (const [event, card] of Object.entries(events)) {
-          html += `<div class="mb-10">
+          const safeEvent = event.replace(/"/g, '&quot;');
+          html += `<div class="mb-10 analysis-event-section" data-event="${safeEvent}">
             <h2 class="section-title" style="font-size:32px;margin-bottom:16px;">${event}</h2>
             <div class="space-y-4">`;
           card.forEach(f => {
@@ -1669,6 +1674,12 @@
         document.getElementById('analysis-loading').classList.add('hidden');
         document.getElementById('analysis-content').innerHTML = html;
         window._analysisLoaded = true;
+        // Apply current event filter if one is selected
+        if (_selectedEvent) {
+          document.querySelectorAll('.analysis-event-section').forEach(el => {
+            el.style.display = el.dataset.event === _selectedEvent ? '' : 'none';
+          });
+        }
 
         // Animate H2H bars when they scroll into view
         const observer = new IntersectionObserver((entries) => {
