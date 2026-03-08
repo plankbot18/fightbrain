@@ -1517,7 +1517,7 @@
     async function loadAnalysis() {
       try {
         // Pre-load fighter profiles so H2H tables have stat data
-        if (!_fighterProfiles) await getFighterProfiles();
+        if (!_fighterProfiles) await loadFighterProfileData();
         const res = await fetch('../model/method_predictions.csv');
         const text = await res.text();
         const lines = text.trim().split('\n');
