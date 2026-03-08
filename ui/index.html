@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <title>FightBrain</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -13,193 +16,282 @@
           colors: {
             bone: { 50: '#FAF7F2', 100: '#F0EBE3' },
             surface: '#FFFFFF',
+            accent: '#D91A1A',
+            border: '#E5DDD5',
+            muted: '#777777',
+          },
+          fontFamily: {
+            display: ['"Bebas Neue"', 'sans-serif'],
+            body: ['"Inter"', 'sans-serif'],
           }
         }
       }
     }
   </script>
   <style>
-    body { background: #FAF7F2; color: #111111; }
-    .tab-active { border-bottom: 3px solid #D91A1A; color: #D91A1A; font-weight: 600; }
-    .tab-inactive { color: #666666; }
-    .tab-inactive:hover { color: #111111; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { background: #FAF7F2; color: #111111; font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Inter', sans-serif; }
+
+    /* ===== HEADER ===== */
+    .site-header {
+      position: sticky; top: 0; z-index: 50;
+      height: 64px; background: #FFFFFF;
+      border-bottom: 1px solid #E5DDD5;
+      display: flex; align-items: center;
+    }
+    .site-header-inner {
+      max-width: 72rem; margin: 0 auto; padding: 0 1rem;
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .site-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #111;
+      letter-spacing: 1px; white-space: nowrap; line-height: 1;
+    }
+    .site-logo sup {
+      font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+      color: #D91A1A; vertical-align: super; margin-left: 1px;
+    }
+
+    /* ===== TAB BAR ===== */
+    .tab-bar {
+      position: sticky; top: 64px; z-index: 49;
+      background: #FFFFFF; border-bottom: 2px solid #E5DDD5;
+    }
+    .tab-bar-inner {
+      max-width: 72rem; margin: 0 auto; padding: 0 1rem;
+      display: flex; align-items: stretch; overflow-x: auto;
+      white-space: nowrap; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .tab-bar-inner::-webkit-scrollbar { display: none; }
+    .tab-bar-inner button {
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+      padding: 14px 20px; color: #777; background: none; border: none;
+      border-bottom: 3px solid transparent; cursor: pointer;
+      transition: color 0.2s, border-color 0.2s; flex-shrink: 0;
+    }
+    .tab-bar-inner button:hover { color: #111; }
+    .tab-active { color: #D91A1A !important; border-bottom-color: #D91A1A !important; }
+    .tab-inactive { color: #777; }
+    .tab-inactive:hover { color: #111; }
+
+    /* ===== COUNTDOWN BANNER ===== */
+    #countdown-banner {
+      background: #111; color: #FFFFFF;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 8px 16px; font-size: 13px; letter-spacing: 0.5px;
+    }
+    #countdown-banner .cd-label {
+      font-family: 'Inter', sans-serif; color: rgba(255,255,255,0.5);
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    }
+    #countdown-banner .cd-val {
+      font-family: 'Bebas Neue', sans-serif; color: #FFFFFF;
+      font-size: 20px; min-width: 28px; text-align: center; line-height: 1;
+    }
+    #countdown-banner .cd-sep { color: rgba(255,255,255,0.25); font-size: 16px; }
+    #countdown-banner .cd-event-name {
+      font-family: 'Inter', sans-serif; color: rgba(255,255,255,0.7);
+      font-size: 12px; margin-right: 8px;
+    }
+
+    /* ===== CONFIDENCE BAR ===== */
     .confidence-bar { transition: width 0.6s ease; }
+
+    /* ===== SCOUT ===== */
     .scout-toggle { cursor: pointer; user-select: none; }
     .scout-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
     .scout-body.open { max-height: 500px; }
+
+    /* ===== SCROLLBAR ===== */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
     ::-webkit-scrollbar-track { background: #FAF7F2; }
+
+    /* ===== FIGHTER LINK ===== */
     .fighter-link { cursor: pointer; text-decoration: underline dotted; color: inherit; }
     .fighter-link:hover { color: #D91A1A; }
+
+    /* ===== FIGHTER MODAL ===== */
     .fighter-modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 100;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100;
       opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+      backdrop-filter: blur(4px);
     }
     .fighter-modal-overlay.open { opacity: 1; pointer-events: auto; }
     .fighter-modal {
       position: fixed; top: 0; right: 0; bottom: 0; width: 600px; max-width: 100vw;
       background: #FFFFFF; z-index: 101; overflow-y: auto;
       transform: translateX(100%); transition: transform 0.3s ease;
-      border-left: 1px solid #E8E0D8;
+      border-left: 1px solid #E5DDD5;
     }
     .fighter-modal.open { transform: translateX(0); }
     .fighter-modal-close {
       position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end;
-      padding: 12px 16px; background: #FFFFFF;
+      padding: 12px 16px; background: #FFFFFF; border-bottom: 1px solid #E5DDD5;
     }
-    .stat-bar-bg { background: #E8E0D8; height: 6px; border-radius: 3px; overflow: hidden; }
+
+    /* ===== STAT BARS ===== */
+    .stat-bar-bg { background: #E5DDD5; height: 6px; border-radius: 3px; overflow: hidden; position: relative; }
     .stat-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+    /* ===== GRADE BADGES ===== */
     .grade-badge {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 24px; height: 24px; border-radius: 6px; font-size: 12px; font-weight: 700;
+      width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700;
+      font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px;
     }
     .grade-A { background: #d1fae5; color: #065f46; }
     .grade-B { background: #dbeafe; color: #1e40af; }
     .grade-C { background: #e5e7eb; color: #6b7280; }
     .grade-D { background: #fee2e2; color: #991b1b; }
-    /* Countdown banner */
-    #countdown-banner {
-      background: #FFFFFF; color: #D91A1A; font-family: monospace;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 6px 0; font-size: 13px; letter-spacing: 0.5px;
-      border-bottom: 1px solid #E8E0D8;
-    }
-    #countdown-banner .cd-label { color: #666666; font-size: 11px; }
-    #countdown-banner .cd-val { color: #D91A1A; font-weight: 700; font-size: 15px; min-width: 28px; text-align: center; }
-    #countdown-banner .cd-sep { color: #ccc; }
-    /* Card browser */
-    .card-browser-nav {
-      width: 44px; height: 44px; border-radius: 50%; background: rgba(217,26,26,0.1);
-      color: #D91A1A; border: 1px solid rgba(217,26,26,0.3); cursor: pointer;
-      display: flex; align-items: center; justify-content: center; font-size: 20px;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .card-browser-nav:hover { background: rgba(217,26,26,0.2); transform: scale(1.1); }
-    .card-browser-nav:disabled { opacity: 0.3; cursor: default; transform: none; }
-    .dot-indicator { width: 8px; height: 8px; border-radius: 50%; background: #E8E0D8; cursor: pointer; transition: background 0.2s; }
-    .dot-indicator.active { background: #D91A1A; }
-    /* Search bar */
+
+    /* ===== SEARCH BAR ===== */
     #fight-search {
-      background: #FFFFFF; border: 1px solid #E8E0D8; color: #111111;
-      border-radius: 8px; padding: 8px 14px; width: 100%; max-width: 500px;
-      outline: none; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: 'Inter', sans-serif;
+      background: #FFFFFF; border: 1px solid #E5DDD5; color: #111;
+      border-radius: 9999px; padding: 8px 18px; width: 220px;
+      outline: none; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s, width 0.3s;
     }
-    #fight-search:focus { border-color: #D91A1A; box-shadow: 0 0 0 3px rgba(217,26,26,0.1); }
+    #fight-search:focus {
+      border-color: #D91A1A; box-shadow: 0 0 0 3px rgba(217,26,26,0.08);
+      width: 280px;
+    }
     #fight-search::placeholder { color: #999; }
-    /* Sort controls */
-    .sort-btn { cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px; }
+
+    /* ===== SORT CONTROLS ===== */
+    .sort-btn {
+      cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px;
+      font-family: 'Inter', sans-serif;
+    }
     .sort-btn:hover { color: #D91A1A; }
     .sort-arrow { font-size: 10px; color: #D91A1A; }
-    /* Matchup report section */
-    .matchup-report { background: rgba(217,26,26,0.04); border: 1px solid rgba(217,26,26,0.15); border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
-    .matchup-report .mr-label { color: #D91A1A; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .matchup-report .mr-value { color: #444; font-size: 12px; margin-top: 2px; }
-    /* View toggle */
-    .view-toggle-btn {
-      padding: 4px 12px; font-size: 12px; border-radius: 6px; cursor: pointer;
-      border: 1px solid #E8E0D8; background: transparent; color: #666666; transition: all 0.2s;
+
+    /* ===== MATCHUP REPORT ===== */
+    .matchup-report {
+      background: rgba(217,26,26,0.04); border: 1px solid rgba(217,26,26,0.15);
+      border-radius: 8px; padding: 12px 16px; margin-top: 12px;
     }
-    .view-toggle-btn.active { background: rgba(217,26,26,0.1); color: #D91A1A; border-color: rgba(217,26,26,0.3); }
-    /* Event selector */
+    .matchup-report .mr-label {
+      color: #D91A1A; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;
+    }
+    .matchup-report .mr-value { color: #444; font-size: 12px; margin-top: 2px; }
+
+    /* ===== VIEW TOGGLE ===== */
+    .view-toggle-btn {
+      padding: 6px 14px; font-size: 12px; border-radius: 8px; cursor: pointer;
+      border: 1px solid #E5DDD5; background: transparent; color: #777;
+      transition: all 0.2s; font-family: 'Inter', sans-serif; font-weight: 500;
+    }
+    .view-toggle-btn.active {
+      background: rgba(217,26,26,0.1); color: #D91A1A; border-color: rgba(217,26,26,0.3);
+    }
+
+    /* ===== EVENT SELECTOR ===== */
     .event-selector {
-      background: #FFFFFF; border: 1px solid #E8E0D8; color: #111111;
+      font-family: 'Inter', sans-serif;
+      background: #FFFFFF; border: 1px solid #E5DDD5; color: #111;
       border-radius: 8px; padding: 8px 14px; font-size: 14px; outline: none;
       transition: border-color 0.2s; cursor: pointer;
     }
     .event-selector:focus { border-color: #D91A1A; }
-    /* Expandable fight rows */
+
+    /* ===== FIGHT ROWS ===== */
     .fight-row { cursor: pointer; transition: background 0.2s, border-color 0.2s; }
-    .fight-row:hover { background: #FFF8F8; border-color: rgba(217,26,26,0.3); }
+    .fight-row:hover { background: #FFF8F8; }
     .fight-row-expanded { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
     .fight-row-expanded.open { max-height: 2000px; }
     .fight-row-chevron { transition: transform 0.3s ease; display: inline-block; }
     .fight-row-chevron.open { transform: rotate(180deg); }
-    /* Value tier badges */
-    .tier-badge-strong { background: #D91A1A; color: #FFFFFF; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
-    .tier-badge-lean { background: #111111; color: #FFFFFF; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
-    /* Value pulse animation */
+
+    /* ===== VALUE TIER BADGES ===== */
+    .tier-badge-strong {
+      background: #D91A1A; color: #FFFFFF; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px; font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .tier-badge-lean {
+      background: #111; color: #FFFFFF; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px; font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    /* ===== VALUE PULSE ===== */
     @keyframes valuePulse {
-      0%, 100% { border-color: rgba(217, 26, 26, 0.3); box-shadow: 0 0 8px rgba(217, 26, 26, 0.1); }
-      50% { border-color: rgba(217, 26, 26, 0.6); box-shadow: 0 0 20px rgba(217, 26, 26, 0.2); }
+      0%, 100% { border-color: rgba(217,26,26,0.3); box-shadow: 0 0 8px rgba(217,26,26,0.1); }
+      50% { border-color: rgba(217,26,26,0.6); box-shadow: 0 0 20px rgba(217,26,26,0.2); }
     }
     .value-pulse { animation: valuePulse 2s ease-in-out infinite; }
-    /* Odds pending section */
+
+    /* ===== ODDS PENDING ===== */
     .odds-pending-toggle { cursor: pointer; user-select: none; }
     .odds-pending-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
     .odds-pending-body.open { max-height: 2000px; }
 
+    /* ===== HIDDEN UTILITY ===== */
+    .hidden { display: none !important; }
+
     /* ===== MOBILE RESPONSIVE ===== */
     @media (max-width: 768px) {
-      /* Scrollable tab bar */
-      header nav {
-        overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; -ms-overflow-style: none; gap: 0 !important;
-        flex-wrap: nowrap;
+      .site-header { height: auto; min-height: 64px; }
+      .site-header-inner {
+        flex-wrap: wrap; padding: 10px 12px; gap: 8px;
       }
-      header nav::-webkit-scrollbar { display: none; }
-      header nav button {
-        min-height: 44px; padding: 12px 16px; flex-shrink: 0; font-size: 13px;
-      }
-      header .flex { flex-wrap: wrap; }
+      .site-logo { font-size: 20px; }
+      .header-center { width: 100%; order: 3; }
+      .header-center .event-selector { width: 100%; }
+      #search-bar-wrapper { width: 100%; order: 4; }
+      #fight-search { width: 100% !important; max-width: 100%; }
 
-      /* Search bar full-width */
-      #fight-search { max-width: 100%; }
+      .tab-bar { top: auto; position: sticky; }
 
-      /* Font sizes */
       body { font-size: 14px; }
 
-      /* Fight rows - stack on mobile */
       .fight-row { flex-wrap: wrap; padding: 12px !important; }
       .fight-row .flex-1 { width: 100%; flex-basis: 100%; margin-bottom: 8px; }
       .fight-row .flex-shrink-0 { width: 100%; flex-basis: 100%; justify-content: space-between; }
       .fight-row .w-36 { width: 100%; flex: 1; }
 
-      /* Fight cards - stack */
       .fight-card-mobile .flex { flex-wrap: wrap; }
       .fight-card-mobile .text-right, .fight-card-mobile .flex-1 { text-align: left; width: 100%; }
       .fight-card-mobile .w-24 { width: 100%; text-align: left; margin: 4px 0; }
       .fight-card-mobile .w-44 { width: 100%; margin-top: 8px; }
 
-      /* Value picks - card layout */
       .value-table-mobile { display: block !important; }
       .value-table-mobile thead { display: none; }
       .value-table-mobile tbody tr {
         display: block; margin-bottom: 12px; padding: 12px;
-        background: #FFFFFF; border: 1px solid #E8E0D8; border-radius: 8px;
+        background: #FFFFFF; border: 1px solid #E5DDD5; border-radius: 8px;
       }
       .value-table-mobile td {
-        display: flex; justify-content: space-between; padding: 4px 0;
-        border: none !important;
+        display: flex; justify-content: space-between; padding: 4px 0; border: none !important;
       }
-      .value-table-mobile td::before { content: attr(data-label); font-weight: 600; color: #666; }
+      .value-table-mobile td::before { content: attr(data-label); font-weight: 600; color: #777; }
 
-      /* Radar chart full-width */
       #radarChart { max-width: 100% !important; }
 
-      /* Outcomes - stack columns */
       .outcomes-side-by-side { flex-direction: column !important; }
       .outcomes-side-by-side .w-px { display: none; }
       .outcomes-side-by-side .flex-1 {
-        border-bottom: 1px solid #E8E0D8; padding-bottom: 16px; margin-bottom: 16px;
+        border-bottom: 1px solid #E5DDD5; padding-bottom: 16px; margin-bottom: 16px;
       }
       .outcomes-side-by-side .flex-1:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
 
-      /* Grid cols on mobile */
-      .grid.md\\:grid-cols-2, .grid.md\\:grid-cols-3 { grid-template-columns: 1fr !important; }
+      .grid.md\:grid-cols-2, .grid.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
 
-      /* Touch targets */
       button, .sort-btn, .scout-toggle, .odds-pending-toggle, .fight-row { min-height: 44px; }
 
-      /* Expand tap target full-width */
       .fight-row-chevron { padding: 8px; }
 
-      /* Event controls */
       .event-selector { width: 100%; margin-bottom: 8px; }
       #upcoming-controls .flex { flex-wrap: wrap; gap: 8px; }
 
-      /* Fighter names */
       .fighter-name-mobile { font-size: 16px !important; }
+
+      #countdown-banner { font-size: 11px; gap: 6px; padding: 6px 8px; flex-wrap: wrap; justify-content: center; }
+      #countdown-banner .cd-val { font-size: 16px; }
     }
   </style>
 </head>
@@ -207,7 +299,7 @@
 
   <!-- Countdown Banner -->
   <div id="countdown-banner">
-    <span style="color:#666666; margin-right:4px;">UFC Fight Night: Emmett vs Vallejos</span>
+    <span class="cd-event-name">UFC Fight Night: Emmett vs Vallejos</span>
     <span class="cd-sep">|</span>
     <span class="cd-val" id="cd-days">--</span><span class="cd-label">d</span>
     <span class="cd-sep">:</span>
@@ -218,35 +310,41 @@
     <span class="cd-val" id="cd-secs">--</span><span class="cd-label">s</span>
   </div>
 
-  <header style="border-bottom: 1px solid #E8E0D8; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);" class="sticky top-0 z-10">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-      <h1 class="text-2xl font-bold tracking-tight">
-        <span style="color:#D91A1A">Fight</span><span style="color:#111111">Brain</span>
-      </h1>
-      <nav class="flex gap-6 text-sm font-medium">
-        <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active pb-1">Upcoming Picks</button>
-        <button onclick="showTab('value')" id="tab-value" class="tab-inactive pb-1">Value Picks</button>
-        <button onclick="showTab('record')" id="tab-record" class="tab-inactive pb-1">Picks Record</button>
-        <button onclick="showTab('model')" id="tab-model" class="tab-inactive pb-1">Model Info</button>
-        <button onclick="showTab('analysis')" id="tab-analysis" class="tab-inactive pb-1">Fight Analysis</button>
-        <button onclick="showTab('outcomes')" id="tab-outcomes" class="tab-inactive pb-1">Outcomes</button>
-      </nav>
+  <!-- Sticky Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-logo">FIGHTBRAIN<sup>MMA</sup></div>
+      <div class="header-center">
+        <select id="event-selector" class="event-selector" onchange="selectEvent(this.value)"></select>
+      </div>
+      <div id="search-bar-wrapper">
+        <input type="text" id="fight-search" placeholder="Search fighters..." oninput="filterFights(this.value)">
+      </div>
     </div>
   </header>
 
-  <!-- Global search bar -->
-  <div id="search-bar-wrapper" class="max-w-6xl mx-auto px-4 py-3">
-    <input type="text" id="fight-search" placeholder="Search fighters..." oninput="filterFights(this.value)">
-  </div>
+  <!-- Tab Bar -->
+  <nav class="tab-bar">
+    <div class="tab-bar-inner">
+      <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active pb-1">Upcoming Picks</button>
+      <button onclick="showTab('value')" id="tab-value" class="tab-inactive pb-1">Value Picks</button>
+      <button onclick="showTab('analysis')" id="tab-analysis" class="tab-inactive pb-1">Fight Analysis</button>
+      <button onclick="showTab('outcomes')" id="tab-outcomes" class="tab-inactive pb-1">Outcomes</button>
+      <button onclick="showTab('record')" id="tab-record" class="tab-inactive pb-1">Picks Record</button>
+      <button onclick="showTab('model')" id="tab-model" class="tab-inactive pb-1">Model Info</button>
+    </div>
+  </nav>
 
-  <main class="max-w-6xl mx-auto px-4 py-4">
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+
     <!-- Upcoming Picks -->
     <section id="panel-upcoming">
       <div id="upcoming-loading" class="text-center text-gray-400 py-12">Loading predictions...</div>
       <div id="upcoming-controls" class="hidden">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
-            <select id="event-selector" class="event-selector" onchange="selectEvent(this.value)"></select>
+            <!-- event-selector is in header now, but upcoming-controls still needs structure -->
           </div>
           <div class="flex gap-2">
             <button class="view-toggle-btn active" id="view-event-btn" onclick="setUpcomingView('event')">Event View</button>
@@ -254,9 +352,7 @@
           </div>
         </div>
       </div>
-      <!-- Event-centric view -->
       <div id="upcoming-event-view" class="hidden"></div>
-      <!-- Grid view -->
       <div id="upcoming-grid" class="hidden"></div>
     </section>
 
@@ -275,12 +371,12 @@
     <!-- Model Info -->
     <section id="panel-model" class="hidden">
       <div class="grid md:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl p-6 border" style="border-color:#E8E0D8">
+        <div class="bg-white rounded-xl p-6 border" style="border-color:#E5DDD5">
           <h3 class="text-lg font-semibold mb-2 text-gray-900">Model Performance</h3>
-          <div class="text-5xl font-bold my-4" style="color:#D91A1A">72.6%</div>
+          <div class="text-5xl font-bold my-4" style="color:#D91A1A; font-family:'Bebas Neue',sans-serif; font-size:64px;">72.6%</div>
           <p class="text-gray-500 text-sm">Test set accuracy on historical UFC bouts using a gradient-boosted classifier trained on fighter stat differentials.</p>
         </div>
-        <div class="bg-white rounded-xl p-6 border" style="border-color:#E8E0D8">
+        <div class="bg-white rounded-xl p-6 border" style="border-color:#E5DDD5">
           <h3 class="text-lg font-semibold mb-2 text-gray-900">How It Works</h3>
           <ul class="text-gray-500 text-sm space-y-2 mt-3 list-disc list-inside">
             <li>Scrapes fighter stats from UFC Stats</li>
@@ -290,7 +386,7 @@
           </ul>
         </div>
       </div>
-      <div class="bg-white rounded-xl p-6 border mt-6" style="border-color:#E8E0D8">
+      <div class="bg-white rounded-xl p-6 border mt-6" style="border-color:#E5DDD5">
         <h3 class="text-lg font-semibold mb-4 text-gray-900">Top Features by Importance</h3>
         <div style="max-height:400px"><canvas id="featureChart"></canvas></div>
       </div>
@@ -298,21 +394,19 @@
 
     <!-- Fight Analysis -->
     <section id="panel-analysis" class="hidden">
-      <!-- Radar chart section -->
-      <div class="bg-white rounded-xl p-6 border mb-6" style="border-color:#E8E0D8">
+      <div class="bg-white rounded-xl p-6 border mb-6" style="border-color:#E5DDD5">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900">Fighter Comparison Radar</h3>
-          <select id="radar-fight-select" class="bg-white border rounded-lg px-3 py-1.5 text-sm text-gray-800 outline-none" style="border-color:#E8E0D8" onchange="renderRadarChart()">
+          <select id="radar-fight-select" class="bg-white border rounded-lg px-3 py-1.5 text-sm text-gray-800 outline-none" style="border-color:#E5DDD5" onchange="renderRadarChart()">
             <option value="">Select a fight...</option>
           </select>
         </div>
         <div class="flex items-center gap-4 mb-3 text-xs">
           <span><span style="display:inline-block;width:12px;height:12px;background:rgba(217,26,26,0.15);border:1px solid #D91A1A;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 1</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(17,17,17,0.1);border:1px solid #111111;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 2</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(17,17,17,0.1);border:1px solid #111;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 2</span>
         </div>
         <div style="max-height:400px;display:flex;justify-content:center;"><canvas id="radarChart" style="max-width:500px;"></canvas></div>
       </div>
-      <!-- Method analysis content -->
       <div id="analysis-loading" class="text-center text-gray-400 py-12">Loading fight analysis...</div>
       <div id="analysis-content"></div>
     </section>
@@ -322,6 +416,7 @@
       <div id="outcomes-loading" class="text-center text-gray-400 py-12">Loading outcomes...</div>
       <div id="outcomes-content"></div>
     </section>
+
   </main>
 
   <!-- Fighter Profile Modal -->
