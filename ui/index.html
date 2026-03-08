@@ -12,26 +12,26 @@
       theme: {
         extend: {
           colors: {
-            dark: { 800: '#1a1a2e', 900: '#0f0f1a', 700: '#25253e' }
+            dark: { 800: '#111111', 900: '#0a0a0a', 700: '#1a1a1a' }
           }
         }
       }
     }
   </script>
   <style>
-    body { background: #0f0f1a; }
-    .tab-active { border-bottom: 2px solid #00d4ff; color: #fff; }
-    .tab-inactive { color: #9ca3af; }
-    .tab-inactive:hover { color: #d1d5db; }
+    body { background: #0a0a0a; }
+    .tab-active { border-bottom: 3px solid #FF1A1A; color: #fff; }
+    .tab-inactive { color: #888; }
+    .tab-inactive:hover { color: #ccc; }
     .confidence-bar { transition: width 0.6s ease; }
     .scout-toggle { cursor: pointer; user-select: none; }
     .scout-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
     .scout-body.open { max-height: 500px; }
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 3px; }
-    ::-webkit-scrollbar-track { background: #1a1a2e; }
+    ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: #111111; }
     .fighter-link { cursor: pointer; text-decoration: underline dotted; color: inherit; }
-    .fighter-link:hover { color: #00d4ff; }
+    .fighter-link:hover { color: #FF1A1A; }
     .fighter-modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
       opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
@@ -39,14 +39,14 @@
     .fighter-modal-overlay.open { opacity: 1; pointer-events: auto; }
     .fighter-modal {
       position: fixed; top: 0; right: 0; bottom: 0; width: 600px; max-width: 100vw;
-      background: #1a1a2e; z-index: 101; overflow-y: auto;
+      background: #111111; z-index: 101; overflow-y: auto;
       transform: translateX(100%); transition: transform 0.3s ease;
-      border-left: 1px solid rgba(255,255,255,0.1);
+      border-left: 1px solid #2a2a2a;
     }
     .fighter-modal.open { transform: translateX(0); }
     .fighter-modal-close {
       position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end;
-      padding: 12px 16px; background: #1a1a2e;
+      padding: 12px 16px; background: #111111;
     }
     .stat-bar-bg { background: #374151; height: 6px; border-radius: 3px; overflow: hidden; }
     .stat-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
@@ -60,67 +60,67 @@
     .grade-D { background: #7f1d1d; color: #f87171; }
     /* Countdown banner */
     #countdown-banner {
-      background: #161b22; color: #00d4ff; font-family: monospace;
+      background: #111111; color: #FF1A1A; font-family: monospace;
       display: flex; align-items: center; justify-content: center; gap: 8px;
       padding: 6px 0; font-size: 13px; letter-spacing: 0.5px;
     }
     #countdown-banner .cd-label { color: #8b949e; font-size: 11px; }
-    #countdown-banner .cd-val { color: #00d4ff; font-weight: 700; font-size: 15px; min-width: 28px; text-align: center; }
-    #countdown-banner .cd-sep { color: #484f58; }
+    #countdown-banner .cd-val { color: #FF1A1A; font-weight: 700; font-size: 15px; min-width: 28px; text-align: center; }
+    #countdown-banner .cd-sep { color: #333; }
     /* Card browser */
     .card-browser-nav {
-      width: 44px; height: 44px; border-radius: 50%; background: rgba(0,212,255,0.15);
-      color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); cursor: pointer;
+      width: 44px; height: 44px; border-radius: 50%; background: rgba(255,26,26,0.15);
+      color: #FF1A1A; border: 1px solid rgba(255,26,26,0.3); cursor: pointer;
       display: flex; align-items: center; justify-content: center; font-size: 20px;
       transition: background 0.2s, transform 0.1s;
     }
-    .card-browser-nav:hover { background: rgba(0,212,255,0.3); transform: scale(1.1); }
+    .card-browser-nav:hover { background: rgba(255,26,26,0.3); transform: scale(1.1); }
     .card-browser-nav:disabled { opacity: 0.3; cursor: default; transform: none; }
     .dot-indicator { width: 8px; height: 8px; border-radius: 50%; background: #374151; cursor: pointer; transition: background 0.2s; }
-    .dot-indicator.active { background: #00d4ff; }
+    .dot-indicator.active { background: #FF1A1A; }
     /* Search bar */
     #fight-search {
-      background: #1a1a2e; border: 1px solid #25253e; color: #e5e7eb;
+      background: #111111; border: 1px solid #1a1a1a; color: #e5e7eb;
       border-radius: 8px; padding: 8px 14px; width: 100%; max-width: 500px;
       outline: none; font-size: 14px; transition: border-color 0.2s;
     }
-    #fight-search:focus { border-color: #00d4ff; }
-    #fight-search::placeholder { color: #6b7280; }
+    #fight-search:focus { border-color: #FF1A1A; }
+    #fight-search::placeholder { color: #666; }
     /* Sort controls */
     .sort-btn { cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px; }
-    .sort-btn:hover { color: #00d4ff; }
-    .sort-arrow { font-size: 10px; color: #00d4ff; }
+    .sort-btn:hover { color: #FF1A1A; }
+    .sort-arrow { font-size: 10px; color: #FF1A1A; }
     /* Matchup report section */
-    .matchup-report { background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.15); border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
-    .matchup-report .mr-label { color: #00d4ff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .matchup-report { background: rgba(255,26,26,0.05); border: 1px solid rgba(255,26,26,0.15); border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+    .matchup-report .mr-label { color: #FF1A1A; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .matchup-report .mr-value { color: #d1d5db; font-size: 12px; margin-top: 2px; }
     /* View toggle */
     .view-toggle-btn {
       padding: 4px 12px; font-size: 12px; border-radius: 6px; cursor: pointer;
-      border: 1px solid #25253e; background: transparent; color: #9ca3af; transition: all 0.2s;
+      border: 1px solid #1a1a1a; background: transparent; color: #9ca3af; transition: all 0.2s;
     }
-    .view-toggle-btn.active { background: rgba(0,212,255,0.15); color: #00d4ff; border-color: rgba(0,212,255,0.3); }
+    .view-toggle-btn.active { background: rgba(255,26,26,0.15); color: #FF1A1A; border-color: rgba(255,26,26,0.3); }
     /* Event selector */
     .event-selector {
-      background: #1a1a2e; border: 1px solid #25253e; color: #e5e7eb;
+      background: #111111; border: 1px solid #1a1a1a; color: #e5e7eb;
       border-radius: 8px; padding: 8px 14px; font-size: 14px; outline: none;
       transition: border-color 0.2s; cursor: pointer;
     }
-    .event-selector:focus { border-color: #00d4ff; }
+    .event-selector:focus { border-color: #FF1A1A; }
     /* Expandable fight rows */
     .fight-row { cursor: pointer; transition: background 0.2s, border-color 0.2s; }
-    .fight-row:hover { background: #1e1e38; border-color: rgba(0,212,255,0.3); }
+    .fight-row:hover { background: #1a1a1a; border-color: rgba(255,26,26,0.3); }
     .fight-row-expanded { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
     .fight-row-expanded.open { max-height: 2000px; }
     .fight-row-chevron { transition: transform 0.3s ease; display: inline-block; }
     .fight-row-chevron.open { transform: rotate(180deg); }
     /* Value tier badges */
-    .tier-badge-strong { background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid rgba(34,197,94,0.4); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
-    .tier-badge-lean { background: rgba(234,179,8,0.2); color: #eab308; border: 1px solid rgba(234,179,8,0.4); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+    .tier-badge-strong { background: rgba(255,26,26,0.2); color: #FF1A1A; border: 1px solid rgba(255,26,26,0.4); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+    .tier-badge-lean { background: rgba(255,215,0,0.2); color: #FFD700; border: 1px solid rgba(255,215,0,0.4); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
     /* Value pulse animation */
     @keyframes valuePulse {
-      0%, 100% { border-color: rgba(34, 197, 94, 0.4); box-shadow: 0 0 8px rgba(34, 197, 94, 0.2); }
-      50% { border-color: rgba(34, 197, 94, 0.8); box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
+      0%, 100% { border-color: rgba(255, 215, 0, 0.4); box-shadow: 0 0 8px rgba(255, 215, 0, 0.2); }
+      50% { border-color: rgba(255, 215, 0, 0.8); box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
     }
     .value-pulse { animation: valuePulse 2s ease-in-out infinite; }
     /* Odds pending section */
@@ -144,10 +144,10 @@
     <span class="cd-val" id="cd-secs">--</span><span class="cd-label">s</span>
   </div>
 
-  <header class="border-b border-gray-700/50 bg-dark-900/80 backdrop-blur sticky top-0 z-10">
+  <header style="border-bottom: 1px solid #2a2a2a; background: rgba(10,10,10,0.8); backdrop-filter: blur(12px);" class="sticky top-0 z-10">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
       <h1 class="text-2xl font-bold tracking-tight">
-        <span style="color:#00d4ff">Fight</span>Brain
+        <span style="color:#FF1A1A">Fight</span>Brain
       </h1>
       <nav class="flex gap-6 text-sm font-medium">
         <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active pb-1">Upcoming Picks</button>
@@ -201,12 +201,12 @@
     <!-- Model Info -->
     <section id="panel-model" class="hidden">
       <div class="grid md:grid-cols-2 gap-6">
-        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40">
+        <div class="bg-dark-800 rounded-xl p-6 border" style="border-color:#2a2a2a">
           <h3 class="text-lg font-semibold mb-2">Model Performance</h3>
-          <div class="text-5xl font-bold my-4" style="color:#00d4ff">72.6%</div>
+          <div class="text-5xl font-bold my-4" style="color:#FF1A1A">72.6%</div>
           <p class="text-gray-400 text-sm">Test set accuracy on historical UFC bouts using a gradient-boosted classifier trained on fighter stat differentials.</p>
         </div>
-        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40">
+        <div class="bg-dark-800 rounded-xl p-6 border" style="border-color:#2a2a2a">
           <h3 class="text-lg font-semibold mb-2">How It Works</h3>
           <ul class="text-gray-400 text-sm space-y-2 mt-3 list-disc list-inside">
             <li>Scrapes fighter stats from UFC Stats</li>
@@ -216,7 +216,7 @@
           </ul>
         </div>
       </div>
-      <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 mt-6">
+      <div class="bg-dark-800 rounded-xl p-6 border mt-6" style="border-color:#2a2a2a">
         <h3 class="text-lg font-semibold mb-4">Top Features by Importance</h3>
         <div style="max-height:400px"><canvas id="featureChart"></canvas></div>
       </div>
@@ -225,7 +225,7 @@
     <!-- Fight Analysis -->
     <section id="panel-analysis" class="hidden">
       <!-- Radar chart section -->
-      <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 mb-6">
+      <div class="bg-dark-800 rounded-xl p-6 border mb-6" style="border-color:#2a2a2a">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold">Fighter Comparison Radar</h3>
           <select id="radar-fight-select" class="bg-dark-700 border border-gray-600/40 rounded-lg px-3 py-1.5 text-sm text-gray-200 outline-none" onchange="renderRadarChart()">
@@ -233,8 +233,8 @@
           </select>
         </div>
         <div class="flex items-center gap-4 mb-3 text-xs">
-          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(0,212,255,0.4);border:1px solid #00d4ff;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 1</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(255,107,107,0.4);border:1px solid #ff6b6b;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 2</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(255,26,26,0.4);border:1px solid #FF1A1A;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 1</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(255,215,0,0.4);border:1px solid #FFD700;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 2</span>
         </div>
         <div style="max-height:400px;display:flex;justify-content:center;"><canvas id="radarChart" style="max-width:500px;"></canvas></div>
       </div>
@@ -494,12 +494,12 @@
         html += `<div>
           <div class="text-xs text-gray-500 mb-1.5">Method of Victory</div>
           <div class="flex h-6 rounded-lg overflow-hidden text-xs font-medium">
-            <div class="bg-blue-600 flex items-center justify-center" style="width:${decW}%">${decPct >= 5 ? decPct + '% DEC' : ''}</div>
-            <div class="bg-red-600 flex items-center justify-center" style="width:${koW}%">${koPct >= 5 ? koPct + '% KO' : ''}</div>
-            <div class="bg-emerald-600 flex items-center justify-center" style="width:${subW}%">${subPct >= 5 ? subPct + '% SUB' : ''}</div>
+            <div style="background:#555" class="flex items-center justify-center" style="width:${decW}%">${decPct >= 5 ? decPct + '% DEC' : ''}</div>
+            <div style="background:#FF1A1A;width:${koW}%" class="flex items-center justify-center">${koPct >= 5 ? koPct + '% KO' : ''}</div>
+            <div style="background:#FFD700;color:#000;width:${subW}%" class="flex items-center justify-center">${subPct >= 5 ? subPct + '% SUB' : ''}</div>
           </div>
           <div class="flex justify-between text-xs mt-1">
-            <span class="text-blue-400">${methodData.finish_label || ''}</span>
+            <span style="color:#FF1A1A">${methodData.finish_label || ''}</span>
             <span class="text-gray-500">${methodData.method_label || ''}</span>
           </div>
         </div>`;
@@ -533,7 +533,7 @@
       const c = confColor(f.conf);
       const isF1 = f.winner === f.f1;
       const isLowData = f.data_quality_flag === 'LOW_DATA';
-      const borderClass = isLowData ? 'border-amber-500/40' : 'border-gray-700/40';
+      const borderStyle = isLowData ? 'border-color:rgba(245,158,11,0.4)' : 'border-color:#2a2a2a';
       const rowId = 'frow-' + (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
 
       // Value tier badge
@@ -550,7 +550,7 @@
         methodLean = `<span class="text-xs text-gray-500 ml-2">${methodData.method_label}</span>`;
       }
 
-      return `<div class="bg-dark-800 rounded-xl border ${borderClass} mb-3 overflow-hidden" data-f1="${f.f1}" data-f2="${f.f2}">
+      return `<div class="bg-dark-800 rounded-xl border mb-3 overflow-hidden" style="${borderStyle}" data-f1="${f.f1}" data-f2="${f.f2}">
         <div class="fight-row p-4 flex items-center gap-4" onclick="toggleFightRow('${rowId}')">
           <div class="flex-1 flex items-center gap-2">
             <span class="${isF1 ? 'text-white font-semibold' : 'text-gray-400'}">${maybeFighterLink(f.f1)}</span>
@@ -584,11 +584,11 @@
       const c = confColor(f.conf);
       const isF1 = f.winner === f.f1;
       const isLowData = f.data_quality_flag === 'LOW_DATA';
-      const borderClass = isLowData ? 'border-amber-500/40' : 'border-gray-700/40';
+      const borderStyle = isLowData ? 'border-color:rgba(245,158,11,0.4)' : 'border-color:#2a2a2a';
       const report = findMatchupReport(f.f1, f.f2);
       const pad = large ? 'p-6' : 'p-4';
 
-      let html = `<div class="bg-dark-800 rounded-xl ${pad} border ${borderClass}" data-f1="${f.f1}" data-f2="${f.f2}">
+      let html = `<div class="bg-dark-800 rounded-xl ${pad} border" style="${borderStyle}" data-f1="${f.f1}" data-f2="${f.f2}">
         <div class="flex items-center gap-4">
           <div class="flex-1 text-right">
             <span class="${isF1 ? 'text-white font-semibold' : 'text-gray-400'}">${maybeFighterLink(f.f1)}</span>
@@ -761,19 +761,19 @@
             {
               label: report.fighter1,
               data: f1Data,
-              backgroundColor: 'rgba(0,212,255,0.2)',
-              borderColor: '#00d4ff',
+              backgroundColor: 'rgba(255,26,26,0.3)',
+              borderColor: '#FF1A1A',
               borderWidth: 2,
-              pointBackgroundColor: '#00d4ff',
+              pointBackgroundColor: '#FF1A1A',
               pointRadius: 4,
             },
             {
               label: report.fighter2,
               data: f2Data,
-              backgroundColor: 'rgba(255,107,107,0.2)',
-              borderColor: '#ff6b6b',
+              backgroundColor: 'rgba(255,215,0,0.2)',
+              borderColor: '#FFD700',
               borderWidth: 2,
-              pointBackgroundColor: '#ff6b6b',
+              pointBackgroundColor: '#FFD700',
               pointRadius: 4,
             }
           ]
@@ -818,7 +818,7 @@
         const losses = record ? record.overall.losses : decided.filter(p => p.result === 'wrong').length;
         const accuracy = record ? record.overall.accuracy : (decided.length > 0 ? (wins / decided.length * 100).toFixed(1) : 0);
 
-        let html = `<div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 mb-6 flex items-center justify-between">
+        let html = `<div class="bg-dark-800 rounded-xl p-6 border mb-6 flex items-center justify-between" style="border-color:#2a2a2a">
           <div class="flex items-center gap-4">
             <div class="text-4xl font-bold text-white">${wins}W - ${losses}L</div>
             <div class="text-2xl font-semibold ${accuracy >= 60 ? 'text-green-400' : accuracy >= 50 ? 'text-yellow-400' : 'text-red-400'}">${accuracy}%</div>
@@ -834,7 +834,7 @@
           const tierColors = { high: 'text-green-400', medium: 'text-yellow-400', low: 'text-orange-400' };
           ['high', 'medium', 'low'].forEach(tier => {
             const t = record.by_tier[tier];
-            html += `<div class="bg-dark-800 rounded-xl p-5 border border-gray-700/40 text-center">
+            html += `<div class="bg-dark-800 rounded-xl p-5 border text-center" style="border-color:#2a2a2a">
               <div class="text-sm ${tierColors[tier]} font-medium mb-2">${tierLabels[tier]}</div>
               <div class="text-2xl font-bold text-white">${t.wins}W - ${t.losses}L</div>
               <div class="text-sm text-gray-400 mt-1">${t.total > 0 ? t.accuracy + '%' : '--'}</div>
@@ -848,7 +848,7 @@
           <div class="space-y-2 mb-8">`;
           for (const [ev, data] of Object.entries(record.by_event)) {
             const evAcc = data.accuracy;
-            html += `<div class="bg-dark-800 rounded-lg p-3 border border-gray-700/40 flex items-center justify-between text-sm">
+            html += `<div class="bg-dark-800 rounded-lg p-3 border flex items-center justify-between text-sm" style="border-color:#2a2a2a">
               <span class="text-white flex-1">${ev}</span>
               <span class="font-semibold text-white">${data.wins}W-${data.losses}L</span>
               <span class="w-16 text-right ${evAcc >= 60 ? 'text-green-400' : evAcc >= 50 ? 'text-yellow-400' : 'text-red-400'}">${evAcc}%</span>
@@ -863,7 +863,7 @@
           decided.forEach(p => {
             const isWin = p.result === 'correct';
             const isHighConfMiss = p.confidence >= 95 && p.result === 'wrong';
-            html += `<div class="bg-dark-800 rounded-lg p-3 border ${isHighConfMiss ? 'border-amber-500/40' : 'border-gray-700/40'} text-sm">
+            html += `<div class="bg-dark-800 rounded-lg p-3 border text-sm" style="border-color:${isHighConfMiss ? 'rgba(245,158,11,0.4)' : '#2a2a2a'}">
               <div class="flex items-center justify-between">
                 <span class="text-gray-400 w-1/4 truncate">${p.event}</span>
                 <span class="text-white flex-1">${p.fight}</span>
@@ -881,7 +881,7 @@
           <div class="space-y-2">`;
           pending.forEach(p => {
             const c = confColor(p.confidence);
-            html += `<div class="bg-dark-800 rounded-lg p-3 border border-gray-700/40 flex items-center justify-between text-sm">
+            html += `<div class="bg-dark-800 rounded-lg p-3 border flex items-center justify-between text-sm" style="border-color:#2a2a2a">
               <span class="text-gray-400 w-1/4 truncate">${p.event}</span>
               <span class="text-white flex-1">${p.fight}</span>
               <span class="w-36 text-right">
@@ -923,7 +923,7 @@
               data: data.map(d => d.value),
               backgroundColor: data.map((_, i) => {
                 const t = i / (data.length - 1);
-                return `rgba(${Math.round(0 * (1-t) + 0 * t)}, ${Math.round(150 * (1-t) + 212 * t)}, ${Math.round(200 * (1-t) + 255 * t)}, 0.8)`;
+                return `rgba(${Math.round(80 * (1-t) + 255 * t)}, ${Math.round(10 * (1-t) + 26 * t)}, ${Math.round(10 * (1-t) + 26 * t)}, 0.8)`;
               }),
               borderRadius: 4
             }]
@@ -1004,15 +1004,15 @@
       const allTiered = _valueSortKey ? picks.filter(p => p.tier === 'STRONG' || p.tier === 'LEAN') : null;
 
       let html = `<div class="grid md:grid-cols-3 gap-4 mb-8">
-        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 text-center">
-          <div class="text-3xl font-bold text-green-400">${_valuePicks.filter(p=>p.tier==='STRONG').length}</div>
+        <div class="bg-dark-800 rounded-xl p-6 border text-center" style="border-color:#2a2a2a">
+          <div class="text-3xl font-bold" style="color:#FF1A1A">${_valuePicks.filter(p=>p.tier==='STRONG').length}</div>
           <div class="text-gray-400 text-sm mt-1">Strong Picks</div>
         </div>
-        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 text-center">
-          <div class="text-3xl font-bold text-yellow-400">${_valuePicks.filter(p=>p.tier==='LEAN').length}</div>
+        <div class="bg-dark-800 rounded-xl p-6 border text-center" style="border-color:#2a2a2a">
+          <div class="text-3xl font-bold" style="color:#FFD700">${_valuePicks.filter(p=>p.tier==='LEAN').length}</div>
           <div class="text-gray-400 text-sm mt-1">Lean Picks</div>
         </div>
-        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 text-center">
+        <div class="bg-dark-800 rounded-xl p-6 border text-center" style="border-color:#2a2a2a">
           <div class="text-3xl font-bold text-gray-400">${_valuePicks.length - _valuePicks.filter(p=>p.tier==='STRONG').length - _valuePicks.filter(p=>p.tier==='LEAN').length}</div>
           <div class="text-gray-400 text-sm mt-1">Skip</div>
         </div>
@@ -1065,20 +1065,20 @@
           allTiered.forEach(p => {
             const isStrong = p.tier === 'STRONG';
             html += renderValueCard(p,
-              isStrong ? 'text-green-400 bg-green-500/20' : 'text-yellow-400 bg-yellow-500/20',
-              isStrong ? 'border-green-500/40' : 'border-yellow-500/40');
+              isStrong ? 'bg-red-500/20' : 'bg-yellow-500/20',
+              isStrong ? 'border-red-500/40' : 'border-yellow-500/40');
           });
         } else {
           html += '<p class="text-gray-500 text-center py-8">No value picks found for upcoming fights.</p>';
         }
       } else {
         if (strong.length > 0) {
-          html += '<h3 class="text-lg font-semibold mb-3 text-green-400">Strong Value Picks</h3>';
-          strong.forEach(p => { html += renderValueCard(p, 'text-green-400 bg-green-500/20', 'border-green-500/40'); });
+          html += '<h3 class="text-lg font-semibold mb-3" style="color:#FF1A1A">Strong Value Picks</h3>';
+          strong.forEach(p => { html += renderValueCard(p, 'bg-red-500/20', 'border-red-500/40'); });
         }
         if (lean.length > 0) {
-          html += '<h3 class="text-lg font-semibold mb-3 mt-6 text-yellow-400">Lean Value Picks</h3>';
-          lean.forEach(p => { html += renderValueCard(p, 'text-yellow-400 bg-yellow-500/20', 'border-yellow-500/40'); });
+          html += '<h3 class="text-lg font-semibold mb-3 mt-6" style="color:#FFD700">Lean Value Picks</h3>';
+          lean.forEach(p => { html += renderValueCard(p, 'bg-yellow-500/20', 'border-yellow-500/40'); });
         }
         if (strong.length === 0 && lean.length === 0) {
           html += '<p class="text-gray-500 text-center py-8">No value picks found for upcoming fights.</p>';
@@ -1088,7 +1088,7 @@
       // Odds Pending section
       if (_oddsPending.length > 0) {
         const opId = 'odds-pending-section';
-        html += `<div class="mt-8 bg-dark-800 rounded-xl border border-gray-700/40 overflow-hidden">
+        html += `<div class="mt-8 bg-dark-800 rounded-xl border overflow-hidden" style="border-color:#2a2a2a">
           <div class="odds-pending-toggle flex items-center justify-between px-5 py-3 text-gray-400 text-sm font-medium"
                onclick="document.getElementById('${opId}').classList.toggle('open'); this.querySelector('.op-chev').classList.toggle('open')">
             <span>Odds Pending (${_oddsPending.length} fights)</span>
@@ -1174,7 +1174,7 @@
             const chinF1 = f.chin_notes_f1 && f.chin_notes_f1 !== 'Never finished' ? f.chin_notes_f1 : '';
             const chinF2 = f.chin_notes_f2 && f.chin_notes_f2 !== 'Never finished' ? f.chin_notes_f2 : '';
 
-            html += `<div class="bg-dark-800 rounded-xl p-5 border border-gray-700/40">
+            html += `<div class="bg-dark-800 rounded-xl p-5 border" style="border-color:#2a2a2a">
               <div class="flex items-center justify-between mb-4">
                 <div class="text-lg font-bold text-white">${maybeFighterLink(f.fighter1)} <span class="text-gray-500 font-normal">vs</span> ${maybeFighterLink(f.fighter2)}</div>
                 <div class="flex items-center gap-2">
@@ -1185,18 +1185,18 @@
               <div class="mb-4">
                 <div class="text-xs text-gray-500 mb-1.5">Method of Victory</div>
                 <div class="flex h-6 rounded-lg overflow-hidden text-xs font-medium">
-                  <div class="bg-blue-600 flex items-center justify-center" style="width:${decW}%">
+                  <div style="background:#555;width:${decW}%" class="flex items-center justify-center">
                     ${f.decision_pct >= 5 ? f.decision_pct + '% DEC' : ''}
                   </div>
-                  <div class="bg-red-600 flex items-center justify-center" style="width:${koW}%">
+                  <div style="background:#FF1A1A;width:${koW}%" class="flex items-center justify-center">
                     ${f.ko_pct >= 5 ? f.ko_pct + '% KO' : ''}
                   </div>
-                  <div class="bg-emerald-600 flex items-center justify-center" style="width:${subW}%">
+                  <div style="background:#FFD700;color:#000;width:${subW}%" class="flex items-center justify-center">
                     ${f.sub_pct >= 5 ? f.sub_pct + '% SUB' : ''}
                   </div>
                 </div>
                 <div class="flex justify-between text-xs mt-1">
-                  <span class="text-blue-400">${f.finish_label}</span>
+                  <span style="color:#FF1A1A">${f.finish_label}</span>
                   <span class="text-gray-500">${f.method_label}</span>
                 </div>
               </div>
@@ -1229,7 +1229,7 @@
                 </div>
               </div>
               <p class="text-gray-300 text-sm leading-relaxed">${f.narrative}</p>
-              ${(chinF1 || chinF2) ? `<div class="mt-3 pt-3 border-t border-gray-700/40">
+              ${(chinF1 || chinF2) ? `<div class="mt-3 pt-3 border-t" style="border-color:#2a2a2a">
                 <div class="text-xs text-gray-500 mb-1">Durability Notes</div>
                 ${chinF1 ? `<div class="text-xs text-amber-400">${f.fighter1}: ${chinF1}</div>` : ''}
                 ${chinF2 ? `<div class="text-xs text-amber-400">${f.fighter2}: ${chinF2}</div>` : ''}
@@ -1291,7 +1291,7 @@
           let html = `<div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
               <span class="text-sm font-bold text-white truncate">${maybeFighterLink(name)}</span>
-              ${isValue ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/40">VALUE</span>' : ''}
+              ${isValue ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:rgba(255,215,0,0.2);color:#FFD700;border:1px solid rgba(255,215,0,0.4)">VALUE</span>' : ''}
             </div>
             <div class="space-y-1 mb-3">
               <div class="flex items-center gap-2">
@@ -1338,7 +1338,7 @@
           return html;
         }
 
-        let html = `<p class="text-gray-500 text-xs mb-6 italic">Model-implied prices vs bookmaker lines. Green VALUE badges indicate our model prices the fighter higher than the book.</p>`;
+        let html = `<p class="text-gray-500 text-xs mb-6 italic">Model-implied prices vs bookmaker lines. Gold VALUE badges indicate our model prices the fighter higher than the book.</p>`;
 
         for (const [event, card] of Object.entries(events)) {
           html += `<div class="mb-10">
@@ -1349,7 +1349,7 @@
             const srcBadge = f.odds_source === 'BOOK'
               ? `<span class="text-[10px] text-gray-500 ml-2">${f.bookmaker || ''}</span>`
               : `<span class="text-[10px] text-yellow-500/60 ml-2">NO BOOK ODDS</span>`;
-            html += `<div class="bg-dark-800 rounded-xl p-5 border border-gray-700/40">
+            html += `<div class="bg-dark-800 rounded-xl p-5 border" style="border-color:#2a2a2a">
               <div class="text-center text-xs text-gray-500 mb-4 uppercase tracking-wider">${maybeFighterLink(f.fighter1)} vs ${maybeFighterLink(f.fighter2)}${srcBadge}</div>
               <div class="flex gap-4">
                 ${renderFighterSide(f.fighter1, f.f1_win_pct, f.f1_win_dec, f.f1_win_ko, f.f1_win_sub, f.implied_dec_odds_f1, f.implied_ko_odds_f1, f.implied_sub_odds_f1, f.f1_book_pct, f.f1_book_dec_odds, f.odds_source)}
@@ -1471,7 +1471,7 @@
                 </span>
               </div>
               <div class="stat-bar-bg relative">
-                <div class="stat-bar-fill" style="width:${barPct}%;background:#00d4ff"></div>
+                <div class="stat-bar-fill" style="width:${barPct}%;background:#FF1A1A"></div>
                 <div class="absolute top-0 h-full w-0.5 bg-yellow-400/60" style="left:${avgPct}%" title="UFC avg: ${s.avg}"></div>
               </div>
             </div>
@@ -1562,8 +1562,8 @@
           labels,
           datasets: [{
             data: values,
-            borderColor: '#00d4ff',
-            backgroundColor: 'rgba(0,212,255,0.1)',
+            borderColor: '#FF1A1A',
+            backgroundColor: 'rgba(255,26,26,0.1)',
             fill: true,
             tension: 0.3,
             pointRadius: pointRadii,

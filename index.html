@@ -15,14 +15,14 @@
       theme: {
         extend: {
           colors: {
-            bg: '#0d1117',
-            'bg-alt': '#0a0e14',
-            surface: '#161b22',
-            border: '#30363d',
-            cyan: '#00d4ff',
-            coral: '#ff6b6b',
-            muted: '#8b949e',
-            text: '#e6edf3',
+            bg: '#0a0a0a',
+            'bg-alt': '#0a0a0a',
+            surface: '#111111',
+            border: '#2a2a2a',
+            accent: '#FF1A1A',
+            gold: '#FFD700',
+            muted: '#888888',
+            text: '#FFFFFF',
           },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -32,15 +32,10 @@
     }
   </script>
   <style>
-    body { background: #0d1117; color: #e6edf3; }
-    .glow { box-shadow: 0 0 40px #00d4ff15, 0 0 80px #00d4ff08; }
-    .glow-text { text-shadow: 0 0 30px #00d4ff60, 0 0 60px #00d4ff20; }
-    .title-glow {
-      text-shadow: 0 0 40px #00d4ff80, 0 0 80px #00d4ff40, 0 0 120px #00d4ff20;
-    }
+    body { background: #0a0a0a; color: #FFFFFF; }
     .gradient-line {
       height: 2px;
-      background: linear-gradient(90deg, transparent, #30363d80, #00d4ff30, #30363d80, transparent);
+      background: linear-gradient(90deg, transparent, #2a2a2a80, #FF1A1A30, #2a2a2a80, transparent);
     }
     .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .fade-in.visible { opacity: 1; transform: translateY(0); }
@@ -59,102 +54,99 @@
       text-transform: uppercase;
     }
     .step-card:hover .step-number {
-      background: #00d4ff20;
-      border-color: #00d4ff40;
+      background: #FF1A1A20;
+      border-color: #FF1A1A40;
     }
 
-    /* Hero animated gradient background */
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    /* Octagon CSS animation */
+    @keyframes octagonRotate {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
     }
-    .hero-gradient {
-      background: linear-gradient(135deg, #0a0e14, #0d1117, #0f0a1a, #0d1117, #0a1014);
-      background-size: 400% 400%;
-      animation: gradientShift 15s ease infinite;
+    .octagon-bg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 500px;
+      height: 500px;
+      transform: translate(-50%, -50%) rotate(0deg);
+      animation: octagonRotate 30s linear infinite;
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+      background: linear-gradient(135deg, #FF1A1A15, #FFD70010, #FF1A1A15);
+      border: none;
+      pointer-events: none;
+      z-index: 0;
     }
-
-    /* CTA pulse glow */
-    @keyframes ctaPulse {
-      0%, 100% { box-shadow: 0 0 20px #00d4ff40; }
-      50% { box-shadow: 0 0 40px #00d4ff80, 0 0 80px #00d4ff40; }
+    .octagon-bg::before {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+      background: #0a0a0a;
     }
-    .cta-button {
-      animation: ctaPulse 2.5s ease-in-out infinite;
-    }
-
-    /* Section alternating backgrounds */
-    .section-dark { background: #0d1117; }
-    .section-darker { background: #0a0e14; }
 
     /* Confidence pill colors */
-    .conf-high { background: #00d4ff20; color: #00d4ff; border: 1px solid #00d4ff40; }
-    .conf-medium { background: #fbbf2420; color: #fbbf24; border: 1px solid #fbbf2440; }
+    .conf-high { background: #FF1A1A20; color: #FF1A1A; border: 1px solid #FF1A1A40; }
+    .conf-medium { background: #FFD70020; color: #FFD700; border: 1px solid #FFD70040; }
 
     /* Sticky nav */
     .sticky-nav {
       position: sticky;
       top: 0;
       z-index: 50;
-      background: #0d1117;
-      border-bottom: 1px solid #30363d;
+      background: rgba(10, 10, 10, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #2a2a2a;
     }
     .nav-link {
-      color: #8b949e;
+      color: #888888;
       font-size: 13px;
       font-weight: 500;
       transition: color 0.2s;
       white-space: nowrap;
     }
-    .nav-link:hover { color: #00d4ff; }
+    .nav-link:hover { color: #FFFFFF; }
     .nav-cta-btn {
-      background: #00d4ff15;
-      color: #00d4ff;
-      border: 1px solid #00d4ff40;
+      background: #FF1A1A;
+      color: #FFFFFF;
       padding: 6px 16px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 700;
       transition: all 0.2s;
       white-space: nowrap;
-    }
-    .nav-cta-btn:hover { background: #00d4ff25; border-color: #00d4ff60; }
-    .hamburger { display: none; background: none; border: none; color: #8b949e; cursor: pointer; padding: 4px; }
-    .nav-links-desktop { display: flex; align-items: center; gap: 20px; }
-    @media (max-width: 768px) {
-      .nav-links-desktop { display: none; }
-      .hamburger { display: block; }
-      .nav-mobile {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: #0d1117;
-        border-bottom: 1px solid #30363d;
-        padding: 16px 24px;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .nav-mobile.open { display: flex; }
-    }
-
-    /* Quick-access pills */
-    .quick-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 18px;
-      border-radius: 9999px;
-      border: 1px solid #30363d;
-      color: #8b949e;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.2s;
       text-decoration: none;
     }
-    .quick-pill:hover { border-color: #00d4ff40; color: #e6edf3; }
+    .nav-cta-btn:hover { background: #e01515; }
+    .nav-links-center { display: flex; align-items: center; gap: 20px; }
+    @media (max-width: 640px) {
+      .nav-links-center { display: none; }
+    }
+
+    /* Section backgrounds */
+    .section-dark { background: #0a0a0a; }
+    .section-darker { background: #0a0a0a; }
+
+    /* Section heading red underline */
+    .section-heading { position: relative; display: inline-block; }
+    .section-heading::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 3px;
+      background: #FF1A1A;
+      margin: 12px auto 0;
+      border-radius: 2px;
+    }
+
+    /* Video section */
+    .video-card iframe {
+      aspect-ratio: 16/9;
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #2a2a2a;
+    }
   </style>
 </head>
 <body class="font-sans antialiased">
@@ -162,50 +154,34 @@
   <!-- STICKY NAV -->
   <nav class="sticky-nav" id="top">
     <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-      <a href="#top" class="text-lg font-black text-cyan tracking-tight" style="text-decoration:none;">FIGHTBRAIN 🧠</a>
-      <div class="nav-links-desktop">
-        <a href="ui/index.html" class="nav-link">Upcoming Picks</a>
-        <a href="ui/index.html" class="nav-link">Value Picks</a>
-        <a href="ui/index.html" class="nav-link">Fight Analysis</a>
-        <a href="ui/index.html" class="nav-link">Outcomes</a>
-        <a href="ui/index.html" class="nav-link">Picks Record</a>
-        <a href="ui/index.html" class="nav-link">Model Info</a>
-        <a href="ui/index.html" class="nav-cta-btn">Open Analytics ↗</a>
+      <a href="#top" class="text-lg font-black text-white tracking-tight" style="text-decoration:none;">FIGHTBRAIN</a>
+      <div class="nav-links-center">
+        <a href="ui/index.html" class="nav-link">Picks</a>
+        <a href="ui/index.html" class="nav-link">Analysis</a>
+        <a href="ui/index.html" class="nav-link">Record</a>
       </div>
-      <button class="hamburger" onclick="document.getElementById('navMobile').classList.toggle('open')" aria-label="Menu">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
-    </div>
-    <div class="nav-mobile" id="navMobile">
-      <a href="ui/index.html" class="nav-link">Upcoming Picks</a>
-      <a href="ui/index.html" class="nav-link">Value Picks</a>
-      <a href="ui/index.html" class="nav-link">Fight Analysis</a>
-      <a href="ui/index.html" class="nav-link">Outcomes</a>
-      <a href="ui/index.html" class="nav-link">Picks Record</a>
-      <a href="ui/index.html" class="nav-link">Model Info</a>
-      <a href="ui/index.html" class="nav-cta-btn" style="display:inline-block;text-align:center;margin-top:4px;">Open Analytics ↗</a>
+      <a href="ui/index.html" class="nav-cta-btn">Open Analytics →</a>
     </div>
   </nav>
 
   <!-- HERO -->
-  <section class="hero-gradient min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
-    <!-- Background glow -->
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-cyan/5 blur-[180px] pointer-events-none"></div>
-    <div class="absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-coral/3 blur-[120px] pointer-events-none"></div>
+  <section class="min-h-screen flex items-center justify-center px-6 relative overflow-hidden" style="background:#0a0a0a;">
+    <!-- Octagon background -->
+    <div class="octagon-bg"></div>
 
     <div class="relative z-10 max-w-4xl mx-auto w-full text-center">
       <!-- Live indicator -->
       <div class="flex items-center justify-center gap-2 mb-8">
-        <div class="w-2.5 h-2.5 rounded-full bg-cyan pulse-dot"></div>
+        <div class="w-2.5 h-2.5 rounded-full bg-accent pulse-dot"></div>
         <span class="text-xs text-muted uppercase tracking-[0.2em] font-semibold">Live Model</span>
       </div>
 
       <!-- Title -->
-      <h1 class="text-5xl sm:text-6xl lg:text-8xl font-black tracking-tight leading-none mb-6 text-cyan title-glow">
+      <h1 class="text-6xl sm:text-7xl lg:text-9xl font-black tracking-tight leading-none mb-6 text-white">
         FIGHTBRAIN
       </h1>
       <p class="text-lg sm:text-xl text-muted max-w-xl mx-auto mb-12 leading-relaxed">
-        Machine learning trained on 8,500+ UFC fights.<br class="hidden sm:block"> Transparent picks, real track record, no guesswork.
+        The model sees what the odds miss.
       </p>
 
       <!-- Probability Arc -->
@@ -213,29 +189,20 @@
         <div class="relative w-96 h-56">
           <canvas id="heroArc"></canvas>
           <div class="absolute inset-0 flex flex-col items-center justify-end pb-4">
-            <div id="heroConf" class="text-4xl font-black text-cyan">--</div>
+            <div id="heroConf" class="text-4xl font-black text-gold">--</div>
             <div class="text-xs text-muted mt-1">model confidence</div>
           </div>
         </div>
         <div class="mt-3 text-center">
-          <div class="text-sm font-bold text-text" id="heroFighters">Loading...</div>
+          <div class="text-lg font-bold text-white" id="heroFighters">Loading...</div>
           <div class="text-xs text-muted mt-1" id="heroEvent"></div>
         </div>
       </div>
 
       <!-- CTA Button -->
-      <a href="ui/index.html" class="cta-button inline-flex items-center gap-2 bg-cyan/10 hover:bg-cyan/20 text-cyan font-bold px-8 py-4 rounded-xl border border-cyan/30 hover:border-cyan/50 transition-all text-lg mt-4">
-        Open Analytics →
+      <a href="ui/index.html" class="inline-flex items-center gap-2 bg-accent hover:bg-red-700 text-white font-bold px-8 py-4 rounded-xl transition-all text-lg mt-4" style="text-decoration:none;">
+        View Picks →
       </a>
-
-      <!-- Quick-access pills -->
-      <div class="flex flex-wrap justify-center gap-3 mt-6">
-        <a href="ui/index.html" class="quick-pill">📊 Upcoming Picks</a>
-        <a href="ui/index.html" class="quick-pill">💰 Value Picks</a>
-        <a href="ui/index.html" class="quick-pill">🥊 Fight Analysis</a>
-      </div>
-
-      <p class="text-xs text-muted mt-4">Join 500+ fans tracking our picks</p>
     </div>
 
     <!-- Scroll indicator -->
@@ -246,26 +213,50 @@
 
   <div class="gradient-line w-full"></div>
 
+  <!-- THE SPORT WE ANALYSE -->
+  <section class="section-dark py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-16 text-white section-heading">The Sport We Analyse</h2>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="video-card fade-in">
+          <iframe src="https://www.youtube.com/embed/E9FNdC_OYHE" title="UFC Greatest KOs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <p class="text-sm text-muted mt-3 text-center">UFC Greatest KOs</p>
+        </div>
+        <div class="video-card fade-in" style="transition-delay:0.1s">
+          <iframe src="https://www.youtube.com/embed/rqSDxCGJ3GQ" title="UFC Greatest Submissions" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <p class="text-sm text-muted mt-3 text-center">UFC Greatest Submissions</p>
+        </div>
+        <div class="video-card fade-in" style="transition-delay:0.2s">
+          <iframe src="https://www.youtube.com/embed/DGG2V5KDlhE" title="UFC Greatest Moments" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <p class="text-sm text-muted mt-3 text-center">UFC Greatest Moments</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="gradient-line w-full"></div>
+
   <!-- TRACK RECORD -->
   <section class="section-darker py-24 px-6">
     <div class="max-w-5xl mx-auto">
-      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-4">Track Record</h2>
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-4 text-white section-heading">Track Record</h2>
       <p class="text-muted text-center mb-16 max-w-xl mx-auto">Every pick tracked. No deleted tweets. No revisionist history.</p>
 
       <div class="grid md:grid-cols-3 gap-6">
-        <div class="fade-in bg-surface border border-border rounded-2xl p-8 text-center glow">
+        <div class="fade-in bg-surface border border-border rounded-2xl p-8 text-center">
           <div class="text-xs text-muted uppercase tracking-widest mb-3">UFC 326 Record</div>
-          <div class="text-5xl font-black text-cyan mb-2">7W - 3L</div>
+          <div class="text-5xl font-black text-gold mb-2">7W - 3L</div>
           <div class="text-sm text-muted">70.0%</div>
         </div>
         <div class="fade-in bg-surface border border-border rounded-2xl p-8 text-center" style="transition-delay:0.1s">
           <div class="text-xs text-muted uppercase tracking-widest mb-3">High Conf Accuracy</div>
-          <div class="text-5xl font-black text-cyan mb-2">75.0%</div>
+          <div class="text-5xl font-black text-gold mb-2">75.0%</div>
           <div class="text-sm text-muted">from live_record.json high tier</div>
         </div>
         <div class="fade-in bg-surface border border-border rounded-2xl p-8 text-center" style="transition-delay:0.2s">
           <div class="text-xs text-muted uppercase tracking-widest mb-3">Model Accuracy</div>
-          <div class="text-5xl font-black text-cyan mb-2">74.1%</div>
+          <div class="text-5xl font-black text-gold mb-2">74.1%</div>
           <div class="text-sm text-muted">backtested on 1,596 fights</div>
         </div>
       </div>
@@ -277,31 +268,31 @@
   <!-- NEXT EVENT -->
   <section class="section-dark py-24 px-6">
     <div class="max-w-5xl mx-auto">
-      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-4">Next Event</h2>
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-4 text-white section-heading">Next Event</h2>
       <p class="text-muted text-center mb-2">UFC Fight Night: Emmett vs Vallejos</p>
 
       <!-- Countdown -->
       <div class="flex justify-center gap-4 mb-16 mt-6">
         <div class="bg-surface border border-border rounded-xl px-5 py-3 text-center min-w-[70px]">
-          <div class="text-2xl font-black text-cyan countdown-digit" id="cd-days">--</div>
+          <div class="text-2xl font-black text-accent countdown-digit" id="cd-days">--</div>
           <div class="text-xs text-muted">Days</div>
         </div>
         <div class="bg-surface border border-border rounded-xl px-5 py-3 text-center min-w-[70px]">
-          <div class="text-2xl font-black text-text countdown-digit" id="cd-hours">--</div>
+          <div class="text-2xl font-black text-accent countdown-digit" id="cd-hours">--</div>
           <div class="text-xs text-muted">Hours</div>
         </div>
         <div class="bg-surface border border-border rounded-xl px-5 py-3 text-center min-w-[70px]">
-          <div class="text-2xl font-black text-text countdown-digit" id="cd-mins">--</div>
+          <div class="text-2xl font-black text-accent countdown-digit" id="cd-mins">--</div>
           <div class="text-xs text-muted">Mins</div>
         </div>
         <div class="bg-surface border border-border rounded-xl px-5 py-3 text-center min-w-[70px]">
-          <div class="text-2xl font-black text-text countdown-digit" id="cd-secs">--</div>
+          <div class="text-2xl font-black text-accent countdown-digit" id="cd-secs">--</div>
           <div class="text-xs text-muted">Secs</div>
         </div>
       </div>
 
       <!-- Top 3 STRONG picks -->
-      <h3 class="text-xl font-bold text-center mb-8">Top Strong Picks</h3>
+      <h3 class="text-xl font-bold text-center mb-8 text-white">Top Strong Picks</h3>
       <div id="strongPicks" class="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto"></div>
     </div>
   </section>
@@ -311,7 +302,7 @@
   <!-- FEATURED CARD -->
   <section class="section-darker py-24 px-6">
     <div class="max-w-5xl mx-auto">
-      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-2">Featured Card</h2>
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-2 text-white section-heading">Featured Card</h2>
       <p class="text-muted text-center mb-12" id="featuredEventName">Loading next event...</p>
 
       <div id="featuredCard" class="grid gap-4 max-w-3xl mx-auto">
@@ -325,21 +316,21 @@
   <!-- HOW IT WORKS -->
   <section class="section-dark py-24 px-6">
     <div class="max-w-5xl mx-auto">
-      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-16">How It Works</h2>
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-16 text-white section-heading">How It Works</h2>
 
       <div class="grid md:grid-cols-3 gap-8">
-        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-cyan/30 transition-colors">
-          <div class="step-number w-14 h-14 rounded-xl bg-cyan/10 border border-cyan/20 text-cyan flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">1</div>
+        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-accent/30 transition-colors">
+          <div class="step-number w-14 h-14 rounded-xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">1</div>
           <h3 class="text-lg font-bold mb-3">Data</h3>
           <p class="text-muted text-sm leading-relaxed">Collect from 8,500+ fights. Elo ratings, striking stats, grappling metrics, age curves, and more.</p>
         </div>
-        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-cyan/30 transition-colors" style="transition-delay:0.1s">
-          <div class="step-number w-14 h-14 rounded-xl bg-cyan/10 border border-cyan/20 text-cyan flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">2</div>
+        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-accent/30 transition-colors" style="transition-delay:0.1s">
+          <div class="step-number w-14 h-14 rounded-xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">2</div>
           <h3 class="text-lg font-bold mb-3">Model</h3>
           <p class="text-muted text-sm leading-relaxed">XGBoost analyzes 39 features per matchup. Head-to-head differentials, method-of-victory predictions, confidence tiers.</p>
         </div>
-        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-cyan/30 transition-colors" style="transition-delay:0.2s">
-          <div class="step-number w-14 h-14 rounded-xl bg-cyan/10 border border-cyan/20 text-cyan flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">3</div>
+        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-accent/30 transition-colors" style="transition-delay:0.2s">
+          <div class="step-number w-14 h-14 rounded-xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">3</div>
           <h3 class="text-lg font-bold mb-3">Edge</h3>
           <p class="text-muted text-sm leading-relaxed">Publish picks with confidence scores and method leans. Surface value where the model disagrees with the market.</p>
         </div>
@@ -352,10 +343,10 @@
   <!-- FOOTER -->
   <footer class="section-darker py-16 px-6 text-center">
     <div class="max-w-4xl mx-auto">
-      <div class="text-2xl font-black text-cyan title-glow mb-4">FIGHTBRAIN</div>
+      <div class="text-2xl font-black text-white mb-4">FIGHTBRAIN — UFC Analytics</div>
       <p class="text-muted text-sm mb-6">Predictions, not guarantees.</p>
-      <div class="border-t border-border pt-6 mt-6">
-        <p class="text-xs text-muted/60">For entertainment purposes only. Please gamble responsibly. FightBrain does not endorse or facilitate gambling.</p>
+      <div class="border-t border-accent pt-6 mt-6">
+        <p class="text-xs text-muted">For entertainment purposes only. Please gamble responsibly. FightBrain does not endorse or facilitate gambling.</p>
       </div>
     </div>
   </footer>
@@ -435,12 +426,12 @@
         const container = document.getElementById('strongPicks');
         if (strongPicks.length > 0) {
           container.innerHTML = strongPicks.map((p, i) => `
-            <div class="fade-in visible bg-surface border border-border rounded-2xl p-6 hover:border-cyan/30 transition-colors" style="transition-delay:${i * 0.1}s">
+            <div class="fade-in visible bg-surface border-l-[3px] border-l-accent border border-border rounded-2xl p-6 transition-colors" style="transition-delay:${i * 0.1}s">
               <div class="flex items-center justify-between mb-4">
-                <span class="strong-badge text-cyan bg-cyan/10 border border-cyan/20">STRONG PICK</span>
-                <span class="text-2xl font-black text-cyan">${p.conf.toFixed(1)}%</span>
+                <span class="strong-badge text-white bg-accent/90 border border-accent">STRONG PICK</span>
+                <span class="text-2xl font-black text-gold">${p.conf.toFixed(1)}%</span>
               </div>
-              <div class="text-base font-bold text-text mb-1">${p.predicted_winner}</div>
+              <div class="text-base font-bold text-white mb-1">${p.predicted_winner}</div>
               <div class="text-xs text-muted">${p.fighter1} vs ${p.fighter2}</div>
             </div>
           `).join('');
@@ -459,13 +450,13 @@
           featuredContainer.innerHTML = featuredPicks.map((p, i) => {
             const opponent = p.predicted_winner === p.fighter1 ? p.fighter2 : p.fighter1;
             return `
-              <div class="fade-in visible bg-surface border border-border rounded-2xl px-6 py-5 flex items-center justify-between hover:border-cyan/30 transition-colors" style="transition-delay:${i * 0.08}s">
+              <div class="fade-in visible bg-surface border border-border border-l-[3px] border-l-accent rounded-2xl px-6 py-5 flex items-center justify-between transition-colors" style="transition-delay:${i * 0.08}s">
                 <div class="flex-1 min-w-0">
-                  <div class="text-lg font-bold text-text truncate">${p.predicted_winner}</div>
+                  <div class="text-lg font-bold text-white truncate">${p.predicted_winner}</div>
                   <div class="text-sm text-muted">vs ${opponent}</div>
                 </div>
                 <div class="flex items-center gap-3 ml-4 shrink-0">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${confClass(p.conf)}">${p.conf.toFixed(1)}%</span>
+                  <span class="text-lg font-black text-gold">${p.conf.toFixed(1)}%</span>
                 </div>
               </div>
             `;
@@ -493,7 +484,7 @@
               labels: [featured.predicted_winner, featured.predicted_winner === featured.fighter1 ? featured.fighter2 : featured.fighter1],
               datasets: [{
                 data: [50, 50],
-                backgroundColor: ['#00d4ff', '#ff6b6b'],
+                backgroundColor: ['#FF1A1A', '#FFD700'],
                 borderWidth: 0,
                 borderRadius: 4,
               }]
