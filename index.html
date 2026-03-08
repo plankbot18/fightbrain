@@ -140,13 +140,64 @@
       border-radius: 2px;
     }
 
-    /* Video section */
-    .video-card iframe {
-      aspect-ratio: 16/9;
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid #2a2a2a;
+    /* Defining Moments cards */
+    .moment-card {
+      position: relative;
+      height: 380px;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: default;
     }
+    .moment-card:hover {
+      transform: scale(1.02);
+    }
+    .moment-card.card-knockout { background: linear-gradient(180deg, #1a0000, #0a0a0a); }
+    .moment-card.card-knockout:hover { box-shadow: 0 0 30px rgba(255, 26, 26, 0.2); }
+    .moment-card.card-takedown { background: linear-gradient(180deg, #1a1500, #0a0a0a); }
+    .moment-card.card-takedown:hover { box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); }
+    .moment-card.card-submission { background: linear-gradient(180deg, #0a0a0a, #0d0d1a); }
+    .moment-card.card-submission:hover { box-shadow: 0 0 30px rgba(255, 215, 0, 0.15); }
+    .moment-card svg {
+      display: block;
+      margin: 0 auto;
+      height: 60%;
+      padding-top: 20px;
+    }
+    .moment-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40%;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85) 40%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+    }
+
+    /* Knockout punch animation */
+    @keyframes punchExtend {
+      0%, 100% { transform: rotate(-10deg) translateX(0); }
+      50% { transform: rotate(5deg) translateX(12px); }
+    }
+    .punch-arm { animation: punchExtend 2s ease-in-out infinite; transform-origin: 40% 50%; }
+
+    /* Takedown drive animation */
+    @keyframes takedownDrive {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      50% { transform: translateX(6px) rotate(3deg); }
+    }
+    .takedown-driver { animation: takedownDrive 1.5s ease-in-out infinite; transform-origin: 50% 80%; }
+
+    /* Submission squeeze animation */
+    @keyframes submissionSqueeze {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(0.97) translateY(2px); }
+    }
+    .submission-squeeze { animation: submissionSqueeze 3s ease-in-out infinite; transform-origin: 50% 50%; }
   </style>
 </head>
 <body class="font-sans antialiased">
@@ -213,23 +264,88 @@
 
   <div class="gradient-line w-full"></div>
 
-  <!-- THE SPORT WE ANALYSE -->
+  <!-- DEFINING MOMENTS -->
   <section class="section-dark py-24 px-6">
     <div class="max-w-6xl mx-auto">
-      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-16 text-white section-heading">The Sport We Analyse</h2>
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-4 text-white section-heading">DEFINING MOMENTS</h2>
+      <p class="text-muted text-center mb-16 max-w-xl mx-auto">Three pillars of MMA. All three modelled.</p>
 
       <div class="grid md:grid-cols-3 gap-6">
-        <div class="video-card fade-in">
-          <iframe src="https://www.youtube.com/embed/E9FNdC_OYHE" title="UFC Greatest KOs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-          <p class="text-sm text-muted mt-3 text-center">UFC Greatest KOs</p>
+        <!-- Card 1: The Knockout -->
+        <div class="moment-card card-knockout fade-in">
+          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Body -->
+            <circle cx="90" cy="45" r="16" fill="#FF1A1A" opacity="0.7"/>
+            <line x1="90" y1="61" x2="90" y2="120" stroke="#FF1A1A" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+            <!-- Back arm -->
+            <line x1="90" y1="75" x2="65" y2="100" stroke="#FF1A1A" stroke-width="3.5" opacity="0.5" stroke-linecap="round"/>
+            <!-- Punch arm -->
+            <g class="punch-arm">
+              <line x1="90" y1="75" x2="130" y2="55" stroke="#FF1A1A" stroke-width="4" opacity="0.8" stroke-linecap="round"/>
+              <circle cx="132" cy="54" r="6" fill="#FF1A1A" opacity="0.8"/>
+            </g>
+            <!-- Legs -->
+            <line x1="90" y1="120" x2="75" y2="170" stroke="#FF1A1A" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+            <line x1="90" y1="120" x2="105" y2="170" stroke="#FF1A1A" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+          </svg>
+          <div class="moment-label">
+            <div class="text-sm font-bold tracking-[0.2em] text-gold uppercase mb-1">Striking</div>
+            <div class="text-xs text-muted text-center">KO/TKO probability modeled per fight</div>
+          </div>
         </div>
-        <div class="video-card fade-in" style="transition-delay:0.1s">
-          <iframe src="https://www.youtube.com/embed/rqSDxCGJ3GQ" title="UFC Greatest Submissions" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-          <p class="text-sm text-muted mt-3 text-center">UFC Greatest Submissions</p>
+
+        <!-- Card 2: The Takedown -->
+        <div class="moment-card card-takedown fade-in" style="transition-delay:0.1s">
+          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g class="takedown-driver">
+              <!-- Driving fighter -->
+              <circle cx="75" cy="65" r="14" fill="#FFD700" opacity="0.7"/>
+              <line x1="75" y1="79" x2="95" y2="110" stroke="#FFD700" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+              <!-- Arms wrapping -->
+              <line x1="88" y1="95" x2="120" y2="90" stroke="#FFD700" stroke-width="3.5" opacity="0.7" stroke-linecap="round"/>
+              <line x1="82" y1="100" x2="115" y2="105" stroke="#FFD700" stroke-width="3.5" opacity="0.7" stroke-linecap="round"/>
+              <!-- Legs driving -->
+              <line x1="95" y1="110" x2="70" y2="155" stroke="#FFD700" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+              <line x1="95" y1="110" x2="95" y2="160" stroke="#FFD700" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+            </g>
+            <!-- Defender being taken down -->
+            <circle cx="125" cy="75" r="14" fill="#FF1A1A" opacity="0.4"/>
+            <line x1="125" y1="89" x2="130" y2="130" stroke="#FF1A1A" stroke-width="3.5" opacity="0.4" stroke-linecap="round"/>
+            <line x1="130" y1="130" x2="120" y2="165" stroke="#FF1A1A" stroke-width="3.5" opacity="0.4" stroke-linecap="round"/>
+            <line x1="130" y1="130" x2="145" y2="165" stroke="#FF1A1A" stroke-width="3.5" opacity="0.4" stroke-linecap="round"/>
+          </svg>
+          <div class="moment-label">
+            <div class="text-sm font-bold tracking-[0.2em] text-accent uppercase mb-1">Grappling</div>
+            <div class="text-xs text-muted text-center">Takedown success factored into every prediction</div>
+          </div>
         </div>
-        <div class="video-card fade-in" style="transition-delay:0.2s">
-          <iframe src="https://www.youtube.com/embed/DGG2V5KDlhE" title="UFC Greatest Moments" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-          <p class="text-sm text-muted mt-3 text-center">UFC Greatest Moments</p>
+
+        <!-- Card 3: The Submission -->
+        <div class="moment-card card-submission fade-in" style="transition-delay:0.2s">
+          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g class="submission-squeeze">
+              <!-- Attacker (behind) -->
+              <circle cx="95" cy="55" r="14" fill="#FFD700" opacity="0.7"/>
+              <line x1="95" y1="69" x2="95" y2="130" stroke="#FFD700" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+              <!-- Choking arms -->
+              <line x1="95" y1="80" x2="110" y2="68" stroke="#FFD700" stroke-width="3.5" opacity="0.8" stroke-linecap="round"/>
+              <line x1="110" y1="68" x2="115" y2="78" stroke="#FFD700" stroke-width="3.5" opacity="0.8" stroke-linecap="round"/>
+              <line x1="95" y1="85" x2="108" y2="82" stroke="#FFD700" stroke-width="3" opacity="0.6" stroke-linecap="round"/>
+              <!-- Attacker legs (hooks in) -->
+              <line x1="95" y1="130" x2="80" y2="165" stroke="#FFD700" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+              <line x1="95" y1="130" x2="115" y2="160" stroke="#FFD700" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+              <!-- Defender (front) -->
+              <circle cx="112" cy="62" r="13" fill="#FF1A1A" opacity="0.4"/>
+              <line x1="112" y1="75" x2="112" y2="130" stroke="#FF1A1A" stroke-width="3.5" opacity="0.4" stroke-linecap="round"/>
+              <line x1="112" y1="90" x2="135" y2="105" stroke="#FF1A1A" stroke-width="3" opacity="0.3" stroke-linecap="round"/>
+              <line x1="112" y1="130" x2="100" y2="170" stroke="#FF1A1A" stroke-width="3.5" opacity="0.4" stroke-linecap="round"/>
+              <line x1="112" y1="130" x2="128" y2="170" stroke="#FF1A1A" stroke-width="3.5" opacity="0.4" stroke-linecap="round"/>
+            </g>
+          </svg>
+          <div class="moment-label">
+            <div class="text-sm font-bold tracking-[0.2em] text-gold uppercase mb-1">Submission</div>
+            <div class="text-xs text-muted text-center">Method of victory predicted alongside winner</div>
+          </div>
         </div>
       </div>
     </div>
@@ -402,7 +518,7 @@
     }
 
     // Load predictions
-    fetch('../model/upcoming_predictions.csv')
+    fetch('model/upcoming_predictions.csv')
       .then(r => r.text())
       .then(predCsv => {
         const predLines = predCsv.trim().split('\n');
