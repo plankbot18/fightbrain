@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="description" content="FightBrain — data-driven UFC fight predictions, value picks, and fighter analytics.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -115,6 +118,8 @@
       padding: 16px 20px;
       align-items: center;
       gap: 12px;
+      min-height: 48px;
+      cursor: pointer;
     }
     .fight-card-f1-name, .fight-card-f2-name {
       font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #111;
@@ -387,7 +392,8 @@
       #search-bar-wrapper { width: 100%; order: 4; }
       #fight-search { width: 100% !important; max-width: 100%; }
 
-      .tab-bar { top: auto; position: sticky; }
+      /* Tab bar: not sticky on mobile — header+countdown already fill top space */
+      .tab-bar { position: relative; top: auto; }
 
       body { font-size: 14px; }
 
@@ -396,7 +402,7 @@
         grid-template-columns: 1fr 36px 1fr 84px 20px;
         padding: 12px 14px; gap: 8px;
       }
-      .fight-card-f1-name, .fight-card-f2-name { font-size: 19px; }
+      .fight-card-f1-name, .fight-card-f2-name { font-size: 19px; overflow-wrap: break-word; word-break: break-word; }
       .fight-card-conf-num { font-size: 26px; }
       .fight-card-conf { padding: 6px 4px; }
 
@@ -1279,7 +1285,7 @@
           ? `<div class="text-xs mt-1" style="color:#b45309">(fade model — value on underdog)</div>` : '';
         const americanOdds = pick.book_odds_american || (pick.book_odds ? (pick.book_odds >= 2.0 ? '+' + Math.round((pick.book_odds - 1) * 100) : '-' + Math.round(100 / (pick.book_odds - 1))) : 'N/A');
         const tierClass = isStrong ? 'value-pick-card-strong' : 'value-pick-card-lean';
-        const pulseClass = (pick.tier === 'STRONG' || pick.tier === 'LEAN') ? 'value-pulse' : '';
+        const pulseClass = pick.tier === 'STRONG' ? 'value-pulse' : '';
 
         return `<div class="value-pick-card ${tierClass} ${pulseClass}">
           <div class="value-pick-card-body">
@@ -1508,9 +1514,9 @@
         const res = await fetch('../model/outcomes.csv');
         const text = await res.text();
         const lines = text.trim().split('\n');
-        const headers = lines[0].split(',');
+        const headers = parseCSVLine(lines[0]);
         const fights = lines.slice(1).map(line => {
-          const parts = line.split(',');
+          const parts = parseCSVLine(line);
           const row = {};
           headers.forEach((h, i) => row[h] = parts[i] || '');
           return row;

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FightBrain — Data-Driven UFC Predictions</title>
   <meta name="description" content="Data-driven UFC predictions powered by machine learning. 76.1% accuracy. Real track record.">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -109,16 +112,15 @@
     .value-card-bar { height: 6px; background: #D91A1A; }
     .value-card-body { padding: 24px; }
     .pick-label { font-family: 'Inter', sans-serif; font-size: 10px; text-transform: uppercase; color: #D91A1A; letter-spacing: 0.1em; }
+    /* tier-badge: used on dark hero card; variant .tier-badge-red for light surfaces */
     .tier-badge { font-family: 'Inter', sans-serif; font-size: 11px; color: white; background: transparent; border: 1px solid white; padding: 2px 8px; border-radius: 4px; }
+    .tier-badge-red { font-family: 'Inter', sans-serif; font-size: 11px; color: white; background: #D91A1A; border: none; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.03em; }
 
     /* Ticker */
     @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     .ticker-track { display: flex; animation: tickerScroll 30s linear infinite; white-space: nowrap; }
 
-    /* Ken Burns fallbacks */
-    .kb-img.fallback-1 { background-image: none !important; background: linear-gradient(135deg,#1a0000,#0a0a0a); }
-    .kb-img.fallback-2 { background-image: none !important; background: linear-gradient(135deg,#1a1400,#0a0a0a); }
-    .kb-img.fallback-3 { background-image: none !important; background: linear-gradient(135deg,#0a0a1a,#0a0a0a); }
+    /* Ken Burns: removed (no longer used) */
 
     /* VS divider */
     .vs-divider {
@@ -216,7 +218,7 @@
           </div>
 
           <!-- Fighter 1 -->
-          <div id="heroF1" style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:white;line-height:1;">Loading...</div>
+          <div id="heroF1" style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:white;line-height:1;word-break:break-word;">Loading...</div>
 
           <!-- VS Divider -->
           <div class="vs-divider">
@@ -224,7 +226,7 @@
           </div>
 
           <!-- Fighter 2 -->
-          <div id="heroF2" style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:#aaaaaa;line-height:1;">Loading...</div>
+          <div id="heroF2" style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:#aaaaaa;line-height:1;word-break:break-word;">Loading...</div>
 
           <!-- Confidence -->
           <div style="margin-top:28px;text-align:center;">
@@ -422,7 +424,7 @@
               <div class="value-card-body">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                   <span class="pick-label">PICK</span>
-                  <span class="tier-badge">STRONG PICK</span>
+                  <span class="tier-badge-red">STRONG PICK</span>
                 </div>
                 <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:#111111;line-height:1;">${p.predicted_winner}</div>
                 <div style="font-family:'Inter',sans-serif;font-size:14px;color:#D91A1A;margin-top:8px;">MODEL: ${p.conf.toFixed(1)}%</div>
@@ -534,7 +536,7 @@
                     </div>
                     <div style="text-align:right;">
                       <div style="font-family:'Inter',sans-serif;font-size:10px;color:#777;text-transform:uppercase;">EV</div>
-                      <div style="font-family:'Inter',sans-serif;font-size:12px;color:white;margin-top:4px;">+${(p.ev || 0).toFixed(3)}</div>
+                      <div style="font-family:'Inter',sans-serif;font-size:12px;color:#111111;margin-top:4px;">${p.ev > 0 ? '+' : ''}${(p.ev || 0).toFixed(3)}</div>
                     </div>
                   </div>
                 </div>
@@ -546,24 +548,7 @@
       .catch(e => console.error('Failed to load value picks', e));
   </script>
 
-  <script>
-    // Ken Burns fallbacks - NO LONGER NEEDED but keep harmless
-    (function() {
-      var checks = [
-        { id: 'kb1', cls: 'fallback-1', url: 'https://images.pexels.com/photos/4761781/pexels-photo-4761781.jpeg?auto=compress&cs=tinysrgb&w=1280' },
-        { id: 'kb2', cls: 'fallback-2', url: 'https://images.pexels.com/photos/8612992/pexels-photo-8612992.jpeg?auto=compress&cs=tinysrgb&w=1280' },
-        { id: 'kb3', cls: 'fallback-3', url: 'https://images.pexels.com/photos/7045404/pexels-photo-7045404.jpeg?auto=compress&cs=tinysrgb&w=1280' }
-      ];
-      checks.forEach(function(c) {
-        var img = new Image();
-        img.onerror = function() {
-          var el = document.getElementById(c.id);
-          if (el) el.classList.add(c.cls);
-        };
-        img.src = c.url;
-      });
-    })();
-  </script>
+  <!-- Ken Burns fallback code removed: kb1/kb2/kb3 elements no longer in DOM -->
 
 </body>
 </html>
