@@ -1578,12 +1578,14 @@
           }
           const s1 = byName[f1name] || {};
           const s2 = byName[f2name] || {};
+          // Stats are stored as {value, label, avg, grade} objects
+          const sv = (s, k) => s[k]?.value ?? s[k] ?? 0;
           const rows = [
-            h2hRow('Strikes/min',  s1.slpm,    s2.slpm,    '', true),
-            h2hRow('Str Accuracy', s1.str_acc,  s2.str_acc,  '%', true),
-            h2hRow('Str Defense',  s1.str_def,  s2.str_def,  '%', true),
-            h2hRow('TD Average',   s1.td_avg,   s2.td_avg,   '/15m', true),
-            h2hRow('TD Defense',   s1.td_def,   s2.td_def,   '%', true),
+            h2hRow('Strikes/min',  sv(s1,'slpm'),    sv(s2,'slpm'),    '', true),
+            h2hRow('Str Accuracy', sv(s1,'str_acc'),  sv(s2,'str_acc'),  '%', true),
+            h2hRow('Str Defense',  sv(s1,'str_def'),  sv(s2,'str_def'),  '%', true),
+            h2hRow('TD Average',   sv(s1,'td_avg'),   sv(s2,'td_avg'),   '/15m', true),
+            h2hRow('TD Defense',   sv(s1,'td_def'),   sv(s2,'td_def'),   '%', true),
           ];
           return `<div class="h2h-table" data-ready="false">
             <div class="h2h-header">
@@ -1646,7 +1648,7 @@
                   </div>
                 </div>
                 <div class="flex justify-between text-xs mt-1">
-                  <span style="color:#D91A1A">${f.finish_label}</span>
+                  <span style="color:#D91A1A">${(f.finish_label && f.finish_label !== 'undefined') ? f.finish_label : ''}</span>
                   <span class="text-gray-500">${f.method_label}</span>
                 </div>
               </div>
