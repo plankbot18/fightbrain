@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <title>FightBrain</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <!-- Chart.js loaded lazily on first tab that needs it -->
   <script>
     tailwind.config = {
       theme: {
@@ -377,6 +377,18 @@
       line-height: 1.7;
     }
 
+    /* ===== SKELETON LOADER ===== */
+    .skeleton {
+      background: linear-gradient(90deg, #E5DDD5 25%, #F0EBE3 50%, #E5DDD5 75%);
+      background-size: 200% 100%;
+      animation: skeletonPulse 1.5s ease-in-out infinite;
+      border-radius: 8px;
+    }
+    @keyframes skeletonPulse {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
     /* ===== HIDDEN UTILITY ===== */
     .hidden { display: none !important; }
 
@@ -402,7 +414,7 @@
         grid-template-columns: 1fr 36px 1fr 84px 20px;
         padding: 12px 14px; gap: 8px;
       }
-      .fight-card-f1-name, .fight-card-f2-name { font-size: 19px; overflow-wrap: break-word; word-break: break-word; }
+      .fight-card-f1-name, .fight-card-f2-name { font-size: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
       .fight-card-conf-num { font-size: 26px; }
       .fight-card-conf { padding: 6px 4px; }
 
@@ -434,7 +446,7 @@
 
   <!-- Countdown Banner -->
   <div id="countdown-banner">
-    <span class="cd-event-name">UFC Fight Night: Emmett vs Vallejos</span>
+    <span class="cd-event-name" id="cd-event-name">Loading event...</span>
     <span class="cd-sep">|</span>
     <span class="cd-val" id="cd-days">--</span><span class="cd-label">d</span>
     <span class="cd-sep">:</span>
@@ -475,7 +487,13 @@
 
     <!-- Upcoming Picks -->
     <section id="panel-upcoming">
-      <div id="upcoming-loading" class="text-center text-gray-400 py-12">Loading predictions...</div>
+      <div id="upcoming-loading" class="py-6">
+        <div class="skeleton" style="height:56px;margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:56px;margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:56px;margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:56px;margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:56px;"></div>
+      </div>
       <div id="upcoming-controls" class="hidden">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3"></div>
@@ -491,13 +509,30 @@
 
     <!-- Value Picks -->
     <section id="panel-value" class="hidden">
-      <div id="value-loading" class="text-center text-gray-400 py-12">Loading value picks...</div>
+      <div id="value-loading" class="py-6">
+        <div class="skeleton" style="height:180px;margin-bottom:16px;border-radius:12px;"></div>
+        <div class="skeleton" style="height:180px;border-radius:12px;"></div>
+      </div>
       <div id="value-content"></div>
     </section>
 
     <!-- Picks Record -->
     <section id="panel-record" class="hidden">
-      <div id="record-loading" class="text-center text-gray-400 py-12">Loading picks log...</div>
+      <div id="record-loading" class="py-6">
+        <div class="grid grid-cols-3 gap-4 mb-8">
+          <div class="skeleton" style="height:100px;border-radius:12px;"></div>
+          <div class="skeleton" style="height:100px;border-radius:12px;"></div>
+          <div class="skeleton" style="height:100px;border-radius:12px;"></div>
+        </div>
+        <div class="skeleton" style="height:40px;margin-bottom:8px;"></div>
+        <div class="skeleton" style="height:40px;margin-bottom:8px;"></div>
+        <div class="skeleton" style="height:40px;"></div>
+      </div>
+      <div id="record-filter" class="hidden mb-4">
+        <select id="record-event-filter" class="event-selector" onchange="filterRecord(this.value)">
+          <option value="">All Events</option>
+        </select>
+      </div>
       <div id="record-content"></div>
     </section>
 
@@ -562,9 +597,43 @@
   </div>
 
   <script>
-    // ===== COUNTDOWN =====
+    // ===== LAZY CHART.JS LOADER =====
+    let _chartJSPromise = null;
+    function loadChartJS() {
+      if (window.Chart) return Promise.resolve();
+      if (_chartJSPromise) return _chartJSPromise;
+      _chartJSPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+      return _chartJSPromise;
+    }
+
+    // ===== COUNTDOWN (dynamic from CSV) =====
+    let _countdownTarget = null;
+    function getNextSaturday() {
+      const d = new Date();
+      d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7));
+      d.setHours(23, 0, 0, 0);
+      return d;
+    }
+    function parseEventDate(eventName) {
+      const dateMap = {
+        'Emmett vs. Vallejos': '2026-03-14T23:00:00Z',
+        'Emmett vs Vallejos': '2026-03-14T23:00:00Z',
+        'Evloev vs. Murphy': '2026-03-21T23:00:00Z',
+        'Della Maddalena vs. Prates': '2026-03-28T23:00:00Z',
+      };
+      for (const [key, date] of Object.entries(dateMap)) {
+        if (eventName && eventName.includes(key)) return new Date(date);
+      }
+      return null;
+    }
     function updateCountdown() {
-      const target = new Date('2026-03-14T23:00:00Z').getTime();
+      const target = (_countdownTarget || getNextSaturday()).getTime();
       const now = Date.now();
       const diff = target - now;
       if (diff <= 0) {
@@ -595,9 +664,9 @@
       });
       // Show/hide search bar (only for upcoming)
       document.getElementById('search-bar-wrapper').style.display = name === 'upcoming' ? '' : 'none';
-      if (name === 'model' && !window._chartLoaded) loadFeatureChart();
-      if (name === 'analysis' && !window._analysisLoaded) loadAnalysis();
-      if (name === 'outcomes' && !window._outcomesLoaded) loadOutcomes();
+      if (name === 'model' && !window._chartLoaded) loadChartJS().then(() => loadFeatureChart());
+      if (name === 'analysis' && !window._analysisLoaded) loadChartJS().then(() => loadAnalysis());
+      if (name === 'outcomes' && !window._outcomesLoaded) loadChartJS().then(() => loadOutcomes());
       if (name === 'analysis') {
         // Re-render radar on tab switch for animation
         setTimeout(() => { if (document.getElementById('radar-fight-select').value) renderRadarChart(); }, 100);
@@ -965,6 +1034,14 @@
         });
         _selectedEvent = eventNames[0] || '';
 
+        // Set dynamic countdown banner event name and date
+        if (_selectedEvent) {
+          const cdName = document.getElementById('cd-event-name');
+          if (cdName) cdName.textContent = _selectedEvent;
+          const parsed = parseEventDate(_selectedEvent);
+          if (parsed) { _countdownTarget = parsed; updateCountdown(); }
+        }
+
         document.getElementById('upcoming-loading').classList.add('hidden');
         document.getElementById('upcoming-controls').classList.remove('hidden');
         renderUpcomingView();
@@ -1062,6 +1139,115 @@
     }
 
     // ===== PICKS RECORD =====
+    let _allPicks = [];
+    let _recordData = null;
+    let _recordEventFilter = '';
+
+    function filterRecord(event) {
+      _recordEventFilter = event;
+      renderRecord();
+    }
+
+    function renderRecord() {
+      const picks = _recordEventFilter
+        ? _allPicks.filter(p => p.event === _recordEventFilter)
+        : _allPicks;
+      const record = _recordData;
+
+      const decided = picks.filter(p => p.result !== null);
+      const pending = picks.filter(p => p.result === null);
+
+      const wins = _recordEventFilter ? decided.filter(p => p.result === 'correct').length : (record ? record.overall.wins : decided.filter(p => p.result === 'correct').length);
+      const losses = _recordEventFilter ? decided.filter(p => p.result === 'wrong').length : (record ? record.overall.losses : decided.filter(p => p.result === 'wrong').length);
+      const accuracy = decided.length > 0 ? (decided.filter(p => p.result === 'correct').length / decided.length * 100).toFixed(1) : 0;
+
+      let html = `<div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="record-summary-card">
+          <div class="record-summary-num">${wins}W</div>
+          <div class="text-sm text-gray-500 mt-2">Wins</div>
+        </div>
+        <div class="record-summary-card">
+          <div class="record-summary-num">${losses}L</div>
+          <div class="text-sm text-gray-500 mt-2">Losses</div>
+        </div>
+        <div class="record-summary-card">
+          <div class="record-summary-num" style="color:#D91A1A">${accuracy}%</div>
+          <div class="text-sm text-gray-500 mt-2">Accuracy</div>
+          ${pending.length > 0 ? `<span class="text-xs text-gray-400 mt-1 block">${pending.length} pending</span>` : ''}
+        </div>
+      </div>
+      ${record && !_recordEventFilter ? `<div class="text-xs text-gray-400 text-right mb-4">Updated ${new Date(record.updated_at).toLocaleString()}</div>` : ''}`;
+
+      if (record && record.by_tier && !_recordEventFilter) {
+        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">By Confidence Tier</h3>
+        <div class="grid md:grid-cols-3 gap-4 mb-8">`;
+        const tierLabels = { high: 'High (70%+)', medium: 'Med (60-70%)', low: 'Low (<60%)' };
+        const tierColors = { high: '#D91A1A', medium: '#b45309', low: '#777' };
+        ['high', 'medium', 'low'].forEach(tier => {
+          const t = record.by_tier[tier];
+          html += `<div class="record-summary-card">
+            <div class="text-xs font-semibold mb-2" style="color:${tierColors[tier]}">${tierLabels[tier]}</div>
+            <div class="record-summary-num" style="font-size:36px;">${t.wins}W - ${t.losses}L</div>
+            <div class="text-sm text-gray-500 mt-1">${t.total > 0 ? t.accuracy + '%' : '--'}</div>
+          </div>`;
+        });
+        html += '</div>';
+      }
+
+      if (record && record.by_event && Object.keys(record.by_event).length > 0 && !_recordEventFilter) {
+        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">By Event</h3>
+        <div class="space-y-2 mb-8">`;
+        for (const [ev, data] of Object.entries(record.by_event)) {
+          const evAcc = data.accuracy;
+          html += `<div class="record-table-row">
+            <span class="text-gray-900 flex-1">${ev}</span>
+            <span class="font-semibold text-gray-900">${data.wins}W-${data.losses}L</span>
+            <span class="w-16 text-right" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${evAcc >= 60 ? '#D91A1A' : evAcc >= 50 ? '#b45309' : '#777'}">${evAcc}%</span>
+          </div>`;
+        }
+        html += '</div>';
+      }
+
+      if (decided.length > 0) {
+        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">Decided Picks</h3>
+        <div class="space-y-1 mb-8">`;
+        decided.forEach(p => {
+          const isWin = p.result === 'correct';
+          const isHighConfMiss = p.confidence >= 95 && p.result === 'wrong';
+          html += `<div class="record-table-row ${isHighConfMiss ? 'record-high-conf-miss' : ''}">
+            <span class="text-gray-500 w-1/4 truncate text-sm">${p.event}</span>
+            <span class="text-gray-900 flex-1 text-sm">${p.fight}</span>
+            <span class="text-gray-400 w-16 text-right text-sm">${p.confidence}%</span>
+            <span class="w-16 text-right font-bold" style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:${isWin ? '#D91A1A' : '#aaa'}">${isWin ? 'W' : 'L'}</span>
+          </div>
+          ${isHighConfMiss ? '<div class="ml-4 mt-1 mb-2 text-xs rounded px-3 py-1.5 border" style="color:#b45309;background:rgba(180,83,9,0.05);border-color:rgba(180,83,9,0.2)">High-confidence miss — see model calibration improvements</div>' : ''}`;
+        });
+        html += '</div>';
+      }
+
+      if (pending.length > 0) {
+        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">Pending (${pending.length})</h3>
+        <div class="space-y-1">`;
+        pending.forEach(p => {
+          html += `<div class="record-table-row">
+            <span class="text-gray-500 w-1/4 truncate text-sm">${p.event}</span>
+            <span class="text-gray-900 flex-1 text-sm">${p.fight}</span>
+            <span class="w-36 text-right">
+              <span style="color:#D91A1A;font-family:'Bebas Neue',sans-serif;font-size:14px;">${p.predicted_winner}</span>
+              <span class="text-gray-400 ml-1 text-sm">${p.confidence}%</span>
+            </span>
+          </div>`;
+        });
+        html += '</div>';
+      }
+
+      if (decided.length === 0 && pending.length === 0) {
+        html += '<p class="text-gray-400 text-center py-8">No picks logged yet.</p>';
+      }
+
+      document.getElementById('record-content').innerHTML = html;
+    }
+
     async function loadRecord() {
       try {
         const [recordRes, picksRes] = await Promise.all([
@@ -1069,102 +1255,27 @@
           fetch('../picks/picks_log.json').then(r => r.json())
         ]);
 
+        _allPicks = picksRes;
+        _recordData = recordRes;
+
+        // Populate event filter dropdown
+        const events = [...new Set(_allPicks.map(p => p.event))];
+        const filterEl = document.getElementById('record-event-filter');
+        events.forEach(ev => {
+          const opt = document.createElement('option');
+          opt.value = ev;
+          opt.textContent = ev;
+          filterEl.appendChild(opt);
+        });
+        document.getElementById('record-filter').classList.remove('hidden');
+
         const picks = picksRes;
         const record = recordRes;
 
         const decided = picks.filter(p => p.result !== null);
         const pending = picks.filter(p => p.result === null);
-        const wins = record ? record.overall.wins : decided.filter(p => p.result === 'correct').length;
-        const losses = record ? record.overall.losses : decided.filter(p => p.result === 'wrong').length;
-        const accuracy = record ? record.overall.accuracy : (decided.length > 0 ? (wins / decided.length * 100).toFixed(1) : 0);
-
-        let html = `<div class="grid grid-cols-3 gap-4 mb-8">
-          <div class="record-summary-card">
-            <div class="record-summary-num">${wins}W</div>
-            <div class="text-sm text-gray-500 mt-2">Wins</div>
-          </div>
-          <div class="record-summary-card">
-            <div class="record-summary-num">${losses}L</div>
-            <div class="text-sm text-gray-500 mt-2">Losses</div>
-          </div>
-          <div class="record-summary-card">
-            <div class="record-summary-num" style="color:#D91A1A">${accuracy}%</div>
-            <div class="text-sm text-gray-500 mt-2">Accuracy</div>
-            ${pending.length > 0 ? `<span class="text-xs text-gray-400 mt-1 block">${pending.length} pending</span>` : ''}
-          </div>
-        </div>
-        ${record ? `<div class="text-xs text-gray-400 text-right mb-4">Updated ${new Date(record.updated_at).toLocaleString()}</div>` : ''}`;
-
-        if (record && record.by_tier) {
-          html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">By Confidence Tier</h3>
-          <div class="grid md:grid-cols-3 gap-4 mb-8">`;
-          const tierLabels = { high: 'High (70%+)', medium: 'Med (60-70%)', low: 'Low (<60%)' };
-          const tierColors = { high: '#D91A1A', medium: '#b45309', low: '#777' };
-          ['high', 'medium', 'low'].forEach(tier => {
-            const t = record.by_tier[tier];
-            html += `<div class="record-summary-card">
-              <div class="text-xs font-semibold mb-2" style="color:${tierColors[tier]}">${tierLabels[tier]}</div>
-              <div class="record-summary-num" style="font-size:36px;">${t.wins}W - ${t.losses}L</div>
-              <div class="text-sm text-gray-500 mt-1">${t.total > 0 ? t.accuracy + '%' : '--'}</div>
-            </div>`;
-          });
-          html += '</div>';
-        }
-
-        if (record && record.by_event && Object.keys(record.by_event).length > 0) {
-          html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">By Event</h3>
-          <div class="space-y-2 mb-8">`;
-          for (const [ev, data] of Object.entries(record.by_event)) {
-            const evAcc = data.accuracy;
-            html += `<div class="record-table-row">
-              <span class="text-gray-900 flex-1">${ev}</span>
-              <span class="font-semibold text-gray-900">${data.wins}W-${data.losses}L</span>
-              <span class="w-16 text-right" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${evAcc >= 60 ? '#D91A1A' : evAcc >= 50 ? '#b45309' : '#777'}">${evAcc}%</span>
-            </div>`;
-          }
-          html += '</div>';
-        }
-
-        if (decided.length > 0) {
-          html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">Decided Picks</h3>
-          <div class="space-y-1 mb-8">`;
-          decided.forEach(p => {
-            const isWin = p.result === 'correct';
-            const isHighConfMiss = p.confidence >= 95 && p.result === 'wrong';
-            html += `<div class="record-table-row ${isHighConfMiss ? 'record-high-conf-miss' : ''}">
-              <span class="text-gray-500 w-1/4 truncate text-sm">${p.event}</span>
-              <span class="text-gray-900 flex-1 text-sm">${p.fight}</span>
-              <span class="text-gray-400 w-16 text-right text-sm">${p.confidence}%</span>
-              <span class="w-16 text-right font-bold" style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:${isWin ? '#D91A1A' : '#aaa'}">${isWin ? 'W' : 'L'}</span>
-            </div>
-            ${isHighConfMiss ? '<div class="ml-4 mt-1 mb-2 text-xs rounded px-3 py-1.5 border" style="color:#b45309;background:rgba(180,83,9,0.05);border-color:rgba(180,83,9,0.2)">High-confidence miss — see model calibration improvements</div>' : ''}`;
-          });
-          html += '</div>';
-        }
-
-        if (pending.length > 0) {
-          html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">Pending (${pending.length})</h3>
-          <div class="space-y-1">`;
-          pending.forEach(p => {
-            const c = confColor(p.confidence);
-            html += `<div class="record-table-row">
-              <span class="text-gray-500 w-1/4 truncate text-sm">${p.event}</span>
-              <span class="text-gray-900 flex-1 text-sm">${p.fight}</span>
-              <span class="w-36 text-right">
-                <span style="color:#D91A1A;font-family:'Bebas Neue',sans-serif;font-size:14px;">${p.predicted_winner}</span>
-                <span class="text-gray-400 ml-1 text-sm">${p.confidence}%</span>
-              </span>
-            </div>`;
-          });
-          html += '</div>';
-        }
-
-        if (decided.length === 0 && pending.length === 0) {
-          html += '<p class="text-gray-400 text-center py-8">No picks logged yet.</p>';
-        }
-
         document.getElementById('record-loading').classList.add('hidden');
-        document.getElementById('record-content').innerHTML = html;
+        renderRecord();
       } catch (e) {
         document.getElementById('record-loading').textContent = 'Failed to load picks log.';
       }
@@ -1310,9 +1421,9 @@
             </div>
             <div class="text-xs text-gray-500">
               ${pick.odds_source === 'BOOK' ? `Odds: <span class="font-mono">${americanOdds}</span>` : ''}
-              ${pick.odds_source === 'BOOK' && pick.bookmaker ? ` via ${pick.bookmaker}` : ''}
               ${pick.odds_source === 'NO_ODDS' ? '<span style="color:#b45309">NO ODDS</span>' : ''}
             </div>
+            ${pick.odds_source === 'BOOK' && pick.bookmaker ? `<div class="text-xs" style="color:#999;margin-top:2px;">via ${pick.bookmaker}</div>` : ''}
             ${fadeNote}
           </div>
         </div>`;
@@ -1327,7 +1438,10 @@
           });
           html += '</div>';
         } else {
-          html += '<p class="text-gray-400 text-center py-8">No value picks found for upcoming fights.</p>';
+          html += `<div class="model-card text-center py-12">
+            <div style="font-size:48px;opacity:0.2;margin-bottom:12px;">&#9878;</div>
+            <p class="text-gray-500" style="font-size:15px;">No strong picks for this event — check back as odds update.</p>
+          </div>`;
         }
       } else {
         if (strong.length > 0) {
@@ -1349,7 +1463,10 @@
           html += '</div>';
         }
         if (strong.length === 0 && lean.length === 0) {
-          html += '<p class="text-gray-400 text-center py-8">No value picks found for upcoming fights.</p>';
+          html += `<div class="model-card text-center py-12">
+            <div style="font-size:48px;opacity:0.2;margin-bottom:12px;">&#9878;</div>
+            <p class="text-gray-500" style="font-size:15px;">No strong picks for this event — check back as odds update.</p>
+          </div>`;
         }
       }
 
@@ -1797,7 +1914,7 @@
         document.getElementById('fighter-modal').classList.add('open');
 
         if (fighter.elo_history && fighter.elo_history.length > 1) {
-          setTimeout(() => renderEloChart(fighter.elo_history), 50);
+          loadChartJS().then(() => setTimeout(() => renderEloChart(fighter.elo_history), 50));
         }
       } catch (e) {
         console.error('Failed to load fighter profile', e);

@@ -157,8 +157,8 @@
   <section class="hero-section min-h-screen flex items-center px-6" style="background:#FAF7F2;">
     <div class="relative z-10 max-w-6xl mx-auto w-full grid md:grid-cols-5 gap-12 items-center py-20">
 
-      <!-- LEFT COLUMN (3/5) -->
-      <div class="md:col-span-3">
+      <!-- LEFT COLUMN (3/5) — on mobile, order-2 so matchup card shows first -->
+      <div class="md:col-span-3 max-md:order-2">
         <!-- Live pill -->
         <div class="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full" style="background:#FFF0F0;">
           <span class="text-sm">🔴</span>
@@ -187,8 +187,8 @@
         </p>
       </div>
 
-      <!-- RIGHT COLUMN (2/5): Featured Matchup Card -->
-      <div class="md:col-span-2">
+      <!-- RIGHT COLUMN (2/5): Featured Matchup Card — on mobile, order-1 so it's first -->
+      <div class="md:col-span-2 max-md:order-1">
         <div style="background:#111111;border-radius:16px;border-top:4px solid #D91A1A;box-shadow:0 20px 60px rgba(0,0,0,0.15);padding:32px;">
 
           <!-- Header -->
@@ -245,28 +245,28 @@
   </section>
 
   <!-- SECTION 3: PICKS TICKER -->
-  <section style="background:#D91A1A;height:48px;overflow:hidden;display:flex;align-items:center;">
+  <section style="background:#D91A1A;height:48px;overflow:hidden;display:flex;align-items:center;" class="max-md:!h-[36px]">
     <div class="ticker-track" id="tickerTrack" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:white;letter-spacing:0.05em;">
       <!-- Populated by JS -->
     </div>
   </section>
 
   <!-- SECTION 4: LIVE RECORD -->
-  <section id="record" style="background:#111111;padding:96px 24px;">
+  <section id="record" style="background:#111111;padding:96px 24px;" class="max-md:!py-12">
     <div class="max-w-5xl mx-auto">
       <h2 style="font-family:'Bebas Neue',sans-serif;font-size:64px;color:white;text-align:center;line-height:1;margin-bottom:12px;">TRACK RECORD</h2>
       <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;text-align:center;margin-bottom:48px;">Every pick public. Every result tracked.</p>
 
       <div class="grid md:grid-cols-3 gap-6">
         <div class="fade-in" style="background:#1A1A1A;border-left:4px solid #D91A1A;border-radius:12px;padding:32px;">
-          <div style="font-family:'Inter',sans-serif;font-size:11px;color:#777;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">UFC 326</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#D91A1A;line-height:1;margin-bottom:4px;">7W - 3L</div>
-          <div style="font-family:'Inter',sans-serif;font-size:14px;color:#777;">70.0% accuracy</div>
+          <div id="recordEventLabel" style="font-family:'Inter',sans-serif;font-size:11px;color:#777;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">LIVE RECORD</div>
+          <div id="recordWL" style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#D91A1A;line-height:1;margin-bottom:4px;">--</div>
+          <div id="recordAcc" style="font-family:'Inter',sans-serif;font-size:14px;color:#777;">-- accuracy</div>
         </div>
         <div class="fade-in" style="background:#1A1A1A;border-left:4px solid #D91A1A;border-radius:12px;padding:32px;transition-delay:0.1s;">
           <div style="font-family:'Inter',sans-serif;font-size:11px;color:#777;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">HIGH CONFIDENCE</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:white;line-height:1;margin-bottom:4px;">75%</div>
-          <div style="font-family:'Inter',sans-serif;font-size:14px;color:#777;">picks at 75%+ confidence</div>
+          <div id="recordHighConf" style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:white;line-height:1;margin-bottom:4px;">--</div>
+          <div style="font-family:'Inter',sans-serif;font-size:14px;color:#777;">picks at 70%+ confidence</div>
         </div>
         <div class="fade-in" style="background:#1A1A1A;border-left:4px solid #D91A1A;border-radius:12px;padding:32px;transition-delay:0.2s;">
           <div style="font-family:'Inter',sans-serif;font-size:11px;color:#777;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">BACKTESTED</div>
@@ -278,7 +278,7 @@
   </section>
 
   <!-- SECTION 5: TOP PICKS -->
-  <section style="background:#FAF7F2;padding:96px 24px;">
+  <section style="background:#FAF7F2;padding:96px 24px;" class="max-md:!py-12">
     <div class="max-w-5xl mx-auto">
       <h2 style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#111111;text-align:center;line-height:1;margin-bottom:12px;">THIS WEEK'S STRONG PICKS</h2>
       <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;text-align:center;margin-bottom:48px;">Picks with edge &ge;12% over the market</p>
@@ -290,7 +290,7 @@
   </section>
 
   <!-- FEATURED CARD -->
-  <section style="background:#FFFFFF;padding:96px 24px;">
+  <section style="background:#FFFFFF;padding:96px 24px;" class="max-md:!py-12">
     <div class="max-w-5xl mx-auto">
       <h2 style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#111111;text-align:center;line-height:1;margin-bottom:12px;">FEATURED CARD</h2>
       <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;text-align:center;margin-bottom:48px;" id="featuredEventName">Loading next event...</p>
@@ -302,7 +302,7 @@
   </section>
 
   <!-- SECTION 6: HOW IT WORKS -->
-  <section style="background:#FFFFFF;padding:96px 24px;border-top:1px solid #E5DDD5;">
+  <section style="background:#FFFFFF;padding:96px 24px;border-top:1px solid #E5DDD5;" class="max-md:!py-12">
     <div class="max-w-5xl mx-auto">
       <h2 style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#111111;text-align:center;line-height:1;margin-bottom:48px;">HOW FIGHTBRAIN WORKS</h2>
 
@@ -327,8 +327,8 @@
   </section>
 
   <!-- SECTION 7: CTA STRIP -->
-  <section style="background:#D91A1A;padding:80px 24px;text-align:center;">
-    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:72px;color:white;line-height:1;margin-bottom:16px;" class="max-md:!text-[48px]">FIGHT NIGHT IS MARCH 14</h2>
+  <section style="background:#D91A1A;padding:80px 24px;text-align:center;" class="max-md:!py-12">
+    <h2 id="ctaHeadline" style="font-family:'Bebas Neue',sans-serif;font-size:72px;color:white;line-height:1;margin-bottom:16px;" class="max-md:!text-[48px]">NEXT FIGHT NIGHT</h2>
     <p style="font-family:'Inter',sans-serif;font-size:18px;color:rgba(255,255,255,0.8);margin-bottom:32px;">Predictions are live. Value picks are posted.</p>
     <a href="ui/index.html" style="display:inline-block;background:white;color:#D91A1A;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:16px 36px;border-radius:12px;text-decoration:none;transition:all 0.2s;">Open Full Analytics →</a>
   </section>
@@ -351,11 +351,31 @@
     }, { threshold: 0.1 });
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-    // Countdown to March 14, 2026 7:00 PM ET (23:00 UTC)
-    const eventDate = new Date('2026-03-14T23:00:00Z');
+    // Countdown — target date set dynamically from CSV, fallback to next Saturday
+    let eventDate = null;
+    function getNextSaturday() {
+      const d = new Date();
+      d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7));
+      d.setHours(23, 0, 0, 0);
+      return d;
+    }
+    function parseEventDate(eventName) {
+      // Known event date mappings based on event name patterns
+      const dateMap = {
+        'Emmett vs. Vallejos': '2026-03-14T23:00:00Z',
+        'Emmett vs Vallejos': '2026-03-14T23:00:00Z',
+        'Evloev vs. Murphy': '2026-03-21T23:00:00Z',
+        'Della Maddalena vs. Prates': '2026-03-28T23:00:00Z',
+      };
+      for (const [key, date] of Object.entries(dateMap)) {
+        if (eventName && eventName.includes(key)) return new Date(date);
+      }
+      return null;
+    }
     function updateCountdown() {
+      const target = eventDate || getNextSaturday();
       const now = new Date();
-      const diff = eventDate - now;
+      const diff = target - now;
       if (diff <= 0) {
         document.getElementById('cd-days').textContent = '0';
         document.getElementById('cd-hours').textContent = '0';
@@ -389,11 +409,6 @@
       return result;
     }
 
-    // Confidence pill color class
-    function confClass(conf) {
-      return conf >= 80 ? 'conf-high' : 'conf-medium';
-    }
-
     // Load predictions
     fetch('model/upcoming_predictions.csv')
       .then(r => r.text())
@@ -408,30 +423,18 @@
           return row;
         });
 
-        // Determine first event in the CSV
+        // Determine first event in the CSV and set dynamic event name + countdown
         const firstEvent = preds[0] ? preds[0].event : '';
         const firstEventPreds = preds.filter(p => p.event === firstEvent);
 
-        // Filter conf >= 70, sort desc, top 3 for strong picks
-        const strongPicks = firstEventPreds.filter(p => p.conf >= 70).sort((a, b) => b.conf - a.conf).slice(0, 3);
+        if (firstEvent) {
+          // Update CTA strip headline dynamically
+          const ctaEl = document.getElementById('ctaHeadline');
+          if (ctaEl) ctaEl.textContent = firstEvent.toUpperCase();
 
-        // Render strong pick cards
-        const container = document.getElementById('strongPicks');
-        if (strongPicks.length > 0) {
-          container.innerHTML = strongPicks.map((p, i) => `
-            <div class="value-card fade-in visible" style="transition-delay:${i * 0.1}s">
-              <div class="value-card-bar"></div>
-              <div class="value-card-body">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                  <span class="pick-label">PICK</span>
-                  <span class="tier-badge-red">STRONG PICK</span>
-                </div>
-                <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:#111111;line-height:1;">${p.predicted_winner}</div>
-                <div style="font-family:'Inter',sans-serif;font-size:14px;color:#D91A1A;margin-top:8px;">MODEL: ${p.conf.toFixed(1)}%</div>
-                <div style="font-family:'Inter',sans-serif;font-size:13px;color:#777;margin-top:4px;">vs. ${p.predicted_winner === p.fighter1 ? p.fighter2 : p.fighter1}</div>
-              </div>
-            </div>
-          `).join('');
+          // Set countdown target from event name
+          const parsed = parseEventDate(firstEvent);
+          if (parsed) { eventDate = parsed; updateCountdown(); }
         }
 
         // Featured Card section: top 5 with conf >= 70 from first event
@@ -468,14 +471,11 @@
         if (allStrong.length > 0) {
           const featured = allStrong[0];
           const winnerProb = featured.conf;
-          const loserProb = 100 - winnerProb;
 
-          // Populate hero card elements
           document.getElementById('heroF1').textContent = featured.fighter1;
           document.getElementById('heroF2').textContent = featured.fighter2;
           document.getElementById('heroEvent').textContent = featured.event;
 
-          // Determine predicted method if available
           const heroMethodEl = document.getElementById('heroMethod');
           if (heroMethodEl && featured.method_label) {
             heroMethodEl.textContent = featured.method_label;
@@ -489,10 +489,7 @@
           const step = target / 40;
           const interval = setInterval(() => {
             current += step;
-            if (current >= target) {
-              current = target;
-              clearInterval(interval);
-            }
+            if (current >= target) { current = target; clearInterval(interval); }
             document.getElementById('heroConf').textContent = current.toFixed(1) + '%';
           }, 30);
         }
@@ -501,13 +498,12 @@
         const tickerTrack = document.getElementById('tickerTrack');
         if (tickerTrack && preds.length > 0) {
           const tickerItems = preds.map(p => `${p.predicted_winner.split(' ').pop().toUpperCase()} ${p.conf.toFixed(1)}%`).join(' · ');
-          // Duplicate for seamless loop
           tickerTrack.innerHTML = `<span>${tickerItems} · </span><span>${tickerItems} · </span>`;
         }
       })
       .catch(e => console.error('Failed to load predictions', e));
 
-    // Load value picks for strong picks section
+    // Load value picks for strong picks section (from value_picks.json)
     fetch('model/value_picks.json')
       .then(r => r.json())
       .then(data => {
@@ -523,12 +519,11 @@
                 <div class="value-card-bar"></div>
                 <div class="value-card-body">
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                    <span class="pick-label">PICK</span>
-                    <span class="tier-badge">STRONG PICK</span>
+                    <span class="pick-label">STRONG PICK</span>
+                    <span class="tier-badge-red">STRONG</span>
                   </div>
                   <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:#111111;line-height:1;">${pickName}</div>
-                  <div style="font-family:'Inter',sans-serif;font-size:14px;color:#D91A1A;margin-top:8px;">MODEL: ${p.confidence}%</div>
-                  <div style="font-family:'Inter',sans-serif;font-size:13px;color:#777;margin-top:4px;">vs. ${opponent}</div>
+                  <div style="font-family:'Inter',sans-serif;font-size:13px;color:#777;margin-top:6px;">vs. ${opponent}</div>
                   <div style="border-top:1px solid #E5DDD5;margin-top:16px;padding-top:12px;display:flex;justify-content:space-between;">
                     <div>
                       <div style="font-family:'Inter',sans-serif;font-size:10px;color:#777;text-transform:uppercase;">EDGE</div>
@@ -536,16 +531,40 @@
                     </div>
                     <div style="text-align:right;">
                       <div style="font-family:'Inter',sans-serif;font-size:10px;color:#777;text-transform:uppercase;">EV</div>
-                      <div style="font-family:'Inter',sans-serif;font-size:12px;color:#111111;margin-top:4px;">${p.ev > 0 ? '+' : ''}${(p.ev || 0).toFixed(3)}</div>
+                      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#111111;line-height:1;margin-top:4px;">${p.ev > 0 ? '+' : ''}${(p.ev || 0).toFixed(3)}</div>
                     </div>
                   </div>
                 </div>
               </div>
             `;
           }).join('');
+        } else if (container) {
+          container.innerHTML = '<div class="text-center text-gray-400 py-8 col-span-3" style="font-family:Inter,sans-serif;font-size:14px;">No strong picks for this event — check back as odds update.</div>';
         }
       })
       .catch(e => console.error('Failed to load value picks', e));
+
+    // Load live record data
+    fetch('model/live_record.json')
+      .then(r => r.json())
+      .then(record => {
+        const o = record.overall;
+        document.getElementById('recordWL').textContent = o.wins + 'W - ' + o.losses + 'L';
+        document.getElementById('recordAcc').textContent = o.accuracy + '% accuracy';
+
+        // Show event count
+        const eventCount = record.by_event ? Object.keys(record.by_event).length : 0;
+        document.getElementById('recordEventLabel').textContent = eventCount + ' EVENT' + (eventCount !== 1 ? 'S' : '') + ' TRACKED';
+
+        // High confidence accuracy
+        if (record.by_tier && record.by_tier.high) {
+          document.getElementById('recordHighConf').textContent = record.by_tier.high.accuracy + '%';
+        }
+      })
+      .catch(() => {
+        document.getElementById('recordWL').textContent = '--';
+        document.getElementById('recordHighConf').textContent = '--';
+      });
   </script>
 
   <!-- Ken Burns fallback code removed: kb1/kb2/kb3 elements no longer in DOM -->
