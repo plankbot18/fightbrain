@@ -359,6 +359,22 @@
     .feature-label { font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: #111; }
 
     /* ===== ANALYSIS ===== */
+    /* H2H stat table */
+    .h2h-table { margin: 16px 0; }
+    .h2h-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .h2h-name-f1, .h2h-name-f2 { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #111; width: 80px; }
+    .h2h-name-f2 { text-align: right; }
+    .h2h-center-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.05em; }
+    .h2h-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .h2h-stat-f1, .h2h-stat-f2 { font-size: 13px; font-weight: 600; color: #555; min-width: 44px; text-align: right; }
+    .h2h-stat-f2 { text-align: left; }
+    .h2h-winner { color: #D91A1A; }
+    .h2h-bar-wrap { flex: 1; position: relative; }
+    .h2h-bar-inner { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #F1F5F9; }
+    .h2h-bar-f1 { height: 100%; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); border-radius: 4px 0 0 4px; }
+    .h2h-bar-f2 { height: 100%; transition: width 0.7s cubic-bezier(0.4,0,0.2,1) 0.05s; border-radius: 0 4px 4px 0; }
+    .h2h-label { text-align: center; font-size: 10px; color: #999; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+
     .analysis-method-bar {
       height: 36px; border-radius: 6px; display: flex;
       align-items: center; justify-content: center;
@@ -870,8 +886,8 @@
             <div style="background:#8B0000;width:${subW}%" class="analysis-method-bar">${subPct >= 5 ? subPct + '% SUB' : ''}</div>
           </div>
           <div class="flex justify-between text-xs mt-1">
-            <span style="color:#D91A1A">${methodData.finish_label || ''}</span>
-            <span class="text-gray-500">${methodData.method_label || ''}</span>
+            <span style="color:#D91A1A">${(methodData.finish_label && methodData.finish_label !== 'undefined') ? methodData.finish_label : ''}</span>
+            <span class="text-gray-500">${(methodData.method_label && methodData.method_label !== 'undefined') ? methodData.method_label : ''}</span>
           </div>
         </div>`;
       }
@@ -1500,6 +1516,8 @@
     // ===== FIGHT ANALYSIS =====
     async function loadAnalysis() {
       try {
+        // Pre-load fighter profiles so H2H tables have stat data
+        if (!_fighterProfiles) await getFighterProfiles();
         const res = await fetch('../model/method_predictions.csv');
         const text = await res.text();
         const lines = text.trim().split('\n');
@@ -1524,16 +1542,56 @@
           events[f.event].push(f);
         });
 
-        function dangerBar(value, color, label) {
-          const pct = Math.round(value * 100);
-          return `<div class="mb-2">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-bold" style="color:${color === 'ko' ? '#D91A1A' : '#8B0000'}">${label}</span>
-              <span class="text-xs text-gray-500">${pct}%</span>
+        // H2H stat row — animated bar grows from center, winner side highlighted
+        function h2hRow(label, f1val, f2val, unit, higherIsBetter) {
+          const f1n = parseFloat(f1val) || 0;
+          const f2n = parseFloat(f2val) || 0;
+          const total = f1n + f2n;
+          // f1 gets left bar, f2 gets right bar, proportional to their share
+          const f1share = total > 0 ? (f1n / total * 100) : 50;
+          const f2share = total > 0 ? (f2n / total * 100) : 50;
+          const f1wins = higherIsBetter ? f1n >= f2n : f1n <= f2n;
+          const f1fmt = Number.isInteger(f1n) ? f1n : f1n.toFixed(1);
+          const f2fmt = Number.isInteger(f2n) ? f2n : f2n.toFixed(1);
+          const edgeColor = '#D91A1A';
+          const neutralColor = '#CBD5E1';
+          return `<div class="h2h-row" data-f1share="${f1share}" data-f2share="${f2share}">
+            <div class="h2h-stat-f1 ${f1wins ? 'h2h-winner' : ''}">${f1fmt}${unit}</div>
+            <div class="h2h-bar-wrap">
+              <div class="h2h-bar-inner">
+                <div class="h2h-bar-f1" style="width:0%;background:${f1wins ? edgeColor : neutralColor};"></div>
+                <div class="h2h-bar-f2" style="width:0%;background:${!f1wins ? edgeColor : neutralColor};"></div>
+              </div>
+              <div class="h2h-label">${label}</div>
             </div>
-            <div style="background:#E5DDD5;height:36px;border-radius:6px;overflow:hidden;">
-              <div style="background:${color === 'ko' ? '#D91A1A' : '#8B0000'};width:${pct}%;height:100%;border-radius:6px;transition:width 0.4s ease;"></div>
+            <div class="h2h-stat-f2 ${!f1wins ? 'h2h-winner' : ''}">${f2fmt}${unit}</div>
+          </div>`;
+        }
+
+        function h2hTable(f1name, f2name, profiles) {
+          // Look up stats from fighter_profiles by name
+          const byName = {};
+          if (profiles && profiles.fighters) {
+            for (const p of Object.values(profiles.fighters)) {
+              byName[p.name] = p.stats || {};
+            }
+          }
+          const s1 = byName[f1name] || {};
+          const s2 = byName[f2name] || {};
+          const rows = [
+            h2hRow('Strikes/min',  s1.slpm,    s2.slpm,    '', true),
+            h2hRow('Str Accuracy', s1.str_acc,  s2.str_acc,  '%', true),
+            h2hRow('Str Defense',  s1.str_def,  s2.str_def,  '%', true),
+            h2hRow('TD Average',   s1.td_avg,   s2.td_avg,   '/15m', true),
+            h2hRow('TD Defense',   s1.td_def,   s2.td_def,   '%', true),
+          ];
+          return `<div class="h2h-table" data-ready="false">
+            <div class="h2h-header">
+              <span class="h2h-name-f1">${f1name.split(' ').pop()}</span>
+              <span class="h2h-center-label">Head to Head</span>
+              <span class="h2h-name-f2">${f2name.split(' ').pop()}</span>
             </div>
+            ${rows.join('')}
           </div>`;
         }
 
@@ -1592,18 +1650,7 @@
                   <span class="text-gray-500">${f.method_label}</span>
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-6 mb-4">
-                <div>
-                  <div class="fight-card-f1-name mb-2" style="font-size:18px;">${f.fighter1}</div>
-                  ${dangerBar(f.ko_danger_f1, 'ko', 'Striking')}
-                  ${dangerBar(f.sub_danger_f1, 'sub', 'Grappling')}
-                </div>
-                <div>
-                  <div class="fight-card-f1-name mb-2" style="font-size:18px;">${f.fighter2}</div>
-                  ${dangerBar(f.ko_danger_f2, 'ko', 'Striking')}
-                  ${dangerBar(f.sub_danger_f2, 'sub', 'Grappling')}
-                </div>
-              </div>
+              ${h2hTable(f.fighter1, f.fighter2, _fighterProfiles)}
               <div class="analysis-narrative">
                 <p>${f.narrative}</p>
               </div>
@@ -1620,6 +1667,22 @@
         document.getElementById('analysis-loading').classList.add('hidden');
         document.getElementById('analysis-content').innerHTML = html;
         window._analysisLoaded = true;
+
+        // Animate H2H bars when they scroll into view
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && entry.target.dataset.ready !== 'true') {
+              entry.target.dataset.ready = 'true';
+              entry.target.querySelectorAll('.h2h-row').forEach(row => {
+                const f1share = parseFloat(row.dataset.f1share) || 50;
+                const f2share = parseFloat(row.dataset.f2share) || 50;
+                row.querySelector('.h2h-bar-f1').style.width = f1share + '%';
+                row.querySelector('.h2h-bar-f2').style.width = f2share + '%';
+              });
+            }
+          });
+        }, { threshold: 0.2 });
+        document.querySelectorAll('.h2h-table').forEach(el => observer.observe(el));
       } catch (e) {
         document.getElementById('analysis-loading').textContent = 'Failed to load fight analysis. Run method_predict.py first.';
       }
