@@ -91,9 +91,101 @@
     /* Confidence pill colors */
     .conf-high { background: #00d4ff20; color: #00d4ff; border: 1px solid #00d4ff40; }
     .conf-medium { background: #fbbf2420; color: #fbbf24; border: 1px solid #fbbf2440; }
+
+    /* Sticky nav */
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #0d1117;
+      border-bottom: 1px solid #30363d;
+    }
+    .nav-link {
+      color: #8b949e;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .nav-link:hover { color: #00d4ff; }
+    .nav-cta-btn {
+      background: #00d4ff15;
+      color: #00d4ff;
+      border: 1px solid #00d4ff40;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .nav-cta-btn:hover { background: #00d4ff25; border-color: #00d4ff60; }
+    .hamburger { display: none; background: none; border: none; color: #8b949e; cursor: pointer; padding: 4px; }
+    .nav-links-desktop { display: flex; align-items: center; gap: 20px; }
+    @media (max-width: 768px) {
+      .nav-links-desktop { display: none; }
+      .hamburger { display: block; }
+      .nav-mobile {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #30363d;
+        padding: 16px 24px;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .nav-mobile.open { display: flex; }
+    }
+
+    /* Quick-access pills */
+    .quick-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .quick-pill:hover { border-color: #00d4ff40; color: #e6edf3; }
   </style>
 </head>
 <body class="font-sans antialiased">
+
+  <!-- STICKY NAV -->
+  <nav class="sticky-nav" id="top">
+    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+      <a href="#top" class="text-lg font-black text-cyan tracking-tight" style="text-decoration:none;">FIGHTBRAIN 🧠</a>
+      <div class="nav-links-desktop">
+        <a href="ui/index.html" class="nav-link">Upcoming Picks</a>
+        <a href="ui/index.html" class="nav-link">Value Picks</a>
+        <a href="ui/index.html" class="nav-link">Fight Analysis</a>
+        <a href="ui/index.html" class="nav-link">Outcomes</a>
+        <a href="ui/index.html" class="nav-link">Picks Record</a>
+        <a href="ui/index.html" class="nav-link">Model Info</a>
+        <a href="ui/index.html" class="nav-cta-btn">Open Analytics ↗</a>
+      </div>
+      <button class="hamburger" onclick="document.getElementById('navMobile').classList.toggle('open')" aria-label="Menu">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+    <div class="nav-mobile" id="navMobile">
+      <a href="ui/index.html" class="nav-link">Upcoming Picks</a>
+      <a href="ui/index.html" class="nav-link">Value Picks</a>
+      <a href="ui/index.html" class="nav-link">Fight Analysis</a>
+      <a href="ui/index.html" class="nav-link">Outcomes</a>
+      <a href="ui/index.html" class="nav-link">Picks Record</a>
+      <a href="ui/index.html" class="nav-link">Model Info</a>
+      <a href="ui/index.html" class="nav-cta-btn" style="display:inline-block;text-align:center;margin-top:4px;">Open Analytics ↗</a>
+    </div>
+  </nav>
 
   <!-- HERO -->
   <section class="hero-gradient min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
@@ -133,9 +225,16 @@
 
       <!-- CTA Button -->
       <a href="ui/index.html" class="cta-button inline-flex items-center gap-2 bg-cyan/10 hover:bg-cyan/20 text-cyan font-bold px-8 py-4 rounded-xl border border-cyan/30 hover:border-cyan/50 transition-all text-lg mt-4">
-        View Full Card
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        Open Analytics →
       </a>
+
+      <!-- Quick-access pills -->
+      <div class="flex flex-wrap justify-center gap-3 mt-6">
+        <a href="ui/index.html" class="quick-pill">📊 Upcoming Picks</a>
+        <a href="ui/index.html" class="quick-pill">💰 Value Picks</a>
+        <a href="ui/index.html" class="quick-pill">🥊 Fight Analysis</a>
+      </div>
+
       <p class="text-xs text-muted mt-4">Join 500+ fans tracking our picks</p>
     </div>
 
