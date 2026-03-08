@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FightBrain — Data-Driven UFC Predictions</title>
+  <meta name="description" content="Data-driven UFC predictions powered by machine learning. 74.1% accuracy. Real track record.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0d1117',
+            'bg-alt': '#0a0e14',
+            surface: '#161b22',
+            border: '#30363d',
+            cyan: '#00d4ff',
+            coral: '#ff6b6b',
+            muted: '#8b949e',
+            text: '#e6edf3',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    body { background: #0d1117; color: #e6edf3; }
+    .glow { box-shadow: 0 0 40px #00d4ff15, 0 0 80px #00d4ff08; }
+    .glow-text { text-shadow: 0 0 30px #00d4ff60, 0 0 60px #00d4ff20; }
+    .title-glow {
+      text-shadow: 0 0 40px #00d4ff80, 0 0 80px #00d4ff40, 0 0 120px #00d4ff20;
+    }
+    .gradient-line {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #30363d80, #00d4ff30, #30363d80, transparent);
+    }
+    .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .pulse-dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .countdown-digit { font-variant-numeric: tabular-nums; }
+    .strong-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .step-card:hover .step-number {
+      background: #00d4ff20;
+      border-color: #00d4ff40;
+    }
+
+    /* Hero animated gradient background */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .hero-gradient {
+      background: linear-gradient(135deg, #0a0e14, #0d1117, #0f0a1a, #0d1117, #0a1014);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+
+    /* CTA pulse glow */
+    @keyframes ctaPulse {
+      0%, 100% { box-shadow: 0 0 20px #00d4ff40; }
+      50% { box-shadow: 0 0 40px #00d4ff80, 0 0 80px #00d4ff40; }
+    }
+    .cta-button {
+      animation: ctaPulse 2.5s ease-in-out infinite;
+    }
+
+    /* Section alternating backgrounds */
+    .section-dark { background: #0d1117; }
+    .section-darker { background: #0a0e14; }
+
+    /* Confidence pill colors */
+    .conf-high { background: #00d4ff20; color: #00d4ff; border: 1px solid #00d4ff40; }
+    .conf-medium { background: #fbbf2420; color: #fbbf24; border: 1px solid #fbbf2440; }
+  </style>
+</head>
+<body class="font-sans antialiased">
+
+  <!-- HERO -->
+  <section class="hero-gradient min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
+    <!-- Background glow -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-cyan/5 blur-[180px] pointer-events-none"></div>
+    <div class="absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-coral/3 blur-[120px] pointer-events-none"></div>
+
+    <div class="relative z-10 max-w-4xl mx-auto w-full text-center">
+      <!-- Live indicator -->
+      <div class="flex items-center justify-center gap-2 mb-8">
+        <div class="w-2.5 h-2.5 rounded-full bg-cyan pulse-dot"></div>
+        <span class="text-xs text-muted uppercase tracking-[0.2em] font-semibold">Live Model</span>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-5xl sm:text-6xl lg:text-8xl font-black tracking-tight leading-none mb-6 text-cyan title-glow">
+        FIGHTBRAIN
+      </h1>
+      <p class="text-lg sm:text-xl text-muted max-w-xl mx-auto mb-12 leading-relaxed">
+        Machine learning trained on 8,500+ UFC fights.<br class="hidden sm:block"> Transparent picks, real track record, no guesswork.
+      </p>
+
+      <!-- Probability Arc -->
+      <div class="flex flex-col items-center mb-8">
+        <div class="relative w-96 h-56">
+          <canvas id="heroArc"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-end pb-4">
+            <div id="heroConf" class="text-4xl font-black text-cyan">--</div>
+            <div class="text-xs text-muted mt-1">model confidence</div>
+          </div>
+        </div>
+        <div class="mt-3 text-center">
+          <div class="text-sm font-bold text-text" id="heroFighters">Loading...</div>
+          <div class="text-xs text-muted mt-1" id="heroEvent"></div>
+        </div>
+      </div>
+
+      <!-- CTA Button -->
+      <a href="../ui/index.html" class="cta-button inline-flex items-center gap-2 bg-cyan/10 hover:bg-cyan/20 text-cyan font-bold px-8 py-4 rounded-xl border border-cyan/30 hover:border-cyan/50 transition-all text-lg mt-4">
+        View Full Card
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+      <p class="text-xs text-muted mt-4">Join 500+ fans tracking our picks</p>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-muted">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+    </div>
+  </section>
+
+  <div class="gradient-line w-full"></div>
+
+  <!-- TRACK RECORD -->
+  <section class="section-darker py-24 px-6">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-4">Track Record</h2>
+      <p class="text-muted text-center mb-16 max-w-xl mx-auto">Every pick tracked. No deleted tweets. No revisionist history.</p>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="fade-in bg-surface border border-border rounded-2xl p-8 text-center glow">
+          <div class="text-xs text-muted uppercase tracking-widest mb-3">UFC 326 Record</div>
+          <div class="text-5xl font-black text-cyan mb-2">7W - 3L</div>
+          <div class="text-sm text-muted">70.0%</div>
+        </div>
+        <div class="fade-in bg-surface border border-border rounded-2xl p-8 text-center" style="transition-delay:0.1s">
+          <div class="text-xs text-muted uppercase tracking-widest mb-3">High Conf Accuracy</div>
+          <div class="text-5xl font-black text-cyan mb-2">75.0%</div>
+          <div class="text-sm text-muted">from live_record.json high tier</div>
+        </div>
+        <div class="fade-in bg-surface border border-border rounded-2xl p-8 text-center" style="transition-delay:0.2s">
+          <div class="text-xs text-muted uppercase tracking-widest mb-3">Model Accuracy</div>
+          <div class="text-5xl font-black text-cyan mb-2">74.1%</div>
+          <div class="text-sm text-muted">backtested on 1,596 fights</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="gradient-line w-full"></div>
+
+  <!-- NEXT EVENT -->
+  <section class="section-dark py-24 px-6">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-4">Next Event</h2>
+      <p class="text-muted text-center mb-2">UFC Fight Night: Emmett vs Vallejos</p>
+
+      <!-- Countdown -->
+      <div class="flex justify-center gap-4 mb-16 mt-6">
+        <div class="bg-surface border border-border rounded-xl px-5 py-3 text-center min-w-[70px]">
+          <div class="text-2xl font-black text-cyan countdown-digit" id="cd-days">--</div>
+          <div class="text-xs text-muted">Days</div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl px-5 py-3 text-center min-w-[70px]">
+          <div class="text-2xl font-black text-text countdown-digit" id="cd-hours">--</div>
+          <div class="text-xs text-muted">Hours</div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl px-5 py-3 text-center min-w-[70px]">
+          <div class="text-2xl font-black text-text countdown-digit" id="cd-mins">--</div>
+          <div class="text-xs text-muted">Mins</div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl px-5 py-3 text-center min-w-[70px]">
+          <div class="text-2xl font-black text-text countdown-digit" id="cd-secs">--</div>
+          <div class="text-xs text-muted">Secs</div>
+        </div>
+      </div>
+
+      <!-- Top 3 STRONG picks -->
+      <h3 class="text-xl font-bold text-center mb-8">Top Strong Picks</h3>
+      <div id="strongPicks" class="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto"></div>
+    </div>
+  </section>
+
+  <div class="gradient-line w-full"></div>
+
+  <!-- FEATURED CARD -->
+  <section class="section-darker py-24 px-6">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-2">Featured Card</h2>
+      <p class="text-muted text-center mb-12" id="featuredEventName">Loading next event...</p>
+
+      <div id="featuredCard" class="grid gap-4 max-w-3xl mx-auto">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <div class="gradient-line w-full"></div>
+
+  <!-- HOW IT WORKS -->
+  <section class="section-dark py-24 px-6">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-4xl sm:text-5xl font-bold text-center mb-16">How It Works</h2>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-cyan/30 transition-colors">
+          <div class="step-number w-14 h-14 rounded-xl bg-cyan/10 border border-cyan/20 text-cyan flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">1</div>
+          <h3 class="text-lg font-bold mb-3">Data</h3>
+          <p class="text-muted text-sm leading-relaxed">Collect from 8,500+ fights. Elo ratings, striking stats, grappling metrics, age curves, and more.</p>
+        </div>
+        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-cyan/30 transition-colors" style="transition-delay:0.1s">
+          <div class="step-number w-14 h-14 rounded-xl bg-cyan/10 border border-cyan/20 text-cyan flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">2</div>
+          <h3 class="text-lg font-bold mb-3">Model</h3>
+          <p class="text-muted text-sm leading-relaxed">XGBoost analyzes 39 features per matchup. Head-to-head differentials, method-of-victory predictions, confidence tiers.</p>
+        </div>
+        <div class="fade-in step-card bg-surface border border-border rounded-2xl p-8 text-center hover:border-cyan/30 transition-colors" style="transition-delay:0.2s">
+          <div class="step-number w-14 h-14 rounded-xl bg-cyan/10 border border-cyan/20 text-cyan flex items-center justify-center text-2xl font-black mx-auto mb-6 transition-colors">3</div>
+          <h3 class="text-lg font-bold mb-3">Edge</h3>
+          <p class="text-muted text-sm leading-relaxed">Publish picks with confidence scores and method leans. Surface value where the model disagrees with the market.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="gradient-line w-full"></div>
+
+  <!-- FOOTER -->
+  <footer class="section-darker py-16 px-6 text-center">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-2xl font-black text-cyan title-glow mb-4">FIGHTBRAIN</div>
+      <p class="text-muted text-sm mb-6">Predictions, not guarantees.</p>
+      <div class="border-t border-border pt-6 mt-6">
+        <p class="text-xs text-muted/60">For entertainment purposes only. Please gamble responsibly. FightBrain does not endorse or facilitate gambling.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll fade-in observer
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // Countdown to March 14, 2026 7:00 PM ET (23:00 UTC)
+    const eventDate = new Date('2026-03-14T23:00:00Z');
+    function updateCountdown() {
+      const now = new Date();
+      const diff = eventDate - now;
+      if (diff <= 0) {
+        document.getElementById('cd-days').textContent = '0';
+        document.getElementById('cd-hours').textContent = '0';
+        document.getElementById('cd-mins').textContent = '0';
+        document.getElementById('cd-secs').textContent = '0';
+        return;
+      }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      document.getElementById('cd-days').textContent = d;
+      document.getElementById('cd-hours').textContent = h;
+      document.getElementById('cd-mins').textContent = m;
+      document.getElementById('cd-secs').textContent = s;
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // CSV parser (handles quoted fields)
+    function parseCSVRow(row) {
+      const result = [];
+      let current = '', inQuotes = false;
+      for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+        if (ch === '"') { inQuotes = !inQuotes; }
+        else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+        else { current += ch; }
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    // Confidence pill color class
+    function confClass(conf) {
+      return conf >= 80 ? 'conf-high' : 'conf-medium';
+    }
+
+    // Load predictions
+    fetch('../model/upcoming_predictions.csv')
+      .then(r => r.text())
+      .then(predCsv => {
+        const predLines = predCsv.trim().split('\n');
+        const predHeaders = parseCSVRow(predLines[0]);
+        const preds = predLines.slice(1).map(line => {
+          const parts = parseCSVRow(line);
+          const row = {};
+          predHeaders.forEach((h, i) => row[h] = parts[i] || '');
+          row.conf = parseFloat(row.confidence);
+          return row;
+        });
+
+        // Determine first event in the CSV
+        const firstEvent = preds[0] ? preds[0].event : '';
+        const firstEventPreds = preds.filter(p => p.event === firstEvent);
+
+        // Filter conf >= 70, sort desc, top 3 for strong picks
+        const strongPicks = firstEventPreds.filter(p => p.conf >= 70).sort((a, b) => b.conf - a.conf).slice(0, 3);
+
+        // Render strong pick cards
+        const container = document.getElementById('strongPicks');
+        if (strongPicks.length > 0) {
+          container.innerHTML = strongPicks.map((p, i) => `
+            <div class="fade-in visible bg-surface border border-border rounded-2xl p-6 hover:border-cyan/30 transition-colors" style="transition-delay:${i * 0.1}s">
+              <div class="flex items-center justify-between mb-4">
+                <span class="strong-badge text-cyan bg-cyan/10 border border-cyan/20">STRONG PICK</span>
+                <span class="text-2xl font-black text-cyan">${p.conf.toFixed(1)}%</span>
+              </div>
+              <div class="text-base font-bold text-text mb-1">${p.predicted_winner}</div>
+              <div class="text-xs text-muted">${p.fighter1} vs ${p.fighter2}</div>
+            </div>
+          `).join('');
+        }
+
+        // Featured Card section: top 5 with conf >= 70 from first event
+        const featuredPicks = firstEventPreds.filter(p => p.conf >= 70).sort((a, b) => b.conf - a.conf).slice(0, 5);
+        const featuredEventEl = document.getElementById('featuredEventName');
+        const featuredContainer = document.getElementById('featuredCard');
+
+        if (firstEvent) {
+          featuredEventEl.textContent = firstEvent;
+        }
+
+        if (featuredPicks.length > 0) {
+          featuredContainer.innerHTML = featuredPicks.map((p, i) => {
+            const opponent = p.predicted_winner === p.fighter1 ? p.fighter2 : p.fighter1;
+            return `
+              <div class="fade-in visible bg-surface border border-border rounded-2xl px-6 py-5 flex items-center justify-between hover:border-cyan/30 transition-colors" style="transition-delay:${i * 0.08}s">
+                <div class="flex-1 min-w-0">
+                  <div class="text-lg font-bold text-text truncate">${p.predicted_winner}</div>
+                  <div class="text-sm text-muted">vs ${opponent}</div>
+                </div>
+                <div class="flex items-center gap-3 ml-4 shrink-0">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${confClass(p.conf)}">${p.conf.toFixed(1)}%</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Re-observe any new fade-in elements
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Hero arc: use highest confidence pick overall for demo
+        const allStrong = preds.filter(p => p.conf >= 70).sort((a, b) => b.conf - a.conf);
+        if (allStrong.length > 0) {
+          const featured = allStrong[0];
+          const winnerProb = featured.conf;
+          const loserProb = 100 - winnerProb;
+
+          document.getElementById('heroFighters').textContent = `${featured.fighter1} vs ${featured.fighter2}`;
+          document.getElementById('heroEvent').textContent = featured.event;
+
+          // Animated half-doughnut: start at 50/50, animate to actual
+          const ctx = document.getElementById('heroArc').getContext('2d');
+          const arcChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+              labels: [featured.predicted_winner, featured.predicted_winner === featured.fighter1 ? featured.fighter2 : featured.fighter1],
+              datasets: [{
+                data: [50, 50],
+                backgroundColor: ['#00d4ff', '#ff6b6b'],
+                borderWidth: 0,
+                borderRadius: 4,
+              }]
+            },
+            options: {
+              rotation: -90,
+              circumference: 180,
+              cutout: '75%',
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(1)}%`
+                  }
+                }
+              },
+              animation: {
+                animateRotate: true,
+                duration: 800,
+              }
+            }
+          });
+
+          // After initial render, animate to actual values
+          setTimeout(() => {
+            arcChart.data.datasets[0].data = [winnerProb, loserProb];
+            arcChart.update();
+            // Animate the confidence number
+            let current = 50;
+            const target = winnerProb;
+            const step = (target - current) / 30;
+            const interval = setInterval(() => {
+              current += step;
+              if ((step > 0 && current >= target) || (step < 0 && current <= target)) {
+                current = target;
+                clearInterval(interval);
+              }
+              document.getElementById('heroConf').textContent = current.toFixed(1) + '%';
+            }, 30);
+          }, 500);
+        }
+      })
+      .catch(e => console.error('Failed to load predictions', e));
+  </script>
+
+</body>
+</html>
