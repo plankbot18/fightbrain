@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FightBrain</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: { 800: '#1a1a2e', 900: '#0f0f1a', 700: '#25253e' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0f0f1a; }
+    .tab-active { border-bottom: 2px solid #00d4ff; color: #fff; }
+    .tab-inactive { color: #9ca3af; }
+    .tab-inactive:hover { color: #d1d5db; }
+    .confidence-bar { transition: width 0.6s ease; }
+    .scout-toggle { cursor: pointer; user-select: none; }
+    .scout-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .scout-body.open { max-height: 500px; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: #1a1a2e; }
+    .fighter-link { cursor: pointer; text-decoration: underline dotted; color: inherit; }
+    .fighter-link:hover { color: #00d4ff; }
+    .fighter-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .fighter-modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .fighter-modal {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 600px; max-width: 100vw;
+      background: #1a1a2e; z-index: 101; overflow-y: auto;
+      transform: translateX(100%); transition: transform 0.3s ease;
+      border-left: 1px solid rgba(255,255,255,0.1);
+    }
+    .fighter-modal.open { transform: translateX(0); }
+    .fighter-modal-close {
+      position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end;
+      padding: 12px 16px; background: #1a1a2e;
+    }
+    .stat-bar-bg { background: #374151; height: 6px; border-radius: 3px; overflow: hidden; }
+    .stat-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .grade-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    }
+    .grade-A { background: #065f46; color: #34d399; }
+    .grade-B { background: #1e3a5f; color: #60a5fa; }
+    .grade-C { background: #4a4a4a; color: #9ca3af; }
+    .grade-D { background: #7f1d1d; color: #f87171; }
+    /* Countdown banner */
+    #countdown-banner {
+      background: #161b22; color: #00d4ff; font-family: monospace;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 6px 0; font-size: 13px; letter-spacing: 0.5px;
+    }
+    #countdown-banner .cd-label { color: #8b949e; font-size: 11px; }
+    #countdown-banner .cd-val { color: #00d4ff; font-weight: 700; font-size: 15px; min-width: 28px; text-align: center; }
+    #countdown-banner .cd-sep { color: #484f58; }
+    /* Card browser */
+    .card-browser-nav {
+      width: 44px; height: 44px; border-radius: 50%; background: rgba(0,212,255,0.15);
+      color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .card-browser-nav:hover { background: rgba(0,212,255,0.3); transform: scale(1.1); }
+    .card-browser-nav:disabled { opacity: 0.3; cursor: default; transform: none; }
+    .dot-indicator { width: 8px; height: 8px; border-radius: 50%; background: #374151; cursor: pointer; transition: background 0.2s; }
+    .dot-indicator.active { background: #00d4ff; }
+    /* Search bar */
+    #fight-search {
+      background: #1a1a2e; border: 1px solid #25253e; color: #e5e7eb;
+      border-radius: 8px; padding: 8px 14px; width: 100%; max-width: 500px;
+      outline: none; font-size: 14px; transition: border-color 0.2s;
+    }
+    #fight-search:focus { border-color: #00d4ff; }
+    #fight-search::placeholder { color: #6b7280; }
+    /* Sort controls */
+    .sort-btn { cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px; }
+    .sort-btn:hover { color: #00d4ff; }
+    .sort-arrow { font-size: 10px; color: #00d4ff; }
+    /* Matchup report section */
+    .matchup-report { background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.15); border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+    .matchup-report .mr-label { color: #00d4ff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .matchup-report .mr-value { color: #d1d5db; font-size: 12px; margin-top: 2px; }
+    /* View toggle */
+    .view-toggle-btn {
+      padding: 4px 12px; font-size: 12px; border-radius: 6px; cursor: pointer;
+      border: 1px solid #25253e; background: transparent; color: #9ca3af; transition: all 0.2s;
+    }
+    .view-toggle-btn.active { background: rgba(0,212,255,0.15); color: #00d4ff; border-color: rgba(0,212,255,0.3); }
+    /* Event selector */
+    .event-selector {
+      background: #1a1a2e; border: 1px solid #25253e; color: #e5e7eb;
+      border-radius: 8px; padding: 8px 14px; font-size: 14px; outline: none;
+      transition: border-color 0.2s; cursor: pointer;
+    }
+    .event-selector:focus { border-color: #00d4ff; }
+    /* Expandable fight rows */
+    .fight-row { cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+    .fight-row:hover { background: #1e1e38; border-color: rgba(0,212,255,0.3); }
+    .fight-row-expanded { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+    .fight-row-expanded.open { max-height: 2000px; }
+    .fight-row-chevron { transition: transform 0.3s ease; display: inline-block; }
+    .fight-row-chevron.open { transform: rotate(180deg); }
+    /* Value tier badges */
+    .tier-badge-strong { background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid rgba(34,197,94,0.4); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+    .tier-badge-lean { background: rgba(234,179,8,0.2); color: #eab308; border: 1px solid rgba(234,179,8,0.4); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+    /* Value pulse animation */
+    @keyframes valuePulse {
+      0%, 100% { border-color: rgba(34, 197, 94, 0.4); box-shadow: 0 0 8px rgba(34, 197, 94, 0.2); }
+      50% { border-color: rgba(34, 197, 94, 0.8); box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
+    }
+    .value-pulse { animation: valuePulse 2s ease-in-out infinite; }
+    /* Odds pending section */
+    .odds-pending-toggle { cursor: pointer; user-select: none; }
+    .odds-pending-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .odds-pending-body.open { max-height: 2000px; }
+  </style>
+</head>
+<body class="text-gray-200 min-h-screen">
+
+  <!-- Countdown Banner -->
+  <div id="countdown-banner">
+    <span style="color:#8b949e; margin-right:4px;">UFC Fight Night: Emmett vs Vallejos</span>
+    <span class="cd-sep">|</span>
+    <span class="cd-val" id="cd-days">--</span><span class="cd-label">d</span>
+    <span class="cd-sep">:</span>
+    <span class="cd-val" id="cd-hours">--</span><span class="cd-label">h</span>
+    <span class="cd-sep">:</span>
+    <span class="cd-val" id="cd-mins">--</span><span class="cd-label">m</span>
+    <span class="cd-sep">:</span>
+    <span class="cd-val" id="cd-secs">--</span><span class="cd-label">s</span>
+  </div>
+
+  <header class="border-b border-gray-700/50 bg-dark-900/80 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-2xl font-bold tracking-tight">
+        <span style="color:#00d4ff">Fight</span>Brain
+      </h1>
+      <nav class="flex gap-6 text-sm font-medium">
+        <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active pb-1">Upcoming Picks</button>
+        <button onclick="showTab('value')" id="tab-value" class="tab-inactive pb-1">Value Picks</button>
+        <button onclick="showTab('record')" id="tab-record" class="tab-inactive pb-1">Picks Record</button>
+        <button onclick="showTab('model')" id="tab-model" class="tab-inactive pb-1">Model Info</button>
+        <button onclick="showTab('analysis')" id="tab-analysis" class="tab-inactive pb-1">Fight Analysis</button>
+        <button onclick="showTab('outcomes')" id="tab-outcomes" class="tab-inactive pb-1">Outcomes</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Global search bar -->
+  <div id="search-bar-wrapper" class="max-w-6xl mx-auto px-4 py-3">
+    <input type="text" id="fight-search" placeholder="Search fighters..." oninput="filterFights(this.value)">
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 py-4">
+    <!-- Upcoming Picks -->
+    <section id="panel-upcoming">
+      <div id="upcoming-loading" class="text-center text-gray-500 py-12">Loading predictions...</div>
+      <div id="upcoming-controls" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <select id="event-selector" class="event-selector" onchange="selectEvent(this.value)"></select>
+          </div>
+          <div class="flex gap-2">
+            <button class="view-toggle-btn active" id="view-event-btn" onclick="setUpcomingView('event')">Event View</button>
+            <button class="view-toggle-btn" id="view-grid-btn" onclick="setUpcomingView('grid')">Full Grid</button>
+          </div>
+        </div>
+      </div>
+      <!-- Event-centric view -->
+      <div id="upcoming-event-view" class="hidden"></div>
+      <!-- Grid view -->
+      <div id="upcoming-grid" class="hidden"></div>
+    </section>
+
+    <!-- Value Picks -->
+    <section id="panel-value" class="hidden">
+      <div id="value-loading" class="text-center text-gray-500 py-12">Loading value picks...</div>
+      <div id="value-content"></div>
+    </section>
+
+    <!-- Picks Record -->
+    <section id="panel-record" class="hidden">
+      <div id="record-loading" class="text-center text-gray-500 py-12">Loading picks log...</div>
+      <div id="record-content"></div>
+    </section>
+
+    <!-- Model Info -->
+    <section id="panel-model" class="hidden">
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40">
+          <h3 class="text-lg font-semibold mb-2">Model Performance</h3>
+          <div class="text-5xl font-bold my-4" style="color:#00d4ff">72.6%</div>
+          <p class="text-gray-400 text-sm">Test set accuracy on historical UFC bouts using a gradient-boosted classifier trained on fighter stat differentials.</p>
+        </div>
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40">
+          <h3 class="text-lg font-semibold mb-2">How It Works</h3>
+          <ul class="text-gray-400 text-sm space-y-2 mt-3 list-disc list-inside">
+            <li>Scrapes fighter stats from UFC Stats</li>
+            <li>Computes head-to-head differentials for each matchup</li>
+            <li>Trains a classification model on historical outcomes</li>
+            <li>Generates win probabilities for upcoming cards</li>
+          </ul>
+        </div>
+      </div>
+      <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 mt-6">
+        <h3 class="text-lg font-semibold mb-4">Top Features by Importance</h3>
+        <div style="max-height:400px"><canvas id="featureChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Fight Analysis -->
+    <section id="panel-analysis" class="hidden">
+      <!-- Radar chart section -->
+      <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Fighter Comparison Radar</h3>
+          <select id="radar-fight-select" class="bg-dark-700 border border-gray-600/40 rounded-lg px-3 py-1.5 text-sm text-gray-200 outline-none" onchange="renderRadarChart()">
+            <option value="">Select a fight...</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-4 mb-3 text-xs">
+          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(0,212,255,0.4);border:1px solid #00d4ff;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 1</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(255,107,107,0.4);border:1px solid #ff6b6b;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 2</span>
+        </div>
+        <div style="max-height:400px;display:flex;justify-content:center;"><canvas id="radarChart" style="max-width:500px;"></canvas></div>
+      </div>
+      <!-- Method analysis content -->
+      <div id="analysis-loading" class="text-center text-gray-500 py-12">Loading fight analysis...</div>
+      <div id="analysis-content"></div>
+    </section>
+
+    <!-- Outcomes -->
+    <section id="panel-outcomes" class="hidden">
+      <div id="outcomes-loading" class="text-center text-gray-500 py-12">Loading outcomes...</div>
+      <div id="outcomes-content"></div>
+    </section>
+  </main>
+
+  <!-- Fighter Profile Modal -->
+  <div id="fighter-overlay" class="fighter-modal-overlay" onclick="closeFighterProfile()"></div>
+  <div id="fighter-modal" class="fighter-modal">
+    <div class="fighter-modal-close">
+      <button onclick="closeFighterProfile()" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+    </div>
+    <div id="fighter-modal-body" class="px-6 pb-8"></div>
+  </div>
+
+  <script>
+    // ===== COUNTDOWN =====
+    function updateCountdown() {
+      const target = new Date('2026-03-14T23:00:00Z').getTime();
+      const now = Date.now();
+      const diff = target - now;
+      if (diff <= 0) {
+        document.getElementById('cd-days').textContent = '0';
+        document.getElementById('cd-hours').textContent = '0';
+        document.getElementById('cd-mins').textContent = '0';
+        document.getElementById('cd-secs').textContent = '0';
+        return;
+      }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      document.getElementById('cd-days').textContent = d;
+      document.getElementById('cd-hours').textContent = String(h).padStart(2, '0');
+      document.getElementById('cd-mins').textContent = String(m).padStart(2, '0');
+      document.getElementById('cd-secs').textContent = String(s).padStart(2, '0');
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // ===== TAB SWITCHING =====
+    function showTab(name) {
+      ['upcoming', 'value', 'record', 'model', 'analysis', 'outcomes'].forEach(t => {
+        document.getElementById('panel-' + t).classList.toggle('hidden', t !== name);
+        const btn = document.getElementById('tab-' + t);
+        btn.className = t === name ? 'tab-active pb-1' : 'tab-inactive pb-1';
+      });
+      // Show/hide search bar (only for upcoming)
+      document.getElementById('search-bar-wrapper').style.display = name === 'upcoming' ? '' : 'none';
+      if (name === 'model' && !window._chartLoaded) loadFeatureChart();
+      if (name === 'analysis' && !window._analysisLoaded) loadAnalysis();
+      if (name === 'outcomes' && !window._outcomesLoaded) loadOutcomes();
+      if (name === 'analysis') {
+        // Re-render radar on tab switch for animation
+        setTimeout(() => { if (document.getElementById('radar-fight-select').value) renderRadarChart(); }, 100);
+      }
+    }
+
+    // ===== UTILITIES =====
+    function confColor(c) {
+      if (c >= 80) return { bar: 'bg-green-500', text: 'text-green-400' };
+      if (c >= 65) return { bar: 'bg-yellow-500', text: 'text-yellow-400' };
+      return { bar: 'bg-orange-500', text: 'text-orange-400' };
+    }
+
+    function formatFeatureName(raw) {
+      return raw.replace('diff_', '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function parseCSVLine(line) {
+      const parts = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          parts.push(current);
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      parts.push(current);
+      return parts;
+    }
+
+    function renderScoutSection(scout, name) {
+      if (!scout) return '';
+      const id = 'scout-' + name.replace(/\s+/g, '-') + '-' + Math.random().toString(36).slice(2, 8);
+      return `<div class="mt-3 bg-amber-900/20 border border-amber-500/30 rounded-lg overflow-hidden">
+        <div class="scout-toggle flex items-center justify-between px-4 py-2 text-amber-400 text-sm font-medium"
+             onclick="document.getElementById('${id}').classList.toggle('open')">
+          <span>Scout Report: ${name}</span>
+          <span class="text-xs">&#9660;</span>
+        </div>
+        <div id="${id}" class="scout-body px-4 pb-3">
+          <div class="grid grid-cols-2 gap-3 text-xs mt-2 mb-3">
+            <div><span class="text-amber-500/70">Style</span><div class="text-amber-200">${scout.style}</div></div>
+            <div><span class="text-amber-500/70">Competition Level</span><div class="text-amber-200">${scout.competition_level}</div></div>
+            <div><span class="text-amber-500/70">Finish Tendency</span><div class="text-amber-200">${scout.finish_tendency}</div></div>
+            <div><span class="text-amber-500/70">Fights in DB</span><div class="text-amber-200">${scout.fights_in_db}</div></div>
+          </div>
+          <p class="text-amber-200/80 text-xs leading-relaxed">${scout.full_writeup}</p>
+          <p class="text-amber-500 text-xs mt-2 italic">${scout.warning}</p>
+        </div>
+      </div>`;
+    }
+
+    // ===== MATCHUP REPORTS =====
+    let _matchupReports = null;
+    async function loadMatchupReports() {
+      if (_matchupReports) return _matchupReports;
+      try {
+        const res = await fetch('../model/matchup_reports.json');
+        _matchupReports = await res.json();
+      } catch (e) {
+        _matchupReports = {};
+      }
+      return _matchupReports;
+    }
+
+    function findMatchupReport(f1, f2) {
+      if (!_matchupReports) return null;
+      for (const key of Object.keys(_matchupReports)) {
+        const r = _matchupReports[key];
+        if ((r.fighter1 === f1 && r.fighter2 === f2) || (r.fighter1 === f2 && r.fighter2 === f1)) return r;
+      }
+      return null;
+    }
+
+    function renderMatchupReport(report) {
+      if (!report) return '';
+      let html = '<div class="matchup-report">';
+      html += '<div class="mr-label mb-2">Matchup Intel</div>';
+      if (report.report_text) {
+        html += `<div class="mr-value mb-3 leading-relaxed">${report.report_text}</div>`;
+      }
+      html += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
+      if (report.f1_key_edge) html += `<div><span class="mr-label">${report.fighter1} Edge</span><div class="mr-value">${report.f1_key_edge}</div></div>`;
+      if (report.f2_key_edge) html += `<div><span class="mr-label">${report.fighter2} Edge</span><div class="mr-value">${report.f2_key_edge}</div></div>`;
+      if (report.x_factor) html += `<div><span class="mr-label">X-Factor</span><div class="mr-value">${report.x_factor}</div></div>`;
+      if (report.f1_record) html += `<div><span class="mr-label">${report.fighter1}</span><div class="mr-value">${report.f1_record}${report.f1_age ? ', Age ' + report.f1_age : ''}, Elo ${report.f1_elo || 'N/A'} (${report.f1_elo_tier || ''})</div></div>`;
+      if (report.f2_record) html += `<div><span class="mr-label">${report.fighter2}</span><div class="mr-value">${report.f2_record}${report.f2_age ? ', Age ' + report.f2_age : ''}, Elo ${report.f2_elo || 'N/A'} (${report.f2_elo_tier || ''})</div></div>`;
+      if (report.data_quality_note) html += `<div class="col-span-2"><span class="mr-label">Data Note</span><div class="mr-value text-amber-400">${report.data_quality_note}</div></div>`;
+      html += '</div></div>';
+      return html;
+    }
+
+    // ===== UPCOMING PICKS (EVENT-CENTRIC) =====
+    let _upcomingFights = [];
+    let _upcomingEvents = {};
+    let _selectedEvent = '';
+    let _upcomingView = 'event';
+    let _searchQuery = '';
+    let _methodPredictions = {};
+    let _valuePicksData = null;
+
+    async function loadMethodPredictions() {
+      try {
+        const res = await fetch('../model/method_predictions.csv');
+        const text = await res.text();
+        const lines = text.trim().split('\n');
+        const headers = parseCSVLine(lines[0]);
+        lines.slice(1).forEach(line => {
+          const parts = parseCSVLine(line);
+          const row = {};
+          headers.forEach((h, i) => row[h] = parts[i] || '');
+          const key = row.fighter1 + ' vs ' + row.fighter2;
+          _methodPredictions[key] = row;
+        });
+      } catch (e) { /* method predictions not available */ }
+    }
+
+    async function loadValuePicksData() {
+      try {
+        const res = await fetch('../model/value_picks.json');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          _valuePicksData = data;
+        } else if (data && data.value_picks) {
+          _valuePicksData = [...data.value_picks, ...(data.odds_pending || [])];
+        }
+      } catch (e) { /* value picks not available */ }
+    }
+
+    function findValuePick(f1, f2) {
+      if (!_valuePicksData) return null;
+      return _valuePicksData.find(v =>
+        (v.fighter1 === f1 && v.fighter2 === f2) || (v.fighter1 === f2 && v.fighter2 === f1)
+      );
+    }
+
+    function getFilteredFights() {
+      let fights = _upcomingFights;
+      if (_selectedEvent && _upcomingView === 'event') {
+        fights = fights.filter(f => f.event === _selectedEvent);
+      }
+      if (_searchQuery) {
+        const q = _searchQuery.toLowerCase();
+        fights = fights.filter(f => f.f1.toLowerCase().includes(q) || f.f2.toLowerCase().includes(q));
+      }
+      return fights;
+    }
+
+    function selectEvent(event) {
+      _selectedEvent = event;
+      renderUpcomingView();
+    }
+
+    function setUpcomingView(view) {
+      _upcomingView = view;
+      document.getElementById('view-event-btn').classList.toggle('active', view === 'event');
+      document.getElementById('view-grid-btn').classList.toggle('active', view === 'grid');
+      renderUpcomingView();
+    }
+
+    function toggleFightRow(id) {
+      const body = document.getElementById(id);
+      const chevron = document.getElementById(id + '-chev');
+      if (body) body.classList.toggle('open');
+      if (chevron) chevron.classList.toggle('open');
+    }
+
+    function renderExpandedContent(f) {
+      const report = findMatchupReport(f.f1, f.f2);
+      const methodKey = f.f1 + ' vs ' + f.f2;
+      const methodData = _methodPredictions[methodKey] || _methodPredictions[f.f2 + ' vs ' + f.f1];
+      const valuePick = findValuePick(f.f1, f.f2);
+
+      let html = '<div class="pt-4 pb-2 space-y-4">';
+
+      // Method probability bars
+      if (methodData) {
+        const decPct = parseFloat(methodData.decision_pct) || 0;
+        const koPct = parseFloat(methodData.ko_pct) || 0;
+        const subPct = parseFloat(methodData.sub_pct) || 0;
+        const total = decPct + koPct + subPct;
+        const decW = total > 0 ? (decPct / total * 100) : 33;
+        const koW = total > 0 ? (koPct / total * 100) : 33;
+        const subW = total > 0 ? (subPct / total * 100) : 34;
+        html += `<div>
+          <div class="text-xs text-gray-500 mb-1.5">Method of Victory</div>
+          <div class="flex h-6 rounded-lg overflow-hidden text-xs font-medium">
+            <div class="bg-blue-600 flex items-center justify-center" style="width:${decW}%">${decPct >= 5 ? decPct + '% DEC' : ''}</div>
+            <div class="bg-red-600 flex items-center justify-center" style="width:${koW}%">${koPct >= 5 ? koPct + '% KO' : ''}</div>
+            <div class="bg-emerald-600 flex items-center justify-center" style="width:${subW}%">${subPct >= 5 ? subPct + '% SUB' : ''}</div>
+          </div>
+          <div class="flex justify-between text-xs mt-1">
+            <span class="text-blue-400">${methodData.finish_label || ''}</span>
+            <span class="text-gray-500">${methodData.method_label || ''}</span>
+          </div>
+        </div>`;
+      }
+
+      // Bookmaker odds vs model
+      if (valuePick && valuePick.odds_source === 'BOOK') {
+        const vpAmerican = valuePick.book_odds_american || (valuePick.book_odds ? (valuePick.book_odds >= 2.0 ? '+' + Math.round((valuePick.book_odds - 1) * 100) : '-' + Math.round(100 / (valuePick.book_odds - 1))) : 'N/A');
+        html += `<div class="bg-dark-700 rounded-lg p-3 border border-gray-600/40">
+          <div class="text-xs text-gray-500 mb-2">Model vs Bookmaker</div>
+          <div class="grid grid-cols-3 gap-3 text-sm">
+            <div><span class="text-gray-500 text-xs">Model</span><div class="text-white font-semibold">${valuePick.confidence}%</div></div>
+            <div><span class="text-gray-500 text-xs">Book (${valuePick.bookmaker || 'N/A'})</span><div class="text-white font-semibold">${valuePick.book_prob}% <span class="font-mono text-xs text-gray-400">${vpAmerican}</span></div></div>
+            <div><span class="text-gray-500 text-xs">Edge</span><div class="${valuePick.edge > 0 ? 'text-green-400' : 'text-red-400'} font-semibold">${valuePick.edge > 0 ? '+' : ''}${valuePick.edge}%</div></div>
+          </div>
+        </div>`;
+      }
+
+      // Scout reports
+      html += (f.f1_scout_obj ? renderScoutSection(f.f1_scout_obj, f.f1) : '');
+      html += (f.f2_scout_obj ? renderScoutSection(f.f2_scout_obj, f.f2) : '');
+
+      // Matchup report
+      if (report) html += renderMatchupReport(report);
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderFightRow(f) {
+      const c = confColor(f.conf);
+      const isF1 = f.winner === f.f1;
+      const isLowData = f.data_quality_flag === 'LOW_DATA';
+      const borderClass = isLowData ? 'border-amber-500/40' : 'border-gray-700/40';
+      const rowId = 'frow-' + (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
+
+      // Value tier badge
+      const valuePick = findValuePick(f.f1, f.f2);
+      let tierBadge = '';
+      if (valuePick && valuePick.tier === 'STRONG') tierBadge = '<span class="tier-badge-strong">STRONG</span>';
+      else if (valuePick && valuePick.tier === 'LEAN') tierBadge = '<span class="tier-badge-lean">LEAN</span>';
+
+      // Method lean text
+      const methodKey = f.f1 + ' vs ' + f.f2;
+      const methodData = _methodPredictions[methodKey] || _methodPredictions[f.f2 + ' vs ' + f.f1];
+      let methodLean = '';
+      if (methodData && methodData.method_label) {
+        methodLean = `<span class="text-xs text-gray-500 ml-2">${methodData.method_label}</span>`;
+      }
+
+      return `<div class="bg-dark-800 rounded-xl border ${borderClass} mb-3 overflow-hidden" data-f1="${f.f1}" data-f2="${f.f2}">
+        <div class="fight-row p-4 flex items-center gap-4" onclick="toggleFightRow('${rowId}')">
+          <div class="flex-1 flex items-center gap-2">
+            <span class="${isF1 ? 'text-white font-semibold' : 'text-gray-400'}">${maybeFighterLink(f.f1)}</span>
+            ${f.f1_scout_obj ? '<span class="text-amber-400 text-xs">!</span>' : ''}
+            <span class="text-xs text-gray-500">vs</span>
+            ${f.f2_scout_obj ? '<span class="text-amber-400 text-xs">!</span>' : ''}
+            <span class="${!isF1 ? 'text-white font-semibold' : 'text-gray-400'}">${maybeFighterLink(f.f2)}</span>
+          </div>
+          <div class="flex items-center gap-3 flex-shrink-0">
+            ${tierBadge}
+            ${methodLean}
+            <div class="w-36">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="${c.text} font-medium">${f.winner}</span>
+                <span class="${c.text}">${f.conf}%</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2">
+                <div class="${c.bar} h-2 rounded-full confidence-bar" style="width:${f.conf}%"></div>
+              </div>
+            </div>
+            <span class="fight-row-chevron text-gray-500 text-xs" id="${rowId}-chev">&#9660;</span>
+          </div>
+        </div>
+        <div id="${rowId}" class="fight-row-expanded px-4">
+          ${renderExpandedContent(f)}
+        </div>
+      </div>`;
+    }
+
+    function renderFightCard(f, large) {
+      const c = confColor(f.conf);
+      const isF1 = f.winner === f.f1;
+      const isLowData = f.data_quality_flag === 'LOW_DATA';
+      const borderClass = isLowData ? 'border-amber-500/40' : 'border-gray-700/40';
+      const report = findMatchupReport(f.f1, f.f2);
+      const pad = large ? 'p-6' : 'p-4';
+
+      let html = `<div class="bg-dark-800 rounded-xl ${pad} border ${borderClass}" data-f1="${f.f1}" data-f2="${f.f2}">
+        <div class="flex items-center gap-4">
+          <div class="flex-1 text-right">
+            <span class="${isF1 ? 'text-white font-semibold' : 'text-gray-400'}">${maybeFighterLink(f.f1)}</span>
+            ${f.f1_scout_obj ? '<span class="text-amber-400 text-xs ml-1">!</span>' : ''}
+          </div>
+          <div class="w-24 text-center text-xs text-gray-500 flex-shrink-0">vs</div>
+          <div class="flex-1">
+            ${f.f2_scout_obj ? '<span class="text-amber-400 text-xs mr-1">!</span>' : ''}
+            <span class="${!isF1 ? 'text-white font-semibold' : 'text-gray-400'}">${maybeFighterLink(f.f2)}</span>
+          </div>
+          <div class="w-44 flex-shrink-0">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="${c.text} font-medium">${f.winner}</span>
+              <span class="${c.text}">${f.conf}%</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div class="${c.bar} h-2 rounded-full confidence-bar" style="width:${f.conf}%"></div>
+            </div>
+          </div>
+        </div>
+        ${f.f1_scout_obj ? renderScoutSection(f.f1_scout_obj, f.f1) : ''}
+        ${f.f2_scout_obj ? renderScoutSection(f.f2_scout_obj, f.f2) : ''}
+        ${large && report ? renderMatchupReport(report) : ''}
+      </div>`;
+      return html;
+    }
+
+    function renderUpcomingView() {
+      const filtered = getFilteredFights();
+      if (_upcomingView === 'event') {
+        document.getElementById('upcoming-event-view').classList.remove('hidden');
+        document.getElementById('upcoming-grid').classList.add('hidden');
+        renderEventView(filtered);
+      } else {
+        document.getElementById('upcoming-event-view').classList.add('hidden');
+        document.getElementById('upcoming-grid').classList.remove('hidden');
+        renderUpcomingGrid(filtered);
+      }
+    }
+
+    function renderEventView(filtered) {
+      const container = document.getElementById('upcoming-event-view');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-500 py-12">No fights match your search.</div>';
+        return;
+      }
+      let html = `<h2 class="text-xl font-bold mb-4 text-white">${_selectedEvent}</h2><div>`;
+      filtered.forEach(f => { html += renderFightRow(f); });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function renderUpcomingGrid(filtered) {
+      const container = document.getElementById('upcoming-grid');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-500 py-12">No fights match your search.</div>';
+        return;
+      }
+      const events = {};
+      filtered.forEach(f => {
+        if (!events[f.event]) events[f.event] = [];
+        events[f.event].push(f);
+      });
+      let html = '';
+      for (const [event, card] of Object.entries(events)) {
+        html += `<div class="mb-8"><h2 class="text-xl font-bold mb-4 text-white">${event}</h2><div class="space-y-3">`;
+        card.forEach(f => { html += renderFightCard(f, false); });
+        html += '</div></div>';
+      }
+      container.innerHTML = html;
+    }
+
+    function filterFights(query) {
+      _searchQuery = query.trim();
+      renderUpcomingView();
+    }
+
+    async function loadUpcoming() {
+      try {
+        await Promise.all([loadMatchupReports(), loadMethodPredictions(), loadValuePicksData()]);
+        const res = await fetch('../model/upcoming_predictions.csv');
+        const text = await res.text();
+        const lines = text.trim().split('\n');
+        const headers = parseCSVLine(lines[0]);
+        _upcomingFights = lines.slice(1).map(line => {
+          const parts = parseCSVLine(line);
+          const row = {};
+          headers.forEach((h, i) => row[h] = parts[i] || '');
+          row.conf = parseFloat(row.confidence);
+          row.f1 = row.fighter1;
+          row.f2 = row.fighter2;
+          row.winner = row.predicted_winner;
+          try { row.f1_scout_obj = row.f1_scout ? JSON.parse(row.f1_scout) : null; } catch(e) { row.f1_scout_obj = null; }
+          try { row.f2_scout_obj = row.f2_scout ? JSON.parse(row.f2_scout) : null; } catch(e) { row.f2_scout_obj = null; }
+          return row;
+        });
+
+        // Group by event
+        _upcomingEvents = {};
+        _upcomingFights.forEach(f => {
+          if (!_upcomingEvents[f.event]) _upcomingEvents[f.event] = [];
+          _upcomingEvents[f.event].push(f);
+        });
+
+        // Populate event selector
+        const eventSelector = document.getElementById('event-selector');
+        const eventNames = Object.keys(_upcomingEvents);
+        eventSelector.innerHTML = '';
+        eventNames.forEach(ev => {
+          const opt = document.createElement('option');
+          opt.value = ev;
+          opt.textContent = ev;
+          eventSelector.appendChild(opt);
+        });
+        _selectedEvent = eventNames[0] || '';
+
+        document.getElementById('upcoming-loading').classList.add('hidden');
+        document.getElementById('upcoming-controls').classList.remove('hidden');
+        renderUpcomingView();
+
+        // Populate radar fight selector
+        populateRadarSelector();
+      } catch (e) {
+        document.getElementById('upcoming-loading').textContent = 'Failed to load predictions. Make sure you are serving from the project root.';
+      }
+    }
+
+    // ===== RADAR CHART (Fight Analysis) =====
+    let _radarChart = null;
+
+    function populateRadarSelector() {
+      const sel = document.getElementById('radar-fight-select');
+      if (!_matchupReports) return;
+      const existing = sel.options.length;
+      if (existing > 1) return; // already populated
+      for (const key of Object.keys(_matchupReports)) {
+        const r = _matchupReports[key];
+        if (r.radar) {
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = `${r.fighter1} vs ${r.fighter2}`;
+          sel.appendChild(opt);
+        }
+      }
+    }
+
+    function renderRadarChart() {
+      const sel = document.getElementById('radar-fight-select');
+      const key = sel.value;
+      if (!key || !_matchupReports || !_matchupReports[key]) {
+        if (_radarChart) { _radarChart.destroy(); _radarChart = null; }
+        return;
+      }
+      const report = _matchupReports[key];
+      const radar = report.radar;
+      if (!radar) return;
+
+      const labels = ['Striking', 'Grappling', 'Defense', 'Finishing Power', 'Experience', 'Recent Form'];
+      const f1Data = labels.map(l => radar.f1[l] || 0);
+      const f2Data = labels.map(l => radar.f2[l] || 0);
+
+      const canvas = document.getElementById('radarChart');
+      if (_radarChart) { _radarChart.destroy(); _radarChart = null; }
+
+      _radarChart = new Chart(canvas, {
+        type: 'radar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: report.fighter1,
+              data: f1Data,
+              backgroundColor: 'rgba(0,212,255,0.2)',
+              borderColor: '#00d4ff',
+              borderWidth: 2,
+              pointBackgroundColor: '#00d4ff',
+              pointRadius: 4,
+            },
+            {
+              label: report.fighter2,
+              data: f2Data,
+              backgroundColor: 'rgba(255,107,107,0.2)',
+              borderColor: '#ff6b6b',
+              borderWidth: 2,
+              pointBackgroundColor: '#ff6b6b',
+              pointRadius: 4,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: { duration: 800, easing: 'easeOutQuart' },
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 100,
+              grid: { color: 'rgba(255,255,255,0.08)' },
+              angleLines: { color: 'rgba(255,255,255,0.08)' },
+              pointLabels: { color: '#9ca3af', font: { size: 12 } },
+              ticks: { display: false }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#d1d5db', font: { size: 12 } }
+            }
+          }
+        }
+      });
+    }
+
+    // ===== PICKS RECORD =====
+    async function loadRecord() {
+      try {
+        const [recordRes, picksRes] = await Promise.all([
+          fetch('../model/live_record.json').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('../picks/picks_log.json').then(r => r.json())
+        ]);
+
+        const picks = picksRes;
+        const record = recordRes;
+
+        const decided = picks.filter(p => p.result !== null);
+        const pending = picks.filter(p => p.result === null);
+        const wins = record ? record.overall.wins : decided.filter(p => p.result === 'correct').length;
+        const losses = record ? record.overall.losses : decided.filter(p => p.result === 'wrong').length;
+        const accuracy = record ? record.overall.accuracy : (decided.length > 0 ? (wins / decided.length * 100).toFixed(1) : 0);
+
+        let html = `<div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 mb-6 flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="text-4xl font-bold text-white">${wins}W - ${losses}L</div>
+            <div class="text-2xl font-semibold ${accuracy >= 60 ? 'text-green-400' : accuracy >= 50 ? 'text-yellow-400' : 'text-red-400'}">${accuracy}%</div>
+            ${pending.length > 0 ? `<span class="text-xs text-gray-500 bg-gray-700/50 px-2 py-1 rounded">${pending.length} pending</span>` : ''}
+          </div>
+          ${record ? `<div class="text-xs text-gray-500">Updated ${new Date(record.updated_at).toLocaleString()}</div>` : ''}
+        </div>`;
+
+        if (record && record.by_tier) {
+          html += `<h3 class="text-lg font-semibold mb-3">By Confidence Tier</h3>
+          <div class="grid md:grid-cols-3 gap-4 mb-8">`;
+          const tierLabels = { high: 'High (70%+)', medium: 'Med (60-70%)', low: 'Low (<60%)' };
+          const tierColors = { high: 'text-green-400', medium: 'text-yellow-400', low: 'text-orange-400' };
+          ['high', 'medium', 'low'].forEach(tier => {
+            const t = record.by_tier[tier];
+            html += `<div class="bg-dark-800 rounded-xl p-5 border border-gray-700/40 text-center">
+              <div class="text-sm ${tierColors[tier]} font-medium mb-2">${tierLabels[tier]}</div>
+              <div class="text-2xl font-bold text-white">${t.wins}W - ${t.losses}L</div>
+              <div class="text-sm text-gray-400 mt-1">${t.total > 0 ? t.accuracy + '%' : '--'}</div>
+            </div>`;
+          });
+          html += '</div>';
+        }
+
+        if (record && record.by_event && Object.keys(record.by_event).length > 0) {
+          html += `<h3 class="text-lg font-semibold mb-3">By Event</h3>
+          <div class="space-y-2 mb-8">`;
+          for (const [ev, data] of Object.entries(record.by_event)) {
+            const evAcc = data.accuracy;
+            html += `<div class="bg-dark-800 rounded-lg p-3 border border-gray-700/40 flex items-center justify-between text-sm">
+              <span class="text-white flex-1">${ev}</span>
+              <span class="font-semibold text-white">${data.wins}W-${data.losses}L</span>
+              <span class="w-16 text-right ${evAcc >= 60 ? 'text-green-400' : evAcc >= 50 ? 'text-yellow-400' : 'text-red-400'}">${evAcc}%</span>
+            </div>`;
+          }
+          html += '</div>';
+        }
+
+        if (decided.length > 0) {
+          html += `<h3 class="text-lg font-semibold mb-3">Decided Picks</h3>
+          <div class="space-y-2 mb-8">`;
+          decided.forEach(p => {
+            const isWin = p.result === 'correct';
+            const isHighConfMiss = p.confidence >= 95 && p.result === 'wrong';
+            html += `<div class="bg-dark-800 rounded-lg p-3 border ${isHighConfMiss ? 'border-amber-500/40' : 'border-gray-700/40'} text-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400 w-1/4 truncate">${p.event}</span>
+                <span class="text-white flex-1">${p.fight}</span>
+                <span class="text-gray-500 w-16 text-right">${p.confidence}%</span>
+                <span class="w-16 text-right ${isWin ? 'text-green-400' : 'text-red-400'} font-semibold">${isWin ? 'WIN' : 'LOSS'}</span>
+              </div>
+              ${isHighConfMiss ? '<div class="mt-2 text-xs text-amber-400 bg-amber-500/10 rounded px-3 py-1.5 border border-amber-500/20">High-confidence miss — see model calibration improvements</div>' : ''}
+            </div>`;
+          });
+          html += '</div>';
+        }
+
+        if (pending.length > 0) {
+          html += `<h3 class="text-lg font-semibold mb-3">Pending (${pending.length})</h3>
+          <div class="space-y-2">`;
+          pending.forEach(p => {
+            const c = confColor(p.confidence);
+            html += `<div class="bg-dark-800 rounded-lg p-3 border border-gray-700/40 flex items-center justify-between text-sm">
+              <span class="text-gray-400 w-1/4 truncate">${p.event}</span>
+              <span class="text-white flex-1">${p.fight}</span>
+              <span class="w-36 text-right">
+                <span class="${c.text}">${p.predicted_winner}</span>
+                <span class="text-gray-500 ml-1">${p.confidence}%</span>
+              </span>
+            </div>`;
+          });
+          html += '</div>';
+        }
+
+        if (decided.length === 0 && pending.length === 0) {
+          html += '<p class="text-gray-500 text-center py-8">No picks logged yet.</p>';
+        }
+
+        document.getElementById('record-loading').classList.add('hidden');
+        document.getElementById('record-content').innerHTML = html;
+      } catch (e) {
+        document.getElementById('record-loading').textContent = 'Failed to load picks log.';
+      }
+    }
+
+    // ===== FEATURE CHART =====
+    async function loadFeatureChart() {
+      try {
+        const res = await fetch('../model/feature_importance.csv');
+        const text = await res.text();
+        const lines = text.trim().split('\n').slice(1);
+        const data = lines.map(l => {
+          const [name, val] = l.split(',');
+          return { name: formatFeatureName(name), value: parseFloat(val) };
+        }).sort((a, b) => a.value - b.value);
+
+        new Chart(document.getElementById('featureChart'), {
+          type: 'bar',
+          data: {
+            labels: data.map(d => d.name),
+            datasets: [{
+              data: data.map(d => d.value),
+              backgroundColor: data.map((_, i) => {
+                const t = i / (data.length - 1);
+                return `rgba(${Math.round(0 * (1-t) + 0 * t)}, ${Math.round(150 * (1-t) + 212 * t)}, ${Math.round(200 * (1-t) + 255 * t)}, 0.8)`;
+              }),
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { color: '#333' }, ticks: { color: '#9ca3af' } },
+              y: { grid: { display: false }, ticks: { color: '#d1d5db', font: { size: 12 } } }
+            }
+          }
+        });
+        window._chartLoaded = true;
+      } catch (e) { console.error('Chart load failed', e); }
+    }
+
+    // ===== VALUE PICKS (with sorting) =====
+    let _valuePicks = [];
+    let _oddsPending = [];
+    let _valueSortKey = null;
+    let _valueSortDir = 'desc';
+
+    async function loadValuePicks() {
+      try {
+        const res = await fetch('../model/value_picks.json');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          _valuePicks = data;
+          _oddsPending = [];
+        } else if (data && data.value_picks) {
+          _valuePicks = data.value_picks || [];
+          _oddsPending = data.odds_pending || [];
+        } else {
+          _valuePicks = [];
+          _oddsPending = [];
+        }
+        renderValuePicks();
+      } catch (e) {
+        document.getElementById('value-loading').textContent = 'Failed to load value picks. Run value_report.py first.';
+      }
+    }
+
+    function sortValuePicks(key) {
+      if (_valueSortKey === key) {
+        _valueSortDir = _valueSortDir === 'desc' ? 'asc' : 'desc';
+      } else {
+        _valueSortKey = key;
+        _valueSortDir = 'desc';
+      }
+      renderValuePicks();
+    }
+
+    function sortArrow(key) {
+      if (_valueSortKey !== key) return '';
+      return `<span class="sort-arrow">${_valueSortDir === 'desc' ? '&#9660;' : '&#9650;'}</span>`;
+    }
+
+    function renderValuePicks() {
+      let picks = [..._valuePicks];
+
+      // Sort if needed
+      if (_valueSortKey) {
+        const keyMap = { 'edge': 'edge', 'ev': 'ev', 'confidence': 'confidence' };
+        const k = keyMap[_valueSortKey];
+        if (k) {
+          picks.sort((a, b) => {
+            const va = parseFloat(a[k]) || 0;
+            const vb = parseFloat(b[k]) || 0;
+            return _valueSortDir === 'desc' ? vb - va : va - vb;
+          });
+        }
+      }
+
+      const strong = picks.filter(p => p.tier === 'STRONG');
+      const lean = picks.filter(p => p.tier === 'LEAN');
+      const allTiered = _valueSortKey ? picks.filter(p => p.tier === 'STRONG' || p.tier === 'LEAN') : null;
+
+      let html = `<div class="grid md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 text-center">
+          <div class="text-3xl font-bold text-green-400">${_valuePicks.filter(p=>p.tier==='STRONG').length}</div>
+          <div class="text-gray-400 text-sm mt-1">Strong Picks</div>
+        </div>
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 text-center">
+          <div class="text-3xl font-bold text-yellow-400">${_valuePicks.filter(p=>p.tier==='LEAN').length}</div>
+          <div class="text-gray-400 text-sm mt-1">Lean Picks</div>
+        </div>
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700/40 text-center">
+          <div class="text-3xl font-bold text-gray-400">${_valuePicks.length - _valuePicks.filter(p=>p.tier==='STRONG').length - _valuePicks.filter(p=>p.tier==='LEAN').length}</div>
+          <div class="text-gray-400 text-sm mt-1">Skip</div>
+        </div>
+      </div>`;
+
+      // Sort controls
+      html += `<div class="flex items-center gap-4 mb-4 text-xs text-gray-400">
+        <span>Sort by:</span>
+        <span class="sort-btn ${_valueSortKey==='edge'?'text-white':''}" onclick="sortValuePicks('edge')">Edge % ${sortArrow('edge')}</span>
+        <span class="sort-btn ${_valueSortKey==='ev'?'text-white':''}" onclick="sortValuePicks('ev')">EV ${sortArrow('ev')}</span>
+        <span class="sort-btn ${_valueSortKey==='confidence'?'text-white':''}" onclick="sortValuePicks('confidence')">Confidence ${sortArrow('confidence')}</span>
+      </div>`;
+
+      function renderValueCard(pick, tierColor, tierBorder) {
+        const evPct = Math.max(0, Math.min(100, ((pick.ev + 1) / 2) * 100));
+        const pulseClass = (pick.tier === 'STRONG' || pick.tier === 'LEAN') ? 'value-pulse' : '';
+        const pickName = pick.best_bet || pick.predicted_winner;
+        const fadeNote = (pick.best_bet && pick.best_bet !== pick.predicted_winner)
+          ? ' <span class="text-yellow-400 text-xs ml-1">(fade model -- value on underdog)</span>' : '';
+        const americanOdds = pick.book_odds_american || (pick.book_odds ? (pick.book_odds >= 2.0 ? '+' + Math.round((pick.book_odds - 1) * 100) : '-' + Math.round(100 / (pick.book_odds - 1))) : 'N/A');
+        return `<div class="bg-dark-800 rounded-xl p-5 border ${tierBorder} mb-4 ${pulseClass}">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <span class="text-lg font-bold text-white">${maybeFighterLink(pickName)}</span>${fadeNote}
+              <span class="text-gray-500 text-sm ml-2">(${maybeFighterLink(pick.fighter1)} vs ${maybeFighterLink(pick.fighter2)})</span>
+            </div>
+            <span class="${tierColor} text-xs font-bold px-2 py-1 rounded">${pick.tier}</span>
+          </div>
+          <div class="text-gray-400 text-xs mb-3">${pick.event}</div>
+          <div class="grid grid-cols-4 gap-3 text-sm mb-3">
+            <div><span class="text-gray-500">Model</span><div class="text-white font-semibold">${pick.confidence}%</div></div>
+            <div><span class="text-gray-500">${pick.odds_source === 'BOOK' ? 'Book' : 'Baseline'}</span><div class="text-white font-semibold">${pick.book_prob}%${pick.odds_source === 'NO_ODDS' ? ' <span class="text-yellow-500 text-[10px]">NO ODDS</span>' : ''}</div></div>
+            <div><span class="text-gray-500">Edge</span><div class="${pick.edge > 0 ? 'text-green-400' : 'text-red-400'} font-semibold">${pick.edge > 0 ? '+' : ''}${pick.edge}%</div></div>
+            <div><span class="text-gray-500">Odds</span><div class="text-white font-semibold font-mono">${pick.odds_source === 'BOOK' ? americanOdds : 'N/A'}</div></div>
+          </div>
+          ${pick.odds_source === 'BOOK' && pick.bookmaker ? '<div class="text-[10px] text-gray-600 mb-2">via ' + pick.bookmaker + '</div>' : ''}
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500 w-6">EV</span>
+            <div class="flex-1 bg-gray-700 rounded-full h-2">
+              <div class="h-2 rounded-full confidence-bar ${pick.ev > 0 ? 'bg-green-500' : 'bg-red-500'}" style="width:${evPct}%"></div>
+            </div>
+            <span class="text-xs ${pick.ev > 0 ? 'text-green-400' : 'text-red-400'} w-12 text-right">${pick.ev > 0 ? '+' : ''}${pick.ev.toFixed(3)}</span>
+          </div>
+        </div>`;
+      }
+
+      if (_valueSortKey) {
+        // When sorting, show all value picks in sorted order
+        if (allTiered.length > 0) {
+          allTiered.forEach(p => {
+            const isStrong = p.tier === 'STRONG';
+            html += renderValueCard(p,
+              isStrong ? 'text-green-400 bg-green-500/20' : 'text-yellow-400 bg-yellow-500/20',
+              isStrong ? 'border-green-500/40' : 'border-yellow-500/40');
+          });
+        } else {
+          html += '<p class="text-gray-500 text-center py-8">No value picks found for upcoming fights.</p>';
+        }
+      } else {
+        if (strong.length > 0) {
+          html += '<h3 class="text-lg font-semibold mb-3 text-green-400">Strong Value Picks</h3>';
+          strong.forEach(p => { html += renderValueCard(p, 'text-green-400 bg-green-500/20', 'border-green-500/40'); });
+        }
+        if (lean.length > 0) {
+          html += '<h3 class="text-lg font-semibold mb-3 mt-6 text-yellow-400">Lean Value Picks</h3>';
+          lean.forEach(p => { html += renderValueCard(p, 'text-yellow-400 bg-yellow-500/20', 'border-yellow-500/40'); });
+        }
+        if (strong.length === 0 && lean.length === 0) {
+          html += '<p class="text-gray-500 text-center py-8">No value picks found for upcoming fights.</p>';
+        }
+      }
+
+      // Odds Pending section
+      if (_oddsPending.length > 0) {
+        const opId = 'odds-pending-section';
+        html += `<div class="mt-8 bg-dark-800 rounded-xl border border-gray-700/40 overflow-hidden">
+          <div class="odds-pending-toggle flex items-center justify-between px-5 py-3 text-gray-400 text-sm font-medium"
+               onclick="document.getElementById('${opId}').classList.toggle('open'); this.querySelector('.op-chev').classList.toggle('open')">
+            <span>Odds Pending (${_oddsPending.length} fights)</span>
+            <span class="fight-row-chevron op-chev text-xs">&#9660;</span>
+          </div>
+          <div id="${opId}" class="odds-pending-body px-5">
+            <div class="space-y-3 pb-4">`;
+        _oddsPending.forEach(p => {
+          html += `<div class="bg-dark-700 rounded-lg p-4 border border-gray-600/40">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-white font-semibold">${maybeFighterLink(p.fighter1 || '')} vs ${maybeFighterLink(p.fighter2 || '')}</span>
+              <span class="text-gray-400 text-sm">${p.confidence || '--'}% confidence</span>
+            </div>
+            <div class="text-xs text-yellow-500/80 italic">No edge calculated — bookmaker lines not yet available</div>
+          </div>`;
+        });
+        html += '</div></div></div>';
+      }
+
+      document.getElementById('value-loading').classList.add('hidden');
+      document.getElementById('value-content').innerHTML = html;
+    }
+
+    // ===== FIGHT ANALYSIS =====
+    async function loadAnalysis() {
+      try {
+        const res = await fetch('../model/method_predictions.csv');
+        const text = await res.text();
+        const lines = text.trim().split('\n');
+        const headers = parseCSVLine(lines[0]);
+        const fights = lines.slice(1).map(line => {
+          const parts = parseCSVLine(line);
+          const row = {};
+          headers.forEach((h, i) => row[h] = parts[i] || '');
+          row.decision_pct = parseFloat(row.decision_pct) || 0;
+          row.ko_pct = parseFloat(row.ko_pct) || 0;
+          row.sub_pct = parseFloat(row.sub_pct) || 0;
+          row.ko_danger_f1 = parseFloat(row.ko_danger_f1) || 0;
+          row.ko_danger_f2 = parseFloat(row.ko_danger_f2) || 0;
+          row.sub_danger_f1 = parseFloat(row.sub_danger_f1) || 0;
+          row.sub_danger_f2 = parseFloat(row.sub_danger_f2) || 0;
+          return row;
+        });
+
+        const events = {};
+        fights.forEach(f => {
+          if (!events[f.event]) events[f.event] = [];
+          events[f.event].push(f);
+        });
+
+        function dangerBar(value, color) {
+          const pct = Math.round(value * 100);
+          return `<div class="flex items-center gap-2">
+            <div class="flex-1 bg-gray-700 rounded-full h-1.5">
+              <div class="${color} h-1.5 rounded-full" style="width:${pct}%"></div>
+            </div>
+            <span class="text-xs text-gray-500 w-8">${pct}%</span>
+          </div>`;
+        }
+
+        function paceBadge(pace) {
+          const colors = {
+            'High-output war': 'bg-red-500/20 text-red-400 border-red-500/30',
+            'Moderate pace': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+            'Grappling match': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+            'Tactical': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+          };
+          const cls = colors[pace] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+          return `<span class="text-xs px-2 py-0.5 rounded border ${cls}">${pace}</span>`;
+        }
+
+        let html = '';
+        for (const [event, card] of Object.entries(events)) {
+          html += `<div class="mb-10">
+            <h2 class="text-xl font-bold mb-4 text-white">${event}</h2>
+            <div class="space-y-4">`;
+          card.forEach(f => {
+            const total = f.decision_pct + f.ko_pct + f.sub_pct;
+            const decW = total > 0 ? (f.decision_pct / total * 100) : 33;
+            const koW = total > 0 ? (f.ko_pct / total * 100) : 33;
+            const subW = total > 0 ? (f.sub_pct / total * 100) : 34;
+
+            const chinF1 = f.chin_notes_f1 && f.chin_notes_f1 !== 'Never finished' ? f.chin_notes_f1 : '';
+            const chinF2 = f.chin_notes_f2 && f.chin_notes_f2 !== 'Never finished' ? f.chin_notes_f2 : '';
+
+            html += `<div class="bg-dark-800 rounded-xl p-5 border border-gray-700/40">
+              <div class="flex items-center justify-between mb-4">
+                <div class="text-lg font-bold text-white">${maybeFighterLink(f.fighter1)} <span class="text-gray-500 font-normal">vs</span> ${maybeFighterLink(f.fighter2)}</div>
+                <div class="flex items-center gap-2">
+                  ${paceBadge(f.pace_label)}
+                  <span class="text-xs text-gray-500">${f.round_estimate}</span>
+                </div>
+              </div>
+              <div class="mb-4">
+                <div class="text-xs text-gray-500 mb-1.5">Method of Victory</div>
+                <div class="flex h-6 rounded-lg overflow-hidden text-xs font-medium">
+                  <div class="bg-blue-600 flex items-center justify-center" style="width:${decW}%">
+                    ${f.decision_pct >= 5 ? f.decision_pct + '% DEC' : ''}
+                  </div>
+                  <div class="bg-red-600 flex items-center justify-center" style="width:${koW}%">
+                    ${f.ko_pct >= 5 ? f.ko_pct + '% KO' : ''}
+                  </div>
+                  <div class="bg-emerald-600 flex items-center justify-center" style="width:${subW}%">
+                    ${f.sub_pct >= 5 ? f.sub_pct + '% SUB' : ''}
+                  </div>
+                </div>
+                <div class="flex justify-between text-xs mt-1">
+                  <span class="text-blue-400">${f.finish_label}</span>
+                  <span class="text-gray-500">${f.method_label}</span>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div class="text-xs text-gray-500 mb-1">${f.fighter1}</div>
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs text-red-400 w-14">Striking</span>
+                      ${dangerBar(f.ko_danger_f1, 'bg-red-500')}
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs text-emerald-400 w-14">Grappling</span>
+                      ${dangerBar(f.sub_danger_f1, 'bg-emerald-500')}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-500 mb-1">${f.fighter2}</div>
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs text-red-400 w-14">Striking</span>
+                      ${dangerBar(f.ko_danger_f2, 'bg-red-500')}
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs text-emerald-400 w-14">Grappling</span>
+                      ${dangerBar(f.sub_danger_f2, 'bg-emerald-500')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-300 text-sm leading-relaxed">${f.narrative}</p>
+              ${(chinF1 || chinF2) ? `<div class="mt-3 pt-3 border-t border-gray-700/40">
+                <div class="text-xs text-gray-500 mb-1">Durability Notes</div>
+                ${chinF1 ? `<div class="text-xs text-amber-400">${f.fighter1}: ${chinF1}</div>` : ''}
+                ${chinF2 ? `<div class="text-xs text-amber-400">${f.fighter2}: ${chinF2}</div>` : ''}
+              </div>` : ''}
+            </div>`;
+          });
+          html += '</div></div>';
+        }
+
+        document.getElementById('analysis-loading').classList.add('hidden');
+        document.getElementById('analysis-content').innerHTML = html;
+        window._analysisLoaded = true;
+      } catch (e) {
+        document.getElementById('analysis-loading').textContent = 'Failed to load fight analysis. Run method_predict.py first.';
+      }
+    }
+
+    // ===== OUTCOMES =====
+    async function loadOutcomes() {
+      try {
+        const res = await fetch('../model/outcomes.csv');
+        const text = await res.text();
+        const lines = text.trim().split('\n');
+        const headers = lines[0].split(',');
+        const fights = lines.slice(1).map(line => {
+          const parts = line.split(',');
+          const row = {};
+          headers.forEach((h, i) => row[h] = parts[i] || '');
+          return row;
+        });
+
+        const events = {};
+        fights.forEach(f => {
+          if (!events[f.event]) events[f.event] = [];
+          events[f.event].push(f);
+        });
+
+        function renderFighterSide(name, winPct, dec, ko, sub, decOdds, koOdds, subOdds, bookPct, bookDecOdds, oddsSource) {
+          const modelPct = parseFloat(winPct) || 0;
+          const bPct = parseFloat(bookPct) || 0;
+          const hasBookOdds = oddsSource === 'BOOK' && bPct > 0;
+          const isValue = hasBookOdds && modelPct > bPct;
+          const edge = hasBookOdds ? (modelPct - bPct).toFixed(1) : null;
+          const bOdds = parseFloat(bookDecOdds) || 0;
+
+          const methods = [
+            { label: 'Decision', pct: parseFloat(dec) || 0, odds: decOdds, color: 'blue' },
+            { label: 'KO/TKO', pct: parseFloat(ko) || 0, odds: koOdds, color: 'red' },
+            { label: 'Submission', pct: parseFloat(sub) || 0, odds: subOdds, color: 'emerald' },
+          ];
+          const maxPct = Math.max(...methods.map(m => m.pct));
+
+          const colorMap = {
+            blue: { bg: 'bg-blue-500/20', border: 'border-blue-500/50', text: 'text-blue-400', glow: 'shadow-blue-500/30' },
+            red: { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-400', glow: 'shadow-red-500/30' },
+            emerald: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', text: 'text-emerald-400', glow: 'shadow-emerald-500/30' },
+          };
+
+          let html = `<div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-bold text-white truncate">${maybeFighterLink(name)}</span>
+              ${isValue ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/40">VALUE</span>' : ''}
+            </div>
+            <div class="space-y-1 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500 w-12">Model</span>
+                <span class="text-xs font-semibold ${isValue ? 'text-green-400' : 'text-white'}">${modelPct}%</span>
+              </div>`;
+
+          if (hasBookOdds) {
+            html += `<div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500 w-12">Book</span>
+                <span class="text-xs font-semibold text-gray-300">${bPct}%</span>
+                <span class="text-xs font-mono text-gray-500">@ ${bOdds.toFixed(2)}</span>
+                ${isValue ? `<span class="text-[10px] text-green-400">+${edge}%</span>` : `<span class="text-[10px] text-red-400">${edge}%</span>`}
+              </div>`;
+          } else {
+            html += `<div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500 w-12">Book</span>
+                <span class="text-xs text-gray-600 italic">no odds</span>
+              </div>`;
+          }
+
+          html += `</div><div class="space-y-2">`;
+
+          methods.forEach(m => {
+            const c = colorMap[m.color];
+            const isMax = m.pct === maxPct && m.pct > 0;
+            const glowClass = isMax ? `shadow-md ${c.glow}` : '';
+            const borderW = isMax ? 'border-2' : 'border';
+            html += `<div class="${c.bg} ${borderW} ${c.border} rounded-lg px-3 py-2 ${glowClass}">
+              <div class="flex items-center justify-between">
+                <span class="${c.text} text-xs font-medium">${m.label}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-white text-sm font-bold">${m.pct}%</span>
+                  <span class="text-gray-400 text-xs font-mono">(${m.odds})</span>
+                </div>
+              </div>
+              <div class="mt-1 bg-gray-700/50 rounded-full h-1.5">
+                <div class="${c.border.replace('border', 'bg').replace('/50', '')} h-1.5 rounded-full" style="width:${Math.min(m.pct * 2, 100)}%"></div>
+              </div>
+            </div>`;
+          });
+
+          html += '</div></div>';
+          return html;
+        }
+
+        let html = `<p class="text-gray-500 text-xs mb-6 italic">Model-implied prices vs bookmaker lines. Green VALUE badges indicate our model prices the fighter higher than the book.</p>`;
+
+        for (const [event, card] of Object.entries(events)) {
+          html += `<div class="mb-10">
+            <h2 class="text-xl font-bold mb-4 text-white">${event}</h2>
+            <div class="space-y-4">`;
+
+          card.forEach(f => {
+            const srcBadge = f.odds_source === 'BOOK'
+              ? `<span class="text-[10px] text-gray-500 ml-2">${f.bookmaker || ''}</span>`
+              : `<span class="text-[10px] text-yellow-500/60 ml-2">NO BOOK ODDS</span>`;
+            html += `<div class="bg-dark-800 rounded-xl p-5 border border-gray-700/40">
+              <div class="text-center text-xs text-gray-500 mb-4 uppercase tracking-wider">${maybeFighterLink(f.fighter1)} vs ${maybeFighterLink(f.fighter2)}${srcBadge}</div>
+              <div class="flex gap-4">
+                ${renderFighterSide(f.fighter1, f.f1_win_pct, f.f1_win_dec, f.f1_win_ko, f.f1_win_sub, f.implied_dec_odds_f1, f.implied_ko_odds_f1, f.implied_sub_odds_f1, f.f1_book_pct, f.f1_book_dec_odds, f.odds_source)}
+                <div class="w-px bg-gray-700/60 flex-shrink-0"></div>
+                ${renderFighterSide(f.fighter2, f.f2_win_pct, f.f2_win_dec, f.f2_win_ko, f.f2_win_sub, f.implied_dec_odds_f2, f.implied_ko_odds_f2, f.implied_sub_odds_f2, f.f2_book_pct, f.f2_book_dec_odds, f.odds_source)}
+              </div>
+            </div>`;
+          });
+
+          html += '</div></div>';
+        }
+
+        document.getElementById('outcomes-loading').classList.add('hidden');
+        document.getElementById('outcomes-content').innerHTML = html;
+        window._outcomesLoaded = true;
+      } catch (e) {
+        document.getElementById('outcomes-loading').textContent = 'Failed to load outcomes. Run outcomes.py first.';
+      }
+    }
+
+    // ===== FIGHTER PROFILE MODAL =====
+    let _fighterProfiles = null;
+    let _eloChart = null;
+
+    async function loadFighterProfileData() {
+      if (_fighterProfiles) return _fighterProfiles;
+      const res = await fetch('../model/fighter_profiles.json');
+      _fighterProfiles = await res.json();
+      return _fighterProfiles;
+    }
+
+    function fighterLink(name, url) {
+      if (!url) return name;
+      return `<span class="fighter-link" data-fighter-url="${url}">${name}</span>`;
+    }
+
+    function findFighterUrl(name) {
+      if (!_fighterProfiles) return '';
+      const fighters = _fighterProfiles.fighters;
+      for (const url in fighters) {
+        if (fighters[url].name === name) return url;
+      }
+      return '';
+    }
+
+    function maybeFighterLink(name) {
+      const url = findFighterUrl(name);
+      return url ? fighterLink(name, url) : name;
+    }
+
+    function closeFighterProfile() {
+      document.getElementById('fighter-overlay').classList.remove('open');
+      document.getElementById('fighter-modal').classList.remove('open');
+      if (_eloChart) { _eloChart.destroy(); _eloChart = null; }
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFighterProfile(); });
+
+    document.addEventListener('click', e => {
+      if (e.target.classList.contains('fighter-link')) {
+        e.preventDefault();
+        loadFighterProfile(e.target.dataset.fighterUrl);
+      }
+    });
+
+    async function loadFighterProfile(url) {
+      if (!url) return;
+      try {
+        const data = await loadFighterProfileData();
+        const fighter = data.fighters[url];
+        if (!fighter) { console.warn('No profile for', url); return; }
+
+        const body = document.getElementById('fighter-modal-body');
+        const tierColors = { Elite: 'text-red-400 bg-red-500/20', Contender: 'text-yellow-400 bg-yellow-500/20', Prospect: 'text-blue-400 bg-blue-500/20', Journeyman: 'text-gray-400 bg-gray-500/20' };
+        const tierCls = tierColors[fighter.elo_tier] || tierColors.Journeyman;
+
+        let html = '';
+
+        html += `<div class="mb-6">
+          <h2 class="text-2xl font-bold text-white">${fighter.name}</h2>
+          ${fighter.nickname ? `<div class="text-gray-500 text-sm italic">"${fighter.nickname}"</div>` : ''}
+          <div class="text-lg text-gray-300 mt-1">${fighter.record}</div>
+          <div class="flex flex-wrap gap-3 mt-3 text-xs text-gray-400">
+            <span>${fighter.height}</span>
+            <span>${fighter.weight}</span>
+            <span>Reach: ${fighter.reach}</span>
+            <span>${fighter.stance}</span>
+            ${fighter.age ? `<span>Age: ${fighter.age}</span>` : ''}
+          </div>
+          <div class="mt-3 flex items-center gap-3">
+            <span class="text-white font-semibold">Elo ${fighter.elo}</span>
+            <span class="text-xs px-2 py-0.5 rounded ${tierCls} font-bold">${fighter.elo_tier}</span>
+            <span class="text-xs ${fighter.elo_momentum >= 0 ? 'text-green-400' : 'text-red-400'}">
+              ${fighter.elo_momentum >= 0 ? '&#9650;' : '&#9660;'} ${Math.abs(fighter.elo_momentum).toFixed(1)} momentum
+            </span>
+            <span class="text-xs text-gray-500">Peak: ${fighter.elo_peak}</span>
+          </div>
+        </div>`;
+
+        html += `<div class="mb-6">
+          <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Career Stats</h3>
+          <div class="space-y-3">`;
+        const statOrder = ['slpm', 'str_acc', 'str_def', 'td_avg', 'td_def', 'sub_avg'];
+        statOrder.forEach(key => {
+          const s = fighter.stats[key];
+          if (!s) return;
+          const diffSign = s.diff >= 0 ? '+' : '';
+          const diffColor = s.diff >= 0 ? 'text-green-400' : 'text-red-400';
+          const maxVal = key.includes('acc') || key.includes('def') ? 100 : (key === 'slpm' ? 10 : 5);
+          const barPct = Math.min((s.value / maxVal) * 100, 100);
+          const avgPct = Math.min((s.avg / maxVal) * 100, 100);
+          html += `<div class="flex items-center gap-3">
+            <span class="grade-badge grade-${s.grade}">${s.grade}</span>
+            <div class="flex-1">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-gray-300">${s.label}</span>
+                <span class="text-white font-semibold">${s.value}
+                  <span class="${diffColor} text-xs ml-1">(${diffSign}${s.diff} vs avg)</span>
+                </span>
+              </div>
+              <div class="stat-bar-bg relative">
+                <div class="stat-bar-fill" style="width:${barPct}%;background:#00d4ff"></div>
+                <div class="absolute top-0 h-full w-0.5 bg-yellow-400/60" style="left:${avgPct}%" title="UFC avg: ${s.avg}"></div>
+              </div>
+            </div>
+          </div>`;
+        });
+        html += '</div></div>';
+
+        if (fighter.recent_fights && fighter.recent_fights.length > 0) {
+          html += `<div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Recent Form</h3>
+            <div class="space-y-2">`;
+          fighter.recent_fights.forEach(f => {
+            const isWin = f.result === 'W';
+            const borderCls = isWin ? 'border-green-500/40' : 'border-red-500/40';
+            const bgCls = isWin ? 'bg-green-500/10' : 'bg-red-500/10';
+            const resultCls = isWin ? 'text-green-400' : 'text-red-400';
+            const oppLink = f.opponent_url ? fighterLink(f.opponent, f.opponent_url) : f.opponent;
+            html += `<div class="${bgCls} border ${borderCls} rounded-lg px-4 py-2 flex items-center justify-between text-sm">
+              <div>
+                <span class="${resultCls} font-bold mr-2">${f.result}</span>
+                <span class="text-white">${oppLink}</span>
+              </div>
+              <div class="text-right text-xs text-gray-400">
+                <div>${f.method} R${f.round}</div>
+                <div>${f.date}</div>
+              </div>
+            </div>`;
+          });
+          html += '</div></div>';
+        }
+
+        if (fighter.elo_history && fighter.elo_history.length > 1) {
+          html += `<div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Elo Rating Trend</h3>
+            <div style="height:200px"><canvas id="eloTrendChart"></canvas></div>
+          </div>`;
+        }
+
+        if (fighter.upcoming) {
+          const u = fighter.upcoming;
+          const isF1 = u.fighter1 === fighter.name;
+          const opponent = isF1 ? u.fighter2 : u.fighter1;
+          const isPicked = u.predicted_winner === fighter.name;
+          html += `<div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Upcoming Fight</h3>
+            <div class="bg-dark-700 rounded-xl p-4 border border-gray-600/40">
+              <div class="text-xs text-gray-500 mb-2">${u.event}</div>
+              <div class="text-white font-semibold">vs ${maybeFighterLink(opponent)}</div>
+              <div class="mt-2 flex items-center gap-3 text-sm">
+                <span class="${isPicked ? 'text-green-400' : 'text-red-400'} font-bold">
+                  ${isPicked ? 'Predicted to Win' : 'Predicted to Lose'}
+                </span>
+                <span class="text-gray-400">${u.confidence}% confidence</span>
+              </div>
+            </div>
+          </div>`;
+        }
+
+        body.innerHTML = html;
+
+        document.getElementById('fighter-overlay').classList.add('open');
+        document.getElementById('fighter-modal').classList.add('open');
+
+        if (fighter.elo_history && fighter.elo_history.length > 1) {
+          setTimeout(() => renderEloChart(fighter.elo_history), 50);
+        }
+      } catch (e) {
+        console.error('Failed to load fighter profile', e);
+      }
+    }
+
+    function renderEloChart(history) {
+      const canvas = document.getElementById('eloTrendChart');
+      if (!canvas) return;
+      if (_eloChart) { _eloChart.destroy(); _eloChart = null; }
+
+      const labels = history.map((h, i) => i === history.length - 1 ? 'Now' : (i + 1).toString());
+      const values = history.map(h => h.elo);
+      const peakVal = Math.max(...values);
+      const peakIdx = values.indexOf(peakVal);
+
+      const pointRadii = values.map((_, i) => i === peakIdx ? 6 : 0);
+      const pointBgColors = values.map((_, i) => i === peakIdx ? '#f59e0b' : 'transparent');
+
+      _eloChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            borderColor: '#00d4ff',
+            backgroundColor: 'rgba(0,212,255,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: pointRadii,
+            pointBackgroundColor: pointBgColors,
+            pointBorderColor: pointBgColors,
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `Elo: ${ctx.parsed.y}`,
+                title: ctx => history[ctx[0].dataIndex].date || `Fight ${ctx[0].dataIndex + 1}`,
+              }
+            }
+          },
+          scales: {
+            x: { display: false },
+            y: {
+              grid: { color: '#333' },
+              ticks: { color: '#9ca3af' },
+            }
+          }
+        }
+      });
+    }
+
+    // ===== INIT =====
+    loadFighterProfileData().catch(() => {}).finally(() => {
+      loadUpcoming();
+      loadValuePicks();
+      loadRecord();
+    });
+  </script>
+</body>
+</html>
