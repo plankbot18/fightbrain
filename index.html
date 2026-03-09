@@ -215,6 +215,16 @@
   }
   .value-card:hover .value-card-img-watermark { opacity: 0.16; }
 
+  /* === MOBILE / DESKTOP HERO TOGGLE === */
+  @media (max-width: 767px) {
+    .mobile-hero  { display: flex !important; }
+    .desktop-hero { display: none !important; }
+  }
+  @media (min-width: 768px) {
+    .mobile-hero  { display: none !important; }
+    .desktop-hero { display: grid !important; }
+  }
+
   /* === UNIT TRACKER ANIMATION === */
   #unitCount { transition: color 0.3s; }
 
@@ -237,90 +247,117 @@
   </nav>
 
   <!-- SECTION 2: HERO -->
-  <section class="hero-section min-h-screen flex items-center px-6" style="background:#FAF7F2;">
-    <div class="relative z-10 max-w-6xl mx-auto w-full grid md:grid-cols-5 gap-12 items-center py-20">
+  <section class="hero-section" style="background:#FAF7F2;min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:0 20px;">
 
-      <!-- LEFT COLUMN (3/5) — on mobile, order-2 so matchup card shows first -->
-      <div class="md:col-span-3 max-md:order-2">
-        <!-- Live pill -->
-        <div class="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full" style="background:#FFF0F0;">
-          <span class="text-sm">🔴</span>
+    <!-- ═══════════════════════════════════ MOBILE HERO (< 768px) ═══════════════════════════════════ -->
+    <div class="mobile-hero" style="display:none;flex-direction:column;gap:16px;padding:16px 0 8px;">
+
+      <!-- Live pill -->
+      <div style="display:inline-flex;align-items:center;gap:6px;background:#FFF0F0;padding:6px 14px;border-radius:100px;width:fit-content;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#D91A1A;display:inline-block;animation:pulse 1.8s ease-in-out infinite;"></span>
+        <span style="font-family:'Inter',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:#D91A1A;font-weight:700;">LIVE MODEL · UFC FIGHT NIGHT</span>
+      </div>
+
+      <!-- Headline — tight 2-liner -->
+      <h1 style="font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:0.92;color:#111111;margin:0;">
+        THE MODEL SEES<br>WHAT THE ODDS MISS.
+      </h1>
+
+      <!-- Mobile matchup card — compact split panel with fighter images -->
+      <div id="mobileMatchupCard" style="background:#111111;border-radius:14px;border-top:3px solid #D91A1A;overflow:hidden;position:relative;">
+        <!-- Countdown strip -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;">
+          <span style="font-family:'Inter',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:#D91A1A;font-weight:700;">NEXT FIGHT NIGHT</span>
+          <div style="display:flex;gap:4px;align-items:baseline;" id="heroCountdown">
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:white;" id="cd-days">--</span><span style="color:#555;font-size:11px;">d</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:white;" id="cd-hours">--</span><span style="color:#555;font-size:11px;">h</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:white;" id="cd-mins">--</span><span style="color:#555;font-size:11px;">m</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:white;" id="cd-secs">--</span><span style="color:#555;font-size:11px;">s</span>
+          </div>
+        </div>
+        <!-- Fighter face-off -->
+        <div style="display:flex;align-items:flex-end;min-height:120px;position:relative;">
+          <!-- F1 side -->
+          <div style="flex:1;padding:10px 0 10px 14px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;">
+            <img id="heroF1Img" src="" alt="" style="position:absolute;bottom:0;left:-4px;height:110px;width:auto;object-fit:contain;object-position:bottom;opacity:0.9;filter:drop-shadow(0 0 10px rgba(217,26,26,0.4));display:none;">
+            <div id="heroF1" style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:white;line-height:1.05;position:relative;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,0.8);">—</div>
+            <div style="font-family:'Inter',sans-serif;font-size:8px;color:#D91A1A;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;position:relative;z-index:2;">PREDICTED WIN</div>
+          </div>
+          <!-- Center confidence -->
+          <div style="padding:10px 12px;display:flex;flex-direction:column;align-items:center;border-left:1px solid #222;border-right:1px solid #222;background:rgba(0,0,0,0.3);">
+            <div id="heroConf" style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:#D91A1A;line-height:1;">--</div>
+            <div style="font-family:'Inter',sans-serif;font-size:8px;color:#666;letter-spacing:0.08em;margin-top:1px;">CONF</div>
+            <span id="heroMethod" style="font-family:'Inter',sans-serif;font-size:8px;color:#D91A1A;background:rgba(217,26,26,0.12);padding:2px 6px;border-radius:4px;margin-top:4px;white-space:nowrap;"></span>
+          </div>
+          <!-- F2 side -->
+          <div style="flex:1;padding:10px 14px 10px 0;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;position:relative;overflow:hidden;">
+            <img id="heroF2Img" src="" alt="" style="position:absolute;bottom:0;right:-4px;height:110px;width:auto;object-fit:contain;object-position:bottom;opacity:0.45;filter:grayscale(0.4);display:none;">
+            <div id="heroF2" style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#777;line-height:1.05;position:relative;z-index:2;text-align:right;">—</div>
+            <div style="font-family:'Inter',sans-serif;font-size:8px;color:#555;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;position:relative;z-index:2;">OPPONENT</div>
+          </div>
+        </div>
+        <!-- Event name -->
+        <div style="padding:8px 16px;border-top:1px solid #1a1a1a;">
+          <span id="heroEvent" style="font-family:'Inter',sans-serif;font-size:10px;color:#555;"></span>
+        </div>
+      </div>
+
+      <!-- CTA + stat strip -->
+      <a href="ui/index.html" style="display:block;background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:16px;border-radius:12px;text-decoration:none;text-align:center;">View This Week's Picks →</a>
+
+      <div style="display:flex;gap:16px;justify-content:center;padding:4px 0;">
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">75%</strong> win rate</span>
+        <span style="color:#ddd;">·</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">9–3</strong> record</span>
+        <span style="color:#ddd;">·</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#D91A1A;">+6</strong> units</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ DESKTOP HERO (≥ 768px) ═══════════════════════════════════ -->
+    <div class="desktop-hero" style="max-width:1200px;margin:0 auto;width:100%;display:grid;grid-template-columns:3fr 2fr;gap:60px;align-items:center;padding:80px 0;">
+
+      <!-- Left: text -->
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;background:#FFF0F0;padding:8px 16px;border-radius:100px;margin-bottom:32px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#D91A1A;display:inline-block;animation:pulse 1.8s ease-in-out infinite;"></span>
           <span style="font-family:'Inter',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#D91A1A;font-weight:600;">LIVE MODEL · UFC FIGHT NIGHT</span>
         </div>
-
-        <!-- Headline -->
-        <h1 style="font-family:'Bebas Neue',sans-serif;font-size:96px;line-height:0.95;color:#111111;margin-bottom:24px;" class="max-md:!text-[56px]">
+        <h1 style="font-family:'Bebas Neue',sans-serif;font-size:96px;line-height:0.95;color:#111111;margin-bottom:24px;">
           THE MODEL<br>SEES WHAT<br>THE ODDS<br>MISS.
         </h1>
-
-        <!-- Subtext -->
         <p style="font-family:'Inter',sans-serif;font-size:18px;color:#777777;max-width:440px;line-height:1.6;margin-bottom:32px;">
           Machine learning trained on 8,500+ UFC fights. Real picks. Real record. No guesswork.
         </p>
-
-        <!-- CTA Buttons -->
-        <div class="flex flex-wrap gap-4 mb-8">
-          <a href="ui/index.html" style="background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#9B1212'" onmouseout="this.style.background='#D91A1A'">View Picks →</a>
-          <a href="#record" style="background:white;color:#111111;font-family:'Inter',sans-serif;font-size:16px;font-weight:600;padding:16px 32px;border-radius:12px;text-decoration:none;border:1px solid #111111;transition:all 0.2s;">See Track Record</a>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+          <a href="ui/index.html" style="background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;">View Picks →</a>
+          <a href="#record" style="background:white;color:#111111;font-family:'Inter',sans-serif;font-size:16px;font-weight:600;padding:16px 32px;border-radius:12px;text-decoration:none;border:1px solid #ddd;">See Track Record</a>
         </div>
-
-        <!-- Social proof -->
-        <p style="font-family:'Inter',sans-serif;font-size:12px;color:#777777;">
-          76.1% model accuracy · 7W-3L live record · 1,596 fights backtested
-        </p>
+        <p style="font-family:'Inter',sans-serif;font-size:12px;color:#999;">76.1% model accuracy · 9W–3L live record · 1,596 fights backtested</p>
       </div>
 
-      <!-- RIGHT COLUMN (2/5): Featured Matchup Card — on mobile, order-1 so it's first -->
-      <div class="md:col-span-2 max-md:order-1">
+      <!-- Right: matchup card -->
+      <div>
         <div style="background:#111111;border-radius:16px;border-top:4px solid #D91A1A;box-shadow:0 20px 60px rgba(0,0,0,0.15);padding:32px;">
-
-          <!-- Header -->
-          <div class="flex items-center justify-between mb-6">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
             <span style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#D91A1A;letter-spacing:0.05em;">NEXT FIGHT NIGHT</span>
-            <div class="flex gap-2" id="heroCountdown">
-              <div class="text-center">
-                <div class="countdown-digit" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;" id="cd-days">--</div>
-                <div style="font-family:'Inter',sans-serif;font-size:9px;color:#777;">D</div>
-              </div>
-              <span style="color:#555;font-size:16px;">:</span>
-              <div class="text-center">
-                <div class="countdown-digit" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;" id="cd-hours">--</div>
-                <div style="font-family:'Inter',sans-serif;font-size:9px;color:#777;">H</div>
-              </div>
-              <span style="color:#555;font-size:16px;">:</span>
-              <div class="text-center">
-                <div class="countdown-digit" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;" id="cd-mins">--</div>
-                <div style="font-family:'Inter',sans-serif;font-size:9px;color:#777;">M</div>
-              </div>
-              <span style="color:#555;font-size:16px;">:</span>
-              <div class="text-center">
-                <div class="countdown-digit" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;" id="cd-secs">--</div>
-                <div style="font-family:'Inter',sans-serif;font-size:9px;color:#777;">S</div>
-              </div>
+            <div style="display:flex;gap:6px;align-items:baseline;">
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:white;" id="dcd-days">--</span><span style="color:#555;font-size:11px;">d</span>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:white;" id="dcd-hours">--</span><span style="color:#555;font-size:11px;">h</span>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:white;" id="dcd-mins">--</span><span style="color:#555;font-size:11px;">m</span>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:white;" id="dcd-secs">--</span><span style="color:#555;font-size:11px;">s</span>
             </div>
           </div>
-
-          <!-- Fighter 1 -->
-          <div id="heroF1" style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:white;line-height:1;word-break:break-word;">Loading...</div>
-
-          <!-- VS Divider -->
-          <div class="vs-divider">
-            <span style="font-family:'Inter',sans-serif;font-size:12px;color:#D91A1A;font-weight:700;">VS</span>
-          </div>
-
-          <!-- Fighter 2 -->
-          <div id="heroF2" style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:#aaaaaa;line-height:1;word-break:break-word;">Loading...</div>
-
-          <!-- Confidence -->
+          <div id="deskHeroF1" style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:white;line-height:1;word-break:break-word;">Loading...</div>
+          <div class="vs-divider"><span style="font-family:'Inter',sans-serif;font-size:12px;color:#D91A1A;font-weight:700;">VS</span></div>
+          <div id="deskHeroF2" style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:#aaaaaa;line-height:1;word-break:break-word;">Loading...</div>
           <div style="margin-top:28px;text-align:center;">
-            <div id="heroConf" style="font-family:'Bebas Neue',sans-serif;font-size:64px;color:#D91A1A;line-height:1;">--</div>
+            <div id="deskHeroConf" style="font-family:'Bebas Neue',sans-serif;font-size:64px;color:#D91A1A;line-height:1;">--</div>
             <div style="font-family:'Inter',sans-serif;font-size:10px;color:#aaaaaa;text-transform:uppercase;letter-spacing:0.15em;margin-top:4px;">MODEL CONFIDENCE</div>
           </div>
-
-          <!-- Bottom: method + event -->
           <div style="margin-top:24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #222;padding-top:16px;">
-            <span id="heroMethod" style="font-family:'Inter',sans-serif;font-size:12px;color:#D91A1A;background:#D91A1A15;padding:4px 10px;border-radius:6px;"></span>
-            <span id="heroEvent" style="font-family:'Inter',sans-serif;font-size:12px;color:#777;"></span>
+            <span id="deskHeroMethod" style="font-family:'Inter',sans-serif;font-size:12px;color:#D91A1A;background:#D91A1A15;padding:4px 10px;border-radius:6px;"></span>
+            <span id="deskHeroEvent" style="font-family:'Inter',sans-serif;font-size:12px;color:#777;"></span>
           </div>
         </div>
       </div>
@@ -495,10 +532,11 @@
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      document.getElementById('cd-days').textContent = d;
-      document.getElementById('cd-hours').textContent = h;
-      document.getElementById('cd-mins').textContent = m;
-      document.getElementById('cd-secs').textContent = s;
+      // Mobile countdown
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      set('cd-days', d); set('cd-hours', h); set('cd-mins', m); set('cd-secs', s);
+      // Desktop countdown
+      set('dcd-days', d); set('dcd-hours', h); set('dcd-mins', m); set('dcd-secs', s);
     }
     updateCountdown();
     setInterval(updateCountdown, 1000);
@@ -595,31 +633,51 @@
         // Re-observe any new fade-in elements
         document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-        // Hero: populate featured matchup card
+        // Hero: populate featured matchup card (both mobile + desktop)
         const allStrong = preds.filter(p => p.conf >= 70).sort((a, b) => b.conf - a.conf);
         if (allStrong.length > 0) {
           const featured = allStrong[0];
-          const winnerProb = featured.conf;
+          const winner = featured.predicted_winner || featured.fighter1;
+          const loser = winner === featured.fighter1 ? featured.fighter2 : featured.fighter1;
 
-          document.getElementById('heroF1').textContent = featured.fighter1;
-          document.getElementById('heroF2').textContent = featured.fighter2;
-          document.getElementById('heroEvent').textContent = featured.event;
+          // Mobile hero
+          const setM = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+          setM('heroF1', winner);
+          setM('heroF2', loser);
+          setM('heroEvent', featured.event || '');
+          const mMethod = document.getElementById('heroMethod');
+          if (mMethod) mMethod.textContent = featured.method_label || '';
 
-          const heroMethodEl = document.getElementById('heroMethod');
-          if (heroMethodEl && featured.method_label) {
-            heroMethodEl.textContent = featured.method_label;
-          } else if (heroMethodEl) {
-            heroMethodEl.textContent = '';
-          }
+          // Desktop hero
+          const setD = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+          setD('deskHeroF1', winner);
+          setD('deskHeroF2', loser);
+          setD('deskHeroEvent', featured.event || '');
+          const dMethod = document.getElementById('deskHeroMethod');
+          if (dMethod) dMethod.textContent = featured.method_label || '';
 
-          // Animate confidence number
+          // Fighter images on mobile matchup card
+          fetch('model/fighter_images.json')
+            .then(r => r.json()).catch(() => ({}))
+            .then(imgs => {
+              const f1img = imgs[winner];
+              const f2img = imgs[loser];
+              const f1el = document.getElementById('heroF1Img');
+              const f2el = document.getElementById('heroF2Img');
+              if (f1el && f1img) { f1el.src = f1img; f1el.alt = winner; f1el.style.display = 'block'; }
+              if (f2el && f2img) { f2el.src = f2img; f2el.alt = loser; f2el.style.display = 'block'; }
+            });
+
+          // Animate confidence number (mobile + desktop)
           let current = 0;
-          const target = winnerProb;
+          const target = featured.conf;
           const step = target / 40;
-          const interval = setInterval(() => {
+          const confInterval = setInterval(() => {
             current += step;
-            if (current >= target) { current = target; clearInterval(interval); }
-            document.getElementById('heroConf').textContent = current.toFixed(1) + '%';
+            if (current >= target) { current = target; clearInterval(confInterval); }
+            const val = current.toFixed(1) + '%';
+            setM('heroConf', val);
+            setD('deskHeroConf', val);
           }, 30);
         }
 
