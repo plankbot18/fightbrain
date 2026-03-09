@@ -1259,14 +1259,12 @@
         <div class="space-y-1 mb-8">`;
         decided.forEach(p => {
           const isWin = p.result === 'correct';
-          const isHighConfMiss = p.confidence >= 95 && p.result === 'wrong';
-          html += `<div class="record-table-row ${isHighConfMiss ? 'record-high-conf-miss' : ''}">
+          html += `<div class="record-table-row">
             <span class="text-gray-500 w-1/4 truncate text-sm">${p.event}</span>
             <span class="text-gray-900 flex-1 text-sm">${p.fight}</span>
             <span class="text-gray-400 w-16 text-right text-sm">${p.confidence}%</span>
             <span class="w-16 text-right font-bold" style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:${isWin ? '#D91A1A' : '#aaa'}">${isWin ? 'W' : 'L'}</span>
-          </div>
-          ${isHighConfMiss ? '<div class="ml-4 mt-1 mb-2 text-xs rounded px-3 py-1.5 border" style="color:#b45309;background:rgba(180,83,9,0.05);border-color:rgba(180,83,9,0.2)">High-confidence miss — see model calibration improvements</div>' : ''}`;
+          </div>`;
         });
         html += '</div>';
       }
