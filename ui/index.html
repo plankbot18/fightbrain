@@ -6,6 +6,13 @@
   <meta name="theme-color" content="#111111">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="description" content="FightBrain — data-driven UFC fight predictions, value picks, and fighter analytics.">
+  <meta property="og:title" content="FightBrain — UFC Predictions Powered by ML" />
+  <meta property="og:description" content="7W–4L · +0.13u odds-adjusted · 73.7% backtested accuracy. Every pick logged before the event." />
+  <meta property="og:image" content="https://plankbot18.github.io/fightbrain/og-image.jpg" />
+  <meta property="og:url" content="https://plankbot18.github.io/fightbrain/ui/index.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@FightBrainMMA" />
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -594,19 +601,42 @@
 
     <!-- Model Info -->
     <section id="panel-model" class="hidden">
+
+      <!-- Plain-language explainer -->
+      <div style="background:#111;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#888;letter-spacing:0.1em;margin-bottom:12px;">HOW FIGHTBRAIN WORKS</div>
+        <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:12px;">
+          FightBrain is a machine learning model trained on 10,000+ UFC fights going back to 2010. Before each event, it analyzes both fighters' stats — striking output, takedown defense, finishing rate, Elo rating, recent form — and outputs a win probability for each matchup.
+        </p>
+        <p style="color:#aaa;font-size:14px;line-height:1.7;margin-bottom:12px;">
+          When the model's confidence meaningfully exceeds what the bookmaker implies (the "edge"), that becomes a pick. The bigger the edge, the higher the stake: LEAN 0.5u · MEDIUM 1u · STRONG 1.5u · LOCK 2u.
+        </p>
+        <p style="color:#888;font-size:13px;line-height:1.6;">
+          Every pick is logged to GitHub before the event — publicly timestamped and immutable. No retroactive changes. The record you see is real.
+        </p>
+        <div style="display:flex;gap:24px;margin-top:16px;flex-wrap:wrap;">
+          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#D91A1A;">73.7%</div><div style="font-size:11px;color:#666;">backtested accuracy</div></div>
+          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;">10K+</div><div style="font-size:11px;color:#666;">fights in training data</div></div>
+          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;">52</div><div style="font-size:11px;color:#666;">model features</div></div>
+          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;">XGBoost</div><div style="font-size:11px;color:#666;">+ isotonic calibration</div></div>
+        </div>
+      </div>
+
       <div class="grid md:grid-cols-2 gap-6">
         <div class="model-card">
           <h3 class="text-lg font-semibold mb-2 text-gray-900">Model Performance</h3>
-          <div class="model-stat-num" style="font-size:72px;line-height:1;margin:16px 0;">72.6%</div>
-          <p class="text-gray-500 text-sm">Test set accuracy on historical UFC bouts using a gradient-boosted classifier trained on fighter stat differentials.</p>
+          <div class="model-stat-num" style="font-size:72px;line-height:1;margin:16px 0;">73.7%</div>
+          <p class="text-gray-500 text-sm">Backtested accuracy on held-out UFC bouts. XGBoost classifier with isotonic calibration, trained on fighter stat differentials and Elo ratings.</p>
         </div>
         <div class="model-card">
-          <h3 class="text-lg font-semibold mb-2 text-gray-900">How It Works</h3>
+          <h3 class="text-lg font-semibold mb-2 text-gray-900">What The Model Sees</h3>
           <ul class="text-gray-500 text-sm space-y-2 mt-3 list-disc list-inside">
-            <li>Scrapes fighter stats from UFC Stats</li>
-            <li>Computes head-to-head differentials for each matchup</li>
-            <li>Trains a classification model on historical outcomes</li>
-            <li>Generates win probabilities for upcoming cards</li>
+            <li>Striking output, accuracy &amp; defense differentials</li>
+            <li>Takedown offense &amp; defense differentials</li>
+            <li>Submission attempt rate differential</li>
+            <li>Elo rating (dynamic, updates after each fight)</li>
+            <li>Recent form &amp; strength of schedule</li>
+            <li>Age, reach, win/loss streak</li>
           </ul>
         </div>
       </div>
@@ -1443,23 +1473,45 @@
         <div class="space-y-2 mb-8">`;
         for (const [ev, data] of Object.entries(record.by_event)) {
           const evAcc = data.accuracy;
-          const evUnits = data.units !== undefined ? ((data.units >= 0 ? '+' : '') + data.units.toFixed(2) + 'u') : '';
-          html += `<div class="record-table-row">
-            <span class="text-gray-900 flex-1 text-sm">${ev}</span>
-            <span class="font-semibold text-gray-900 text-sm">${data.wins}W–${data.losses}L</span>
-            ${evUnits ? `<span style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:${data.units >= 0 ? '#16a34a' : '#ef4444'};min-width:60px;text-align:right;">${evUnits}</span>` : ''}
-            <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:${evAcc >= 60 ? '#D91A1A' : '#777'};min-width:46px;text-align:right;">${evAcc}%</span>
+          const oddsU = data.odds_units !== undefined && data.odds_units !== null ? data.odds_units : null;
+          const oddsUStr = oddsU !== null ? ((oddsU >= 0 ? '+' : '') + oddsU.toFixed(2) + 'u') : '';
+          const oddsRoi = data.odds_roi !== null && data.odds_roi !== undefined ? data.odds_roi : null;
+          html += `<div class="record-table-row" style="flex-direction:column;gap:2px;padding:10px 12px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;font-weight:600;color:#111;flex:1;">${ev.replace('UFC Fight Night: ','')}</span>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#555;">${data.wins}W–${data.losses}L</span>
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:${evAcc >= 60 ? '#D91A1A' : '#777'};min-width:40px;text-align:right;">${evAcc}%</span>
+            </div>
+            ${oddsUStr ? `<div style="font-size:11px;color:#888;padding-left:0;">
+              Odds-adjusted: <span style="color:${oddsU >= 0 ? '#16a34a' : '#ef4444'};font-weight:600;">${oddsUStr}</span>${oddsRoi !== null ? ` · ${oddsRoi >= 0 ? '+' : ''}${oddsRoi}% ROI` : ''}
+            </div>` : ''}
           </div>`;
         }
         html += '</div>';
       }
 
+      // #9: Strong filter toggle
+      const showStrongOnly = window._strongFilterOn || false;
+      html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <h3 class="section-title" style="font-size:18px;margin:0;">Decided Picks</h3>
+        <span style="font-size:11px;color:#aaa;">most recent first</span>
+        <button onclick="window._strongFilterOn=!window._strongFilterOn;renderRecord();"
+          style="margin-left:auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid ${showStrongOnly ? '#D91A1A' : '#ddd'};background:${showStrongOnly ? '#D91A1A' : 'white'};color:${showStrongOnly ? 'white' : '#555'};cursor:pointer;font-weight:600;">
+          ${showStrongOnly ? '✓ STRONG+ ONLY' : 'STRONG+ ONLY'}
+        </button>
+      </div>`;
+
+      // #2: Social proof
+      html += `<div style="font-size:11px;color:#aaa;margin-bottom:12px;padding:8px 12px;background:#f9f7f4;border-radius:8px;border-left:3px solid #D91A1A;">
+        All picks logged before the event · publicly verifiable via <a href="https://github.com/plankbot18/fightbrain/commits/main/picks/picks_log.json" target="_blank" style="color:#D91A1A;text-decoration:none;">GitHub commit history ↗</a>
+      </div>`;
+
       // Decided Picks — most recent first (#4), with running P&L (#5), heavy fav flag (#3), mobile truncation (#9)
-      if (decided.length > 0) {
-        html += `<h3 class="section-title" style="font-size:18px;margin-bottom:8px;">Decided Picks <span style="font-size:12px;color:#aaa;font-weight:400;">most recent first</span></h3>
-        <div class="space-y-1 mb-4">`;
+      const filteredDecided = showStrongOnly ? decided.filter(p => p.confidence >= 75) : decided;
+      if (filteredDecided.length > 0) {
+        html += `<div class="space-y-1 mb-4">`;
         let runningPnl = 0;
-        decided.forEach(p => {
+        filteredDecided.forEach(p => {
           const isWin = p.result === 'correct';
           const odds = p.book_odds_american;
           const oddsStr = odds != null ? (odds > 0 ? `+${odds}` : `${odds}`) : '—';
@@ -1473,19 +1525,24 @@
           const pnlColor = pnl == null ? '#aaa' : (pnl >= 0 ? '#16a34a' : '#ef4444');
           const runStr = (runningPnl >= 0 ? '+' : '') + runningPnl.toFixed(2) + 'u';
           const runColor = runningPnl >= 0 ? '#16a34a' : '#ef4444';
-          // #3: heavy favorite flag (odds < -400 and win returns < 0.3u per unit staked)
           const isHeavyFav = odds != null && odds < -400;
-          const fightShort = p.fight.length > 38 ? p.fight.substring(0, 36) + '…' : p.fight; // #9: truncate
+          const fightShort = p.fight.length > 36 ? p.fight.substring(0, 34) + '…' : p.fight;
+          // #7: fight date from resolved_at or logged_at
+          const dateStr = p.resolved_at ? new Date(p.resolved_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+          // #5: share button
+          const shareText = encodeURIComponent(`${isWin ? '✅' : '❌'} ${p.predicted_winner} ${oddsStr} — ${isWin ? 'WIN' : 'LOSS'}\n${pnlStr} | Model: ${p.confidence}%\n\nFightBrain record: 7W–4L · +0.13u\nplankbot18.github.io/fightbrain/`);
           html += `<div class="record-table-row" style="flex-direction:column;gap:2px;padding:10px 12px;">
             <div style="display:flex;align-items:center;gap:8px;width:100%;">
               <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${isWin ? '#D91A1A' : '#aaa'};min-width:18px;">${isWin ? 'W' : 'L'}</span>
               <span style="font-weight:700;font-size:14px;color:#111;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.predicted_winner}</span>
-              <span style="font-size:13px;color:#888;">${oddsStr}${isHeavyFav ? ' <span style="font-size:10px;color:#f59e0b;font-weight:600;">HVY FAV</span>' : ''}</span>
+              <span style="font-size:13px;color:#888;">${oddsStr}${isHeavyFav ? '&nbsp;<span style="font-size:10px;color:#f59e0b;font-weight:600;">HVY FAV</span>' : ''}</span>
               <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${pnlColor};min-width:60px;text-align:right;">${pnlStr}</span>
             </div>
             <div style="display:flex;align-items:center;gap:6px;padding-left:26px;flex-wrap:nowrap;overflow:hidden;">
-              <span style="font-size:11px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%;">${fightShort}</span>
-              <span style="font-size:11px;color:#ccc;margin-left:auto;white-space:nowrap;">${stake}u · running: <span style="color:${runColor};font-weight:600;">${runStr}</span></span>
+              <span style="font-size:11px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%;">${fightShort}</span>
+              ${dateStr ? `<span style="font-size:10px;color:#ccc;white-space:nowrap;">${dateStr}</span>` : ''}
+              <span style="font-size:11px;color:#ccc;margin-left:auto;white-space:nowrap;">${stake}u · <span style="color:${runColor};font-weight:600;">${runStr}</span></span>
+              <a href="https://twitter.com/intent/tweet?text=${shareText}" target="_blank" style="font-size:10px;color:#888;text-decoration:none;white-space:nowrap;" title="Share on X">𝕏</a>
             </div>
           </div>`;
         });
@@ -1497,6 +1554,8 @@
           <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:${totalColor};">${totalStr}</span>
         </div>`;
         html += '</div>';
+      } else if (showStrongOnly) {
+        html += `<p style="color:#aaa;text-align:center;padding:24px;">No STRONG+ picks yet — all decided picks were LEAN or MEDIUM.</p>`;
       }
 
       if (pending.length > 0) {
@@ -1690,11 +1749,14 @@
                 <div class="value-stat-label">EV</div>
               </div>
             </div>
-            <div class="text-xs text-gray-500">
-              ${pick.odds_source === 'BOOK' ? `Odds: <span class="font-mono">${americanOdds}</span>` : ''}
-              ${pick.odds_source === 'NO_ODDS' ? '<span style="color:#b45309">NO ODDS</span>' : ''}
+            <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+              ${pick.book_odds_american || pick.book_odds ? `<div style="background:#111;border-radius:6px;padding:4px 10px;display:inline-block;">
+                <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:${americanOdds.toString().startsWith('+') ? '#4ade80' : '#e2e8f0'};">${americanOdds}</span>
+                <span style="font-size:10px;color:#666;margin-left:4px;">to win</span>
+              </div>` : '<span style="font-size:11px;color:#b45309;">no odds yet</span>'}
+              ${pick.recommended_units ? `<span style="font-size:11px;color:#888;">${pick.recommended_units}u stake</span>` : ''}
+              ${pick.bookmaker ? `<span style="font-size:10px;color:#666;">via ${pick.bookmaker}</span>` : ''}
             </div>
-            ${pick.odds_source === 'BOOK' && pick.bookmaker ? `<div class="text-xs" style="color:#999;margin-top:2px;">via ${pick.bookmaker}</div>` : ''}
             ${fadeNote}
           </div>
         </div>`;

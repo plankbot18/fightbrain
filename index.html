@@ -397,18 +397,27 @@
     </div>
   </section>
 
-  <!-- UNIT TRACKER -->
-  <section style="background:#D91A1A;padding:56px 24px;text-align:center;">
+  <!-- RECORD BANNER -->
+  <section style="background:#D91A1A;padding:48px 24px;text-align:center;">
     <div class="max-w-4xl mx-auto">
-      <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;" id="unitLabel">UNIT TRACKER</p>
-      <div style="display:flex;justify-content:center;align-items:baseline;gap:16px;flex-wrap:wrap;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+0.13</div>
-        <div style="text-align:left;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:rgba(255,255,255,0.9);">UNITS</div>
-          <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);" id="unitSub">+1.2% ROI · 7W–4L · 11 picks · verified odds</div>
+      <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:16px;" id="unitLabel">LIVE RECORD — UFC 326</p>
+      <div style="display:flex;justify-content:center;align-items:center;gap:40px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:80px;color:white;line-height:1;" id="recordWLHero">7W–4L</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.08em;">WIN–LOSS</div>
+        </div>
+        <div style="width:1px;height:80px;background:rgba(255,255,255,0.25);"></div>
+        <div style="text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:80px;color:white;line-height:1;" id="accHero">63.6%</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.08em;">ACCURACY</div>
+        </div>
+        <div style="width:1px;height:80px;background:rgba(255,255,255,0.25);"></div>
+        <div style="text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:80px;color:white;line-height:1;" id="unitCount">+0.13u</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.08em;" id="unitSub">ODDS-ADJ P&L · +1.2% ROI</div>
         </div>
       </div>
-      <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-top:16px;">Odds-adjusted · Tiered staking · All picks public &amp; verified</p>
+      <p style="font-family:'Inter',sans-serif;font-size:11px;color:rgba(255,255,255,0.4);margin-top:20px;">Verified closing odds · Tiered staking · All picks public &amp; timestamped on GitHub</p>
     </div>
   </section>
 
@@ -795,31 +804,26 @@
           document.getElementById('recordHighConf').textContent = record.by_tier.high.accuracy + '%';
         }
 
-        // Unit tracker: odds-adjusted P&L is the honest figure (actual return based on odds)
-        // Fallback to tiered flat if odds not available
+        // Hero record banner — lead with record + accuracy, show units as tertiary
         const hasOdds = u.odds_adjusted !== null && u.odds_adjusted !== undefined;
         const displayUnits = hasOdds ? u.odds_adjusted : (u.pnl !== undefined ? u.pnl : (o.wins - o.losses));
         const displayROI = hasOdds ? u.odds_roi : (u.roi !== undefined ? u.roi : 0);
-        const oddsNote = hasOdds && u.odds_note === 'estimated' ? ' · est. odds' : '';
-        const unitLabel = 'UNIT TRACKER (ODDS-ADJUSTED)';
+        const accuracy = o.total > 0 ? (o.wins / o.total * 100).toFixed(1) : '--';
 
-        // Update unit tracker section
+        const wlEl = document.getElementById('recordWLHero');
+        const accEl = document.getElementById('accHero');
         const unitCountEl = document.getElementById('unitCount');
         const unitSubEl = document.getElementById('unitSub');
         const unitLabelEl = document.getElementById('unitLabel');
+
+        if (wlEl) wlEl.textContent = o.wins + 'W\u2013' + o.losses + 'L';
+        if (accEl) accEl.textContent = accuracy + '%';
         if (unitCountEl) {
           const sign = displayUnits >= 0 ? '+' : '';
-          unitCountEl.dataset.countTo = Math.abs(displayUnits);
-          unitCountEl.dataset.prefix = sign;
-          unitCountEl.dataset.isNeg = displayUnits < 0 ? '1' : '0';
-          unitCountEl.dataset.suffix = '';
-          // Set immediately (animation fires on scroll)
-          unitCountEl.textContent = sign + displayUnits.toFixed(2);
+          unitCountEl.textContent = sign + displayUnits.toFixed(2) + 'u';
         }
-        if (unitSubEl) {
-          unitSubEl.textContent = (displayROI >= 0 ? '+' : '') + displayROI + '% ROI · ' + o.wins + 'W–' + o.losses + 'L · ' + o.total + ' picks' + oddsNote;
-        }
-        if (unitLabelEl) unitLabelEl.textContent = unitLabel;
+        if (unitSubEl) unitSubEl.textContent = 'ODDS-ADJ P\u0026L \u00b7 ' + (displayROI >= 0 ? '+' : '') + displayROI + '% ROI';
+        if (unitLabelEl) unitLabelEl.textContent = 'LIVE RECORD \u2014 ' + (Object.keys(record.by_event || {})[0] || 'UFC');
       })
       .catch(() => {
         document.getElementById('recordWL').textContent = '--';
