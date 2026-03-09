@@ -207,6 +207,13 @@
     white-space: nowrap; pointer-events: none; user-select: none; line-height: 1;
     letter-spacing: 0.02em;
   }
+  .value-card-img-watermark {
+    position: absolute; bottom: 0; right: -8px;
+    height: 85%; width: auto; object-fit: contain; object-position: bottom right;
+    opacity: 0.09; pointer-events: none; filter: grayscale(0.2);
+    transition: opacity 0.3s;
+  }
+  .value-card:hover .value-card-img-watermark { opacity: 0.16; }
 
   /* === UNIT TRACKER ANIMATION === */
   #unitCount { transition: color 0.3s; }
@@ -638,7 +645,7 @@
             const opponent = pickName === p.fighter1 ? p.fighter2 : p.fighter1;
             return `
               <div class="value-card fade-in visible" style="transition-delay:${i * 0.1}s">
-                <div class="value-card-watermark">${pickName.split(' ').pop().toUpperCase()}</div>
+                ${imgs[pickName] ? `<img src="${imgs[pickName]}" alt="${pickName}" class="value-card-img-watermark" onerror="this.style.display='none'" loading="lazy">` : `<div class="value-card-watermark">${pickName.split(' ').pop().toUpperCase()}</div>`}
                 <div class="value-card-bar"></div>
                 <div class="value-card-body">
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
