@@ -363,6 +363,9 @@
     .feature-label { font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: #111; }
 
     /* ===== ANALYSIS ===== */
+    /* Scout dot indicator — replaces "Scout Report Available" text */
+    .scout-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #D91A1A; margin-left: 4px; vertical-align: middle; }
+
     /* H2H stat table */
     .h2h-table { margin: 16px 0; }
     .h2h-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -434,9 +437,15 @@
         grid-template-columns: 1fr 36px 1fr 84px 20px;
         padding: 12px 14px; gap: 8px;
       }
-      .fight-card-f1-name, .fight-card-f2-name { font-size: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
-      .fight-card-conf-num { font-size: 26px; }
+      .fight-card-f1-name, .fight-card-f2-name { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
+      .fight-card-conf-num { font-size: 22px; }
       .fight-card-conf { padding: 6px 4px; }
+      .fight-card-conf-label { display: none; } /* hide "Confidence" text on mobile — % + name is enough */
+
+      /* H2H table mobile tweaks */
+      .h2h-name-f1, .h2h-name-f2 { font-size: 13px; width: 52px; }
+      .h2h-stat-f1, .h2h-stat-f2 { font-size: 11px; min-width: 34px; }
+      .h2h-label { font-size: 9px; }
 
       /* Value grid mobile */
       .value-card-grid { grid-template-columns: 1fr; }
@@ -938,8 +947,8 @@
       // Value tier badge
       const valuePick = findValuePick(f.f1, f.f2);
       let tierBadge = '';
-      if (valuePick && valuePick.tier === 'STRONG') tierBadge = '<span class="tier-badge-strong" style="margin-left:6px;vertical-align:middle;">STRONG</span>';
-      else if (valuePick && valuePick.tier === 'LEAN') tierBadge = '<span class="tier-badge-lean" style="margin-left:6px;vertical-align:middle;">LEAN</span>';
+      if (valuePick && valuePick.tier === 'STRONG') tierBadge = '<span class="tier-badge-strong" style="display:block;margin-top:2px;">STRONG</span>';
+      else if (valuePick && valuePick.tier === 'LEAN') tierBadge = '<span class="tier-badge-lean" style="display:block;margin-top:2px;">LEAN</span>';
 
       // Winner short name (last name)
       const winnerShort = f.winner.split(' ').pop();
@@ -948,12 +957,12 @@
         <div class="fight-card-header" onclick="toggleFightRow('${rowId}')">
           <div>
             <div class="fight-card-f1-name ${isF1 ? 'winner-name' : ''}">${maybeFighterLink(f.f1)}${!isF1 ? '' : tierBadge}</div>
-            ${f.f1_scout_obj ? '<span class="text-xs" style="color:#D91A1A">Scout Report Available</span>' : ''}
+            ${f.f1_scout_obj ? '<span class="scout-dot" title="Scout Report"></span>' : ''}
           </div>
           <div class="fight-card-vs">VS</div>
           <div>
             <div class="fight-card-f2-name ${!isF1 ? 'winner-name' : ''}">${maybeFighterLink(f.f2)}${isF1 ? '' : tierBadge}</div>
-            ${f.f2_scout_obj ? '<span class="text-xs" style="color:#D91A1A;text-align:right;display:block;">Scout Report Available</span>' : ''}
+            ${f.f2_scout_obj ? '<span class="scout-dot" title="Scout Report" style="display:block;text-align:right;"></span>' : ''}
           </div>
           <div class="fight-card-conf">
             <div class="fight-card-conf-num">${f.conf}%</div>
