@@ -142,46 +142,61 @@
       height: 1px;
       background: #333;
     }
-  /* === FIGHTER PROMO CARDS === */
+  /* === FIGHTER PROMO CARDS (image split-panel) === */
   .fight-promo-card {
-    border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-    margin-bottom: 0;
+    border-radius: 16px; overflow: hidden; box-shadow: 0 6px 32px rgba(0,0,0,0.22);
+    position: relative; min-height: 140px;
   }
   .fight-promo-inner {
-    display: flex; align-items: stretch; min-height: 90px;
-    background: linear-gradient(135deg, #111 0%, #1a0000 50%, #111 100%);
-    background-size: 200% 200%;
-    animation: kenBurns 9s ease-in-out infinite;
+    display: flex; align-items: stretch; min-height: 140px; position: relative;
+    background: #111;
   }
-  @keyframes kenBurns {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
+  /* Winner side — image panel */
   .fight-promo-winner {
-    flex: 1; padding: 20px 20px 20px 24px; background: linear-gradient(90deg, rgba(217,26,26,0.18) 0%, transparent 100%);
-    border-left: 3px solid #D91A1A; display: flex; flex-direction: column; justify-content: center;
+    flex: 1; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #1a0000 0%, #2a0000 100%);
+    border-left: 3px solid #D91A1A;
+    display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 16px;
   }
+  .fight-promo-winner-img {
+    position: absolute; bottom: 0; right: -10px;
+    height: 130px; width: auto; object-fit: contain;
+    object-position: bottom; filter: drop-shadow(0 0 12px rgba(217,26,26,0.4));
+    transition: transform 0.6s ease;
+  }
+  .fight-promo-card:hover .fight-promo-winner-img { transform: scale(1.05) translateY(-4px); }
+  /* Opponent side — image panel */
   .fight-promo-opponent {
-    flex: 1; padding: 20px 24px 20px 20px; text-align: right;
-    display: flex; flex-direction: column; justify-content: center; align-items: flex-end;
+    flex: 1; position: relative; overflow: hidden;
+    background: linear-gradient(225deg, #0d0d0d 0%, #1a1a1a 100%);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 14px 16px; align-items: flex-end; text-align: right;
   }
+  .fight-promo-opponent-img {
+    position: absolute; bottom: 0; left: -10px;
+    height: 130px; width: auto; object-fit: contain;
+    object-position: bottom; filter: brightness(0.55) grayscale(0.3);
+    transition: transform 0.6s ease;
+  }
+  .fight-promo-card:hover .fight-promo-opponent-img { transform: scale(1.03) translateY(-2px); }
   .fight-promo-name {
-    font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #ffffff; line-height: 1.1;
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #ffffff; line-height: 1.1;
+    position: relative; z-index: 2; text-shadow: 0 1px 4px rgba(0,0,0,0.8);
   }
-  .fight-promo-name.opp { color: #aaaaaa; }
+  .fight-promo-name.opp { color: #888888; }
   .fight-promo-sublabel {
-    font-family: 'Inter', sans-serif; font-size: 9px; color: #D91A1A; text-transform: uppercase;
-    letter-spacing: 0.1em; margin-top: 3px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 8px; color: #D91A1A; text-transform: uppercase;
+    letter-spacing: 0.12em; margin-top: 2px; font-weight: 700; position: relative; z-index: 2;
   }
-  .fight-promo-sublabel.opp { color: #555; }
+  .fight-promo-sublabel.opp { color: #444; }
+  /* Center VS badge */
   .fight-promo-vs {
-    padding: 16px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06);
-    min-width: 80px;
+    padding: 12px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-left: 1px solid rgba(255,255,255,0.07); border-right: 1px solid rgba(255,255,255,0.07);
+    min-width: 76px; background: rgba(0,0,0,0.4); z-index: 3; position: relative;
   }
   .fight-promo-conf {
-    font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #D91A1A; line-height: 1;
+    font-family: 'Bebas Neue', sans-serif; font-size: 34px; color: #D91A1A; line-height: 1;
   }
 
   /* === VALUE CARD WATERMARK === */
@@ -533,36 +548,41 @@
         }
 
         if (featuredPicks.length > 0) {
-          featuredContainer.innerHTML = featuredPicks.map((p, i) => {
-            const isF1Winner = p.predicted_winner === p.fighter1;
-            const winner = p.predicted_winner;
-            const loser = isF1Winner ? p.fighter2 : p.fighter1;
-            const winnerLast = winner.split(' ').pop().toUpperCase();
-            const loserLast = loser.split(' ').pop().toUpperCase();
-            return `
-              <div class="fight-promo-card fade-in visible" style="transition-delay:${i * 0.1}s;animation-delay:${i * 0.3}s;">
-                <div class="fight-promo-inner">
-                  <!-- Winner side -->
-                  <div class="fight-promo-winner">
-                    <div class="fight-promo-name">${winner}</div>
-                    <div class="fight-promo-sublabel">PREDICTED WINNER</div>
+          // Load fighter images then render
+          fetch('model/fighter_images.json')
+            .then(r => r.json())
+            .catch(() => ({}))
+            .then(imgs => {
+              featuredContainer.innerHTML = featuredPicks.map((p, i) => {
+                const winner = p.predicted_winner;
+                const loser = p.predicted_winner === p.fighter1 ? p.fighter2 : p.fighter1;
+                const wImg = imgs[winner];
+                const lImg = imgs[loser];
+                const wImgTag = wImg ? `<img class="fight-promo-winner-img" src="${wImg}" alt="${winner}" loading="lazy" onerror="this.style.display='none'">` : '';
+                const lImgTag = lImg ? `<img class="fight-promo-opponent-img" src="${lImg}" alt="${loser}" loading="lazy" onerror="this.style.display='none'">` : '';
+                return `
+                  <div class="fight-promo-card fade-in visible" style="transition-delay:${i * 0.1}s;">
+                    <div class="fight-promo-inner">
+                      <div class="fight-promo-winner">
+                        ${wImgTag}
+                        <div class="fight-promo-name">${winner}</div>
+                        <div class="fight-promo-sublabel">PREDICTED WINNER</div>
+                      </div>
+                      <div class="fight-promo-vs">
+                        <div class="fight-promo-conf">${p.conf.toFixed(0)}<span style="font-size:16px;">%</span></div>
+                        <div style="font-size:9px;color:#666;letter-spacing:0.08em;margin-top:2px;">CONF</div>
+                      </div>
+                      <div class="fight-promo-opponent">
+                        ${lImgTag}
+                        <div class="fight-promo-name opp">${loser}</div>
+                        <div class="fight-promo-sublabel opp">OPPONENT</div>
+                      </div>
+                    </div>
                   </div>
-                  <!-- VS badge -->
-                  <div class="fight-promo-vs">
-                    <div class="fight-promo-conf">${p.conf.toFixed(0)}<span style="font-size:18px;">%</span></div>
-                    <div style="font-size:10px;color:#999;letter-spacing:0.1em;margin-top:2px;">CONFIDENCE</div>
-                  </div>
-                  <!-- Opponent side -->
-                  <div class="fight-promo-opponent">
-                    <div class="fight-promo-name opp">${loser}</div>
-                    <div class="fight-promo-sublabel opp">OPPONENT</div>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
-          // Trigger Ken Burns after render
-          document.querySelectorAll('.fight-promo-inner').forEach(el => el.classList.add('kb-active'));
+                `;
+              }).join('');
+              document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+            });
         }
 
         // Re-observe any new fade-in elements

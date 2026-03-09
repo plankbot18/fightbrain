@@ -166,6 +166,15 @@
     }
     .winner-name { color: #D91A1A !important; }
     .fight-card-low-data { border-color: rgba(180,83,9,0.4); }
+    /* Fighter portrait images in card headers */
+    .fighter-card-portrait {
+      position: absolute; bottom: 0; height: 72px; width: auto;
+      object-fit: contain; object-position: bottom;
+      pointer-events: none; opacity: 0.18; transition: opacity 0.3s;
+    }
+    .f1-portrait { left: 0; filter: none; }
+    .f2-portrait { right: 0; filter: none; }
+    .fight-card:hover .fighter-card-portrait { opacity: 0.28; }
 
     /* ===== CONFIDENCE BAR ===== */
     .confidence-bar { transition: width 0.6s ease; }
@@ -1024,16 +1033,23 @@
       // Winner short name (last name)
       const winnerShort = f.winner.split(' ').pop();
 
+      const f1Img = getFighterImg(f.f1);
+      const f2Img = getFighterImg(f.f2);
+      const f1ImgTag = f1Img ? `<img src="${f1Img}" alt="${f.f1}" class="fighter-card-portrait f1-portrait" onerror="this.style.display='none'" loading="lazy">` : '';
+      const f2ImgTag = f2Img ? `<img src="${f2Img}" alt="${f.f2}" class="fighter-card-portrait f2-portrait" onerror="this.style.display='none'" loading="lazy">` : '';
+
       return `<div class="fight-card ${winnerSideClass} ${lowDataClass}" data-f1="${f.f1}" data-f2="${f.f2}">
         <div class="fight-card-header" onclick="toggleFightRow('${rowId}')">
-          <div>
-            <div class="fight-card-f1-name ${isF1 ? 'winner-name' : ''}">${maybeFighterLink(f.f1)}${!isF1 ? '' : tierBadge}</div>
-            ${f.f1_scout_obj ? '<span class="scout-dot" title="Scout Report"></span>' : ''}
+          <div style="position:relative;flex:1;min-width:0;overflow:hidden;">
+            ${f1ImgTag}
+            <div class="fight-card-f1-name ${isF1 ? 'winner-name' : ''}" style="position:relative;z-index:2;">${maybeFighterLink(f.f1)}${!isF1 ? '' : tierBadge}</div>
+            ${f.f1_scout_obj ? '<span class="scout-dot" title="Scout Report" style="position:relative;z-index:2;"></span>' : ''}
           </div>
           <div class="fight-card-vs">VS</div>
-          <div>
-            <div class="fight-card-f2-name ${!isF1 ? 'winner-name' : ''}">${maybeFighterLink(f.f2)}${isF1 ? '' : tierBadge}</div>
-            ${f.f2_scout_obj ? '<span class="scout-dot" title="Scout Report" style="display:block;text-align:right;"></span>' : ''}
+          <div style="position:relative;flex:1;min-width:0;overflow:hidden;text-align:right;">
+            ${f2ImgTag}
+            <div class="fight-card-f2-name ${!isF1 ? 'winner-name' : ''}" style="position:relative;z-index:2;">${maybeFighterLink(f.f2)}${isF1 ? '' : tierBadge}</div>
+            ${f.f2_scout_obj ? '<span class="scout-dot" title="Scout Report" style="display:block;text-align:right;position:relative;z-index:2;"></span>' : ''}
           </div>
           <div class="fight-card-conf">
             <div class="fight-card-conf-num">${f.conf}%</div>
@@ -1921,6 +1937,20 @@
       return _fighterProfiles;
     }
 
+    let _fighterImages = null;
+    async function loadFighterImages() {
+      if (_fighterImages) return _fighterImages;
+      try {
+        const res = await fetch('../model/fighter_images.json');
+        _fighterImages = await res.json();
+      } catch { _fighterImages = {}; }
+      return _fighterImages;
+    }
+    function getFighterImg(name) {
+      if (!_fighterImages) return '';
+      return _fighterImages[name] || '';
+    }
+
     function fighterLink(name, url) {
       if (!url) return name;
       return `<span class="fighter-link" data-fighter-url="${url}">${name}</span>`;
@@ -2136,7 +2166,11 @@
     }
 
     // ===== INIT =====
-    loadFighterProfileData().catch(() => {}).finally(() => {
+    // Pre-load both profile and image data before rendering cards
+    Promise.all([
+      loadFighterProfileData().catch(() => {}),
+      loadFighterImages().catch(() => {})
+    ]).finally(() => {
       loadUpcoming();
       loadValuePicks();
       loadRecord();
