@@ -2050,28 +2050,31 @@
         const tierCls = tierColors[fighter.elo_tier] || tierColors.Journeyman;
 
         let html = '';
-        const portraitImg = fighterImgHtml(fighter.name, 'portrait');
+        const portraitSrc = getFighterImg(fighter.name);
 
-        html += `<div class="mb-6" style="position:relative;overflow:visible;min-height:${portraitImg ? '200px' : 'auto'};padding-right:${portraitImg ? '155px' : '0'}">
-          ${portraitImg}
-          <h2 style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:#111;line-height:1;position:relative;z-index:2;">${fighter.name}</h2>
-          ${fighter.nickname ? `<div class="text-gray-500 text-sm italic" style="position:relative;z-index:2;">"${fighter.nickname}"</div>` : ''}
-          <div class="text-lg text-gray-600 mt-1" style="position:relative;z-index:2;">${fighter.record}</div>
-          <div class="flex flex-wrap gap-3 mt-3 text-xs text-gray-500" style="position:relative;z-index:2;">
-            <span>${fighter.height}</span>
-            <span>${fighter.weight}</span>
-            <span>Reach: ${fighter.reach}</span>
-            <span>${fighter.stance}</span>
-            ${fighter.age ? `<span>Age: ${fighter.age}</span>` : ''}
+        // Flex row: text left, portrait right (no overlap possible)
+        html += `<div class="mb-6" style="display:flex;align-items:flex-end;gap:12px;min-height:${portraitSrc ? '160px' : 'auto'};">
+          <div style="flex:1;min-width:0;">
+            <h2 style="font-family:'Bebas Neue',sans-serif;font-size:34px;color:#111;line-height:1;">${fighter.name}</h2>
+            ${fighter.nickname ? `<div class="text-gray-500 text-sm italic">"${fighter.nickname}"</div>` : ''}
+            <div class="text-lg text-gray-600 mt-1">${fighter.record}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:12px;color:#777;">
+              ${[fighter.height, fighter.weight, fighter.reach ? 'Reach: '+fighter.reach : '', fighter.stance, fighter.age ? 'Age: '+fighter.age : ''].filter(Boolean).map(s=>`<span>${s}</span>`).join('')}
+            </div>
+            <div style="margin-top:10px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;">
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#111;">Elo ${fighter.elo}</span>
+              <span class="text-xs px-2 py-0.5 rounded ${tierCls} font-bold">${fighter.elo_tier}</span>
+              <span style="font-size:12px;" class="${fighter.elo_momentum >= 0 ? 'text-green-600' : 'text-red-600'}">
+                ${fighter.elo_momentum >= 0 ? '▲' : '▼'} ${Math.abs(fighter.elo_momentum).toFixed(1)} momentum
+              </span>
+              <span style="font-size:12px;color:#999;">Peak: ${fighter.elo_peak}</span>
+            </div>
           </div>
-          <div class="mt-3 flex items-center gap-3 flex-wrap" style="position:relative;z-index:2;">
-            <span style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#111;">Elo ${fighter.elo}</span>
-            <span class="text-xs px-2 py-0.5 rounded ${tierCls} font-bold">${fighter.elo_tier}</span>
-            <span class="text-xs ${fighter.elo_momentum >= 0 ? 'text-green-600' : 'text-red-600'}">
-              ${fighter.elo_momentum >= 0 ? '&#9650;' : '&#9660;'} ${Math.abs(fighter.elo_momentum).toFixed(1)} momentum
-            </span>
-            <span class="text-xs text-gray-500">Peak: ${fighter.elo_peak}</span>
-          </div>
+          ${portraitSrc ? `<div style="flex-shrink:0;width:130px;align-self:flex-end;">
+            <img src="${portraitSrc}" alt="${fighter.name}"
+              style="width:130px;height:auto;max-height:180px;object-fit:contain;object-position:bottom;display:block;filter:drop-shadow(0 2px 12px rgba(217,26,26,0.25));"
+              loading="lazy" onerror="this.parentElement.style.display='none'">
+          </div>` : ''}
         </div>`;
 
         html += `<div class="mb-6">
