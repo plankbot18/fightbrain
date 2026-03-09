@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FightBrain — UFC Picks · 75% Win Rate</title>
   <meta property="og:title" content="FightBrain — UFC Predictions Powered by ML" />
-  <meta property="og:description" content="Machine learning UFC picks. 75% win rate. 9-3 record. +6 units. Every pick public and tracked." />
+  <meta property="og:description" content="Machine learning UFC picks. 58.3% win rate. 7-5 record. +2 flat units. Every pick public and tracked." />
   <meta property="og:url" content="https://plankbot18.github.io/fightbrain/" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="FightBrain — UFC Picks" />
-  <meta name="twitter:description" content="75% win rate. +6 units. 9-3 record. ML-powered UFC predictions. Every fight week." />
-  <meta name="description" content="FightBrain: ML-powered UFC picks. 75% win rate. 9-3 record. +6 units flat. Every pick is public and tracked.">
+  <meta name="twitter:description" content="58.3% win rate. 7-5 record. ML-powered UFC predictions. Every fight week." />
+  <meta name="description" content="FightBrain: ML-powered UFC picks. 58.3% win rate. 7-5 record. Every pick tracked. Every pick is public and tracked.">
   <meta name="theme-color" content="#111111">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -306,11 +306,11 @@
       <a href="ui/index.html" style="display:block;background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:16px;border-radius:12px;text-decoration:none;text-align:center;">View This Week's Picks →</a>
 
       <div style="display:flex;gap:16px;justify-content:center;padding:4px 0;">
-        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">75%</strong> win rate</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">58.3%</strong> win rate</span>
         <span style="color:#ddd;">·</span>
-        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">9–3</strong> record</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">7–5</strong> record</span>
         <span style="color:#ddd;">·</span>
-        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#D91A1A;">+6</strong> units</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#D91A1A;">+2u</strong> flat</span>
       </div>
     </div>
 
@@ -333,7 +333,7 @@
           <a href="ui/index.html" style="background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;">View Picks →</a>
           <a href="#record" style="background:white;color:#111111;font-family:'Inter',sans-serif;font-size:16px;font-weight:600;padding:16px 32px;border-radius:12px;text-decoration:none;border:1px solid #ddd;">See Track Record</a>
         </div>
-        <p style="font-family:'Inter',sans-serif;font-size:12px;color:#999;">76.1% model accuracy · 9W–3L live record · 1,596 fights backtested</p>
+        <p style="font-family:'Inter',sans-serif;font-size:12px;color:#999;">76.1% model accuracy · 7W–5L live record · 1,596 fights backtested</p>
       </div>
 
       <!-- Right: matchup card -->
@@ -400,15 +400,15 @@
   <!-- UNIT TRACKER -->
   <section style="background:#D91A1A;padding:56px 24px;text-align:center;">
     <div class="max-w-4xl mx-auto">
-      <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;">UNIT TRACKER — FLAT BETTING, 1 UNIT PER PICK</p>
+      <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;" id="unitLabel">UNIT TRACKER</p>
       <div style="display:flex;justify-content:center;align-items:baseline;gap:16px;flex-wrap:wrap;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+6</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+2</div>
         <div style="text-align:left;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:rgba(255,255,255,0.9);">UNITS</div>
-          <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);">+50% ROI · 9W–3L · 12 picks</div>
+          <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);" id="unitSub">+16.7% ROI · 7W–5L · 12 picks</div>
         </div>
       </div>
-      <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-top:16px;">+1 unit per correct pick · −1 unit per incorrect pick · All picks public &amp; verified</p>
+      <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-top:16px;">Risk 1 unit per pick · Profit based on book odds · All picks public &amp; verified</p>
     </div>
   </section>
 
@@ -737,8 +737,10 @@
       .then(r => r.json())
       .then(record => {
         const o = record.overall;
+        const u = record.units || {};
         document.getElementById('recordWL').textContent = o.wins + 'W - ' + o.losses + 'L';
         document.getElementById('recordAcc').textContent = o.accuracy + '% win rate';
+
         // Prep counter for backtested accuracy card
         const btEl = document.getElementById('backtestNum');
         if (btEl) { btEl.dataset.countTo = '76.1'; btEl.dataset.suffix = '%'; observer.observe(btEl); }
@@ -751,6 +753,33 @@
         if (record.by_tier && record.by_tier.high) {
           document.getElementById('recordHighConf').textContent = record.by_tier.high.accuracy + '%';
         }
+
+        // Unit tracker: prefer odds-adjusted if available, else flat
+        const flatUnits = u.flat !== undefined ? u.flat : (o.wins - o.losses);
+        const oddsUnits = u.odds_adjusted;
+        const displayUnits = (oddsUnits !== null && oddsUnits !== undefined) ? oddsUnits : flatUnits;
+        const isOddsAdj = (oddsUnits !== null && oddsUnits !== undefined);
+        const displayROI = isOddsAdj ? u.odds_roi : u.flat_roi;
+        const unitLabel = isOddsAdj ? 'ODDS-ADJ UNITS' : 'UNITS (FLAT)';
+        const unitNote = isOddsAdj ? (u.odds_note === 'estimated' ? 'est. opening odds' : 'verified odds') : 'flat +1/-1 per pick';
+
+        // Update unit tracker section
+        const unitCountEl = document.getElementById('unitCount');
+        const unitSubEl = document.getElementById('unitSub');
+        const unitLabelEl = document.getElementById('unitLabel');
+        if (unitCountEl) {
+          const sign = displayUnits >= 0 ? '+' : '';
+          unitCountEl.dataset.countTo = Math.abs(displayUnits);
+          unitCountEl.dataset.prefix = sign;
+          unitCountEl.dataset.isNeg = displayUnits < 0 ? '1' : '0';
+          unitCountEl.dataset.suffix = '';
+          // Set immediately (animation fires on scroll)
+          unitCountEl.textContent = sign + displayUnits.toFixed(2);
+        }
+        if (unitSubEl) {
+          unitSubEl.textContent = (displayROI >= 0 ? '+' : '') + displayROI + '% ROI · ' + o.wins + 'W–' + o.losses + 'L · ' + o.total + ' picks';
+        }
+        if (unitLabelEl) unitLabelEl.textContent = unitLabel;
       })
       .catch(() => {
         document.getElementById('recordWL').textContent = '--';
@@ -758,24 +787,26 @@
       });
   </script>
 
-  <!-- Unit tracker count-up animation -->
+  <!-- Unit tracker count-up animation (reads data-count-to from live_record JS) -->
   <script>
     (function() {
       const unitEl = document.getElementById('unitCount');
       if (!unitEl) return;
       let animated = false;
-      const target = 6;
       function animateCount() {
         if (animated) return;
         animated = true;
-        const duration = 1600;
+        const rawTarget = parseFloat(unitEl.dataset.countTo || unitEl.textContent.replace(/[^0-9.-]/g, '')) || 2;
+        const isNeg = unitEl.dataset.isNeg === '1';
+        const prefix = isNeg ? '-' : '+';
+        const duration = 1400;
         const start = performance.now();
         function update(now) {
           const elapsed = now - start;
           const progress = Math.min(elapsed / duration, 1);
           const eased = 1 - Math.pow(1 - progress, 3);
-          const current = Math.round(eased * target);
-          unitEl.textContent = '+' + current;
+          const current = (eased * rawTarget).toFixed(2);
+          unitEl.textContent = prefix + current;
           if (progress < 1) requestAnimationFrame(update);
         }
         requestAnimationFrame(update);
