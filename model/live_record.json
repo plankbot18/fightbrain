@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-09T21:09:26.668208+00:00",
+  "updated_at": "2026-03-09T21:26:21.597398+00:00",
   "overall": {
     "wins": 7,
     "losses": 4,
@@ -11,10 +11,10 @@
     "pnl": 5.0,
     "roi": 45.5,
     "staked": 11.0,
-    "odds_adjusted": 0.78,
-    "odds_roi": 7.1,
+    "odds_adjusted": 0.13,
+    "odds_roi": 1.2,
     "odds_picks": 11,
-    "odds_note": "estimated"
+    "odds_note": "verified"
   },
   "by_tier": {
     "lock": {
