@@ -1344,73 +1344,121 @@
         : _allPicks;
       const record = _recordData;
 
-      const decided = picks.filter(p => p.result !== null);
+      const decided = [...picks.filter(p => p.result !== null)].reverse(); // #4: most recent first
       const pending = picks.filter(p => p.result === null);
 
-      const wins = _recordEventFilter ? decided.filter(p => p.result === 'correct').length : (record ? record.overall.wins : decided.filter(p => p.result === 'correct').length);
-      const losses = _recordEventFilter ? decided.filter(p => p.result === 'wrong').length : (record ? record.overall.losses : decided.filter(p => p.result === 'wrong').length);
-      const accuracy = decided.length > 0 ? (decided.filter(p => p.result === 'correct').length / decided.length * 100).toFixed(1) : 0;
+      const wins = decided.filter(p => p.result === 'correct').length;
+      const losses = decided.filter(p => p.result === 'wrong').length;
+      const accuracy = decided.length > 0 ? (wins / decided.length * 100).toFixed(1) : 0;
 
-      let html = `<div class="grid grid-cols-3 gap-4 mb-8">
-        <div class="record-summary-card">
-          <div class="record-summary-num">${wins}W</div>
-          <div class="text-sm text-gray-500 mt-2">Wins</div>
-        </div>
-        <div class="record-summary-card">
-          <div class="record-summary-num">${losses}L</div>
-          <div class="text-sm text-gray-500 mt-2">Losses</div>
-        </div>
-        <div class="record-summary-card">
-          <div class="record-summary-num" style="color:#D91A1A">${accuracy}%</div>
-          <div class="text-sm text-gray-500 mt-2">Accuracy</div>
-          ${pending.length > 0 ? `<span class="text-xs text-gray-400 mt-1 block">${pending.length} pending</span>` : ''}
-        </div>
-      </div>
-      ${record && !_recordEventFilter ? `<div class="text-xs text-gray-400 text-right mb-4">Updated ${new Date(record.updated_at).toLocaleString()}</div>` : ''}`;
+      // #5: compute total P&L up front for header + running total
+      let totalPnl = 0, totalStaked = 0, totalPnlKnown = true;
+      decided.forEach(p => {
+        const odds = p.book_odds_american;
+        const stake = p.recommended_units || 1;
+        totalStaked += stake;
+        if (odds != null) {
+          if (p.result === 'correct') {
+            totalPnl += odds > 0 ? (odds / 100) * stake : (100 / Math.abs(odds)) * stake;
+          } else {
+            totalPnl -= stake;
+          }
+        } else { totalPnlKnown = false; }
+      });
+      const totalRoi = totalStaked > 0 ? (totalPnl / totalStaked * 100).toFixed(1) : 0;
+      const totalColor = totalPnl >= 0 ? '#16a34a' : '#ef4444';
+      const totalStr = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(2) + 'u';
 
+      // #6: current streak
+      let streak = 0, streakType = '';
+      for (const p of decided) {
+        const r = p.result === 'correct' ? 'W' : 'L';
+        if (!streakType) streakType = r;
+        if (r === streakType) streak++; else break;
+      }
+      const streakLabel = streak > 0 ? `${streak}${streakType} streak` : '';
+
+      // #1 + #2: P&L summary card at the top
+      let html = `
+      <div style="background:#111;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#888;letter-spacing:0.1em;margin-bottom:4px;">ALL-TIME P&L (ODDS-ADJUSTED)</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:${totalColor};line-height:1;">${totalStr}</div>
+          <div style="font-size:12px;color:#666;margin-top:4px;">${totalPnl >= 0 ? '+' : ''}${totalRoi}% ROI · ${totalStaked.toFixed(1)}u staked · ${totalPnlKnown ? 'verified odds' : 'some est.'}</div>
+        </div>
+        <div style="display:flex;gap:24px;align-items:center;">
+          <div style="text-align:center;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:white;">${wins}W–${losses}L</div>
+            <div style="font-size:11px;color:#777;">${accuracy}% accuracy</div>
+          </div>
+          ${streakLabel ? `<div style="background:#1a1a1a;border-radius:8px;padding:8px 14px;text-align:center;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:${streakType === 'W' ? '#16a34a' : '#ef4444'};">${streakLabel.toUpperCase()}</div>
+            <div style="font-size:10px;color:#666;">current</div>
+          </div>` : ''}
+        </div>
+      </div>`;
+
+      // #8: per-tier ROI
       if (record && record.by_tier && !_recordEventFilter) {
-        const u = record.units || {};
-        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:8px;">By Confidence Tier</h3>`;
-        if (u.tiered_flat !== undefined) {
-          html += `<p style="font-size:13px;color:#777;margin-bottom:12px;">Tiered staking: LEAN 0.5u · MEDIUM 1u · STRONG 1.5u · LOCK 2u</p>`;
-        }
-        html += `<div class="grid md:grid-cols-4 gap-4 mb-8">`;
+        html += `<h3 class="section-title" style="font-size:18px;margin-bottom:8px;">By Confidence Tier</h3>
+        <div class="grid md:grid-cols-4 gap-3 mb-8">`;
         const tierLabels = { lock: 'LOCK (85%+)', strong: 'STRONG (75-84%)', medium: 'MEDIUM (65-74%)', lean: 'LEAN (<65%)' };
         const tierStake = { lock: '2u', strong: '1.5u', medium: '1u', lean: '0.5u' };
         const tierColors = { lock: '#D91A1A', strong: '#c05c00', medium: '#b45309', lean: '#777' };
+        // compute per-tier P&L from actual picks
+        const tierPnl = { lock: 0, strong: 0, medium: 0, lean: 0 };
+        const tierStaked = { lock: 0, strong: 0, medium: 0, lean: 0 };
+        decided.forEach(p => {
+          const conf = p.confidence;
+          const tier = conf >= 85 ? 'lock' : conf >= 75 ? 'strong' : conf >= 65 ? 'medium' : 'lean';
+          const stake = p.recommended_units || 1;
+          const odds = p.book_odds_american;
+          tierStaked[tier] += stake;
+          if (odds != null) {
+            if (p.result === 'correct') tierPnl[tier] += odds > 0 ? (odds/100)*stake : (100/Math.abs(odds))*stake;
+            else tierPnl[tier] -= stake;
+          }
+        });
         ['lock', 'strong', 'medium', 'lean'].forEach(tier => {
           const t = record.by_tier[tier] || { wins:0, losses:0, total:0, accuracy:0 };
+          const roi = tierStaked[tier] > 0 ? (tierPnl[tier] / tierStaked[tier] * 100).toFixed(0) : null;
+          const pnlStr = (tierPnl[tier] >= 0 ? '+' : '') + tierPnl[tier].toFixed(2) + 'u';
+          const pnlColor = tierPnl[tier] >= 0 ? '#16a34a' : '#ef4444';
           html += `<div class="record-summary-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <div class="text-xs font-semibold" style="color:${tierColors[tier]}">${tierLabels[tier]}</div>
+              <div style="font-size:10px;font-weight:700;color:${tierColors[tier]}">${tierLabels[tier]}</div>
               <div style="font-size:10px;color:#aaa;font-family:'Bebas Neue',sans-serif;">${tierStake[tier]}</div>
             </div>
-            <div class="record-summary-num" style="font-size:30px;">${t.wins}W - ${t.losses}L</div>
-            <div class="text-sm text-gray-500 mt-1">${t.total > 0 ? t.accuracy + '%' : '--'}</div>
+            <div class="record-summary-num" style="font-size:26px;">${t.wins}W–${t.losses}L</div>
+            <div style="font-size:11px;color:#777;margin-top:2px;">${t.total > 0 ? t.accuracy + '% acc' : '--'}</div>
+            ${t.total > 0 ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:${pnlColor};margin-top:4px;">${pnlStr}${roi !== null ? ' · ' + (roi >= 0 ? '+' : '') + roi + '% ROI' : ''}</div>` : ''}
           </div>`;
         });
         html += '</div>';
       }
 
+      // By Event
       if (record && record.by_event && Object.keys(record.by_event).length > 0 && !_recordEventFilter) {
-        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">By Event</h3>
+        html += `<h3 class="section-title" style="font-size:18px;margin-bottom:8px;">By Event</h3>
         <div class="space-y-2 mb-8">`;
         for (const [ev, data] of Object.entries(record.by_event)) {
           const evAcc = data.accuracy;
+          const evUnits = data.units !== undefined ? ((data.units >= 0 ? '+' : '') + data.units.toFixed(2) + 'u') : '';
           html += `<div class="record-table-row">
-            <span class="text-gray-900 flex-1">${ev}</span>
-            <span class="font-semibold text-gray-900">${data.wins}W-${data.losses}L</span>
-            <span class="w-16 text-right" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${evAcc >= 60 ? '#D91A1A' : evAcc >= 50 ? '#b45309' : '#777'}">${evAcc}%</span>
+            <span class="text-gray-900 flex-1 text-sm">${ev}</span>
+            <span class="font-semibold text-gray-900 text-sm">${data.wins}W–${data.losses}L</span>
+            ${evUnits ? `<span style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:${data.units >= 0 ? '#16a34a' : '#ef4444'};min-width:60px;text-align:right;">${evUnits}</span>` : ''}
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:${evAcc >= 60 ? '#D91A1A' : '#777'};min-width:46px;text-align:right;">${evAcc}%</span>
           </div>`;
         }
         html += '</div>';
       }
 
+      // Decided Picks — most recent first (#4), with running P&L (#5), heavy fav flag (#3), mobile truncation (#9)
       if (decided.length > 0) {
-        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">Decided Picks</h3>
-        <div class="space-y-1 mb-8">`;
-        let totalPnl = 0;
-        let totalPnlKnown = true;
+        html += `<h3 class="section-title" style="font-size:18px;margin-bottom:8px;">Decided Picks <span style="font-size:12px;color:#aaa;font-weight:400;">most recent first</span></h3>
+        <div class="space-y-1 mb-4">`;
+        let runningPnl = 0;
         decided.forEach(p => {
           const isWin = p.result === 'correct';
           const odds = p.book_odds_american;
@@ -1418,48 +1466,47 @@
           const stake = p.recommended_units || 1;
           let pnl = null;
           if (odds != null) {
-            if (isWin) {
-              pnl = odds > 0 ? (odds / 100) * stake : (100 / Math.abs(odds)) * stake;
-            } else {
-              pnl = -stake;
-            }
+            pnl = isWin ? (odds > 0 ? (odds/100)*stake : (100/Math.abs(odds))*stake) : -stake;
           }
-          if (pnl != null) totalPnl += pnl; else totalPnlKnown = false;
+          if (pnl != null) runningPnl += pnl;
           const pnlStr = pnl != null ? (pnl >= 0 ? `+${pnl.toFixed(2)}u` : `${pnl.toFixed(2)}u`) : '—';
           const pnlColor = pnl == null ? '#aaa' : (pnl >= 0 ? '#16a34a' : '#ef4444');
+          const runStr = (runningPnl >= 0 ? '+' : '') + runningPnl.toFixed(2) + 'u';
+          const runColor = runningPnl >= 0 ? '#16a34a' : '#ef4444';
+          // #3: heavy favorite flag (odds < -400 and win returns < 0.3u per unit staked)
+          const isHeavyFav = odds != null && odds < -400;
+          const fightShort = p.fight.length > 38 ? p.fight.substring(0, 36) + '…' : p.fight; // #9: truncate
           html += `<div class="record-table-row" style="flex-direction:column;gap:2px;padding:10px 12px;">
             <div style="display:flex;align-items:center;gap:8px;width:100%;">
               <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${isWin ? '#D91A1A' : '#aaa'};min-width:18px;">${isWin ? 'W' : 'L'}</span>
-              <span style="font-weight:700;font-size:14px;color:#111;flex:1;">${p.predicted_winner}</span>
-              <span style="font-size:13px;color:#888;">${oddsStr}</span>
+              <span style="font-weight:700;font-size:14px;color:#111;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.predicted_winner}</span>
+              <span style="font-size:13px;color:#888;">${oddsStr}${isHeavyFav ? ' <span style="font-size:10px;color:#f59e0b;font-weight:600;">HVY FAV</span>' : ''}</span>
               <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${pnlColor};min-width:60px;text-align:right;">${pnlStr}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;padding-left:26px;">
-              <span style="font-size:12px;color:#aaa;">${p.fight}</span>
-              <span style="font-size:12px;color:#bbb;margin-left:auto;">${p.confidence}% · ${stake}u stake${p.odds_source === 'estimated' ? ' · est.' : ''}</span>
+            <div style="display:flex;align-items:center;gap:6px;padding-left:26px;flex-wrap:nowrap;overflow:hidden;">
+              <span style="font-size:11px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%;">${fightShort}</span>
+              <span style="font-size:11px;color:#ccc;margin-left:auto;white-space:nowrap;">${stake}u · running: <span style="color:${runColor};font-weight:600;">${runStr}</span></span>
             </div>
           </div>`;
         });
-        const totalStr = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(2) + 'u' + (totalPnlKnown ? '' : '*');
-        const totalColor = totalPnl >= 0 ? '#16a34a' : '#ef4444';
         html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 12px;border-top:2px solid #111;margin-top:4px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#555;letter-spacing:0.05em;">ALL-TIME P&amp;L</span>
+          <div>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#555;letter-spacing:0.05em;">ALL-TIME P&amp;L</span>
+            <span style="font-size:12px;color:#777;margin-left:10px;">${totalPnl >= 0 ? '+' : ''}${totalRoi}% ROI · ${totalStaked.toFixed(1)}u staked</span>
+          </div>
           <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:${totalColor};">${totalStr}</span>
         </div>`;
         html += '</div>';
       }
 
       if (pending.length > 0) {
-        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">Pending (${pending.length})</h3>
+        html += `<h3 class="section-title" style="font-size:18px;margin-bottom:8px;">Pending (${pending.length})</h3>
         <div class="space-y-1">`;
         pending.forEach(p => {
           html += `<div class="record-table-row">
-            <span class="text-gray-500 w-1/4 truncate text-sm">${p.event}</span>
-            <span class="text-gray-900 flex-1 text-sm">${p.fight}</span>
-            <span class="w-36 text-right">
-              <span style="color:#D91A1A;font-family:'Bebas Neue',sans-serif;font-size:14px;">${p.predicted_winner}</span>
-              <span class="text-gray-400 ml-1 text-sm">${p.confidence}%</span>
-            </span>
+            <span class="text-gray-500 text-sm" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.event.replace('UFC Fight Night: ','')}</span>
+            <span style="color:#D91A1A;font-family:'Bebas Neue',sans-serif;font-size:14px;flex:1;text-align:right;">${p.predicted_winner}</span>
+            <span class="text-gray-400 text-sm ml-2">${p.confidence}%</span>
           </div>`;
         });
         html += '</div>';
