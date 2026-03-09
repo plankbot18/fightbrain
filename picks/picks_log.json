@@ -196,23 +196,5 @@
     "odds_source": "estimated",
     "recommended_units": 1.0,
     "model_version": "v1.0-73.1pct"
-  },
-  {
-    "event": "UFC 326: Holloway vs. Oliveira 2",
-    "fight": "Luke Fernandez vs Rodolfo Bellato",
-    "fighter1": "Luke Fernandez",
-    "fighter2": "Rodolfo Bellato",
-    "predicted_winner": "Luke Fernandez",
-    "confidence": 98.1,
-    "logged_at": "2026-03-07T22:23:11.709709+00:00",
-    "actual_winner": "Rodolfo Bellato",
-    "result": "wrong",
-    "method": "KO/TKO",
-    "finish_round": 1,
-    "resolved_at": "2026-03-08T14:53:51.913561+00:00",
-    "book_odds_american": -350,
-    "odds_source": "estimated",
-    "recommended_units": 2.0,
-    "model_version": "v1.0-73.1pct"
   }
 ]
