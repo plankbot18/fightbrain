@@ -975,11 +975,18 @@
         html += `<div style="font-size:13px;color:#555;line-height:1.6;">${truncateToSentences(report.report_text, 2)}</div>`;
       }
 
-      // Full analysis toggle
-      html += `<button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn" class="full-analysis-btn"
-        style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;transition:opacity 0.2s;">
-        Full Analysis ↓
-      </button>`;
+      // Button row: Full Analysis + Share
+      html += `<div style="display:flex;align-items:center;gap:14px;margin-top:4px;">
+        <button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn" class="full-analysis-btn"
+          style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;transition:opacity 0.2s;">
+          Full Analysis ↓
+        </button>
+        <button onclick="sharePick('${f.f1.replace(/'/g,"\\'")}','${f.f2.replace(/'/g,"\\'")}','${f.predicted_winner.replace(/'/g,"\\'")}',${f.conf},'${(f.event||'').replace(/'/g,"\\'")}')"
+          style="font-size:11px;color:#999;background:none;border:1px solid #ddd;border-radius:6px;cursor:pointer;padding:3px 10px;font-family:'Inter',sans-serif;font-weight:500;transition:all 0.2s;"
+          onmouseover="this.style.borderColor='#D91A1A';this.style.color='#D91A1A'" onmouseout="this.style.borderColor='#ddd';this.style.color='#999'">
+          ↗ Share
+        </button>
+      </div>`;
 
       html += '</div>';
 
@@ -1015,6 +1022,34 @@
       html += '</div>';
 
       return html;
+    }
+
+    function sharePick(f1, f2, winner, conf, event) {
+      const loser = winner === f1 ? f2 : f1;
+      const eventShort = event.replace(/UFC (Fight Night|[0-9]+):?\s*/i, '').replace(/\s*\(.*\)/, '').trim();
+      const text = `🧠 FightBrain ML Pick\n\n${winner} to win vs ${loser}\n${conf.toFixed(1)}% model confidence\n${eventShort ? eventShort + ' · ' : ''}Every pick tracked publicly\n\nhttps://plankbot18.github.io/fightbrain/`;
+      navigator.clipboard.writeText(text).then(() => showToast('Pick copied — ready to post!')).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        showToast('Pick copied — ready to post!');
+      });
+    }
+
+    function showToast(msg) {
+      let t = document.getElementById('share-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'share-toast';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:white;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:12px 24px;border-radius:100px;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(10px)'; }, 2800);
     }
 
     function toggleFullAnalysis(id) {

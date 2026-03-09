@@ -436,12 +436,19 @@
     </div>
   </section>
 
-  <!-- SECTION 6: TELEGRAM CTA -->
+  <!-- SECTION 6: COMMUNITY CTA -->
   <section style="background:#FAF7F2;padding:72px 24px;border-top:1px solid #E5DDD5;text-align:center;" class="max-md:!py-10">
     <div class="max-w-2xl mx-auto">
       <h2 style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:#111111;line-height:1;margin-bottom:12px;">GET PICKS DELIVERED EVERY FIGHT WEEK</h2>
-      <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;margin-bottom:28px;">Machine learning trained on 10,000+ UFC fights. Every prediction includes a confidence score and edge vs the bookmakers. Free to follow.</p>
-      <a href="ui/index.html" style="display:inline-block;background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:16px 40px;border-radius:12px;text-decoration:none;">View This Week's Picks →</a>
+      <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;margin-bottom:32px;">Every prediction includes model confidence, edge vs the bookmaker, and a full matchup breakdown. Public record. No subscription required.</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">
+        <a href="ui/index.html" style="display:inline-block;background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;">View This Week's Picks →</a>
+        <a id="discordBtn" href="#" style="display:inline-flex;align-items:center;gap:8px;background:#5865F2;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;opacity:0.7;cursor:default;" title="Coming soon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.114 18.1.133 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          Discord — Coming Soon
+        </a>
+      </div>
+      <p style="font-family:'Inter',sans-serif;font-size:12px;color:#bbb;">Discord community launching soon — free picks, model updates, fight week discussion</p>
     </div>
   </section>
 
@@ -681,11 +688,37 @@
           }, 30);
         }
 
-        // Populate ticker
+        // Populate ticker — blend upcoming picks with resolved results
         const tickerTrack = document.getElementById('tickerTrack');
-        if (tickerTrack && preds.length > 0) {
-          const tickerItems = preds.map(p => `${p.predicted_winner.split(' ').pop().toUpperCase()} ${p.conf.toFixed(1)}%`).join(' · ');
-          tickerTrack.innerHTML = `<span>${tickerItems} · </span><span>${tickerItems} · </span>`;
+        if (tickerTrack) {
+          // Load picks_log for W/L markers on resolved picks
+          fetch('picks/picks_log.json')
+            .then(r => r.json()).catch(() => [])
+            .then(log => {
+              const resolved = {};
+              log.forEach(p => {
+                if (p.result) resolved[p.predicted_winner] = p.result;
+              });
+
+              // Current card picks (upcoming)
+              const upcomingItems = preds.map(p => {
+                const name = p.predicted_winner.split(' ').pop().toUpperCase();
+                return `${name} ${p.conf.toFixed(0)}%`;
+              }).join(' · ');
+
+              // Past results (most recent 8)
+              const pastPicks = log.filter(p => p.result).slice(-8);
+              const pastItems = pastPicks.map(p => {
+                const name = p.predicted_winner.split(' ').pop().toUpperCase();
+                const marker = p.result === 'correct' ? '✓' : '✗';
+                const color = p.result === 'correct' ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)';
+                return `<span style="color:${color}">${marker} ${name} ${p.confidence.toFixed(0)}%</span>`;
+              }).join(' · ');
+
+              const divider = pastPicks.length ? ' <span style="color:rgba(255,255,255,0.3)">│ RESULTS │</span> ' : '';
+              const full = `<span>${upcomingItems}${divider}${pastItems} · </span><span>${upcomingItems}${divider}${pastItems} · </span>`;
+              tickerTrack.innerHTML = full;
+            });
         }
       })
       .catch(e => console.error('Failed to load predictions', e));
@@ -712,7 +745,7 @@
                   </div>
                   <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:#111111;line-height:1;">${pickName}</div>
                   <div style="font-family:'Inter',sans-serif;font-size:13px;color:#777;margin-top:6px;">vs. ${opponent}</div>
-                  <div style="border-top:1px solid #E5DDD5;margin-top:16px;padding-top:12px;display:flex;justify-content:space-between;">
+                  <div style="border-top:1px solid #E5DDD5;margin-top:16px;padding-top:12px;display:flex;justify-content:space-between;align-items:flex-end;">
                     <div>
                       <div style="font-family:'Inter',sans-serif;font-size:10px;color:#777;text-transform:uppercase;">EDGE</div>
                       <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:#D91A1A;line-height:1;">${p.edge > 0 ? '+' : ''}${p.edge}%</div>
@@ -720,6 +753,7 @@
                     <div style="text-align:right;">
                       <div style="font-family:'Inter',sans-serif;font-size:10px;color:#777;text-transform:uppercase;">EV</div>
                       <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#111111;line-height:1;margin-top:4px;">${p.ev > 0 ? '+' : ''}${(p.ev || 0).toFixed(3)}</div>
+                      <button onclick="landingSharePick('${pickName.replace(/'/g,"\\'")}','${opponent.replace(/'/g,"\\'")}',${p.conf || 0})" style="margin-top:8px;font-size:11px;color:#999;background:none;border:1px solid #ddd;border-radius:6px;cursor:pointer;padding:3px 10px;font-family:'Inter',sans-serif;font-weight:500;">↗ Share</button>
                     </div>
                   </div>
                 </div>
@@ -785,6 +819,30 @@
         document.getElementById('recordWL').textContent = '--';
         document.getElementById('recordHighConf').textContent = '--';
       });
+  </script>
+
+  <script>
+    function landingSharePick(winner, loser, conf) {
+      const text = `🧠 FightBrain ML Pick\n\n${winner} to win vs ${loser}\n${conf ? conf.toFixed(1) + '% model confidence\n' : ''}Every pick tracked publicly\n\nhttps://plankbot18.github.io/fightbrain/`;
+      navigator.clipboard.writeText(text).then(() => landingToast('Pick copied — ready to post!')).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        landingToast('Pick copied — ready to post!');
+      });
+    }
+    function landingToast(msg) {
+      let t = document.getElementById('landing-toast');
+      if (!t) {
+        t = document.createElement('div'); t.id = 'landing-toast';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:white;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:12px 24px;border-radius:100px;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(10px)'; }, 2800);
+    }
   </script>
 
   <!-- Unit tracker count-up animation (reads data-count-to from live_record JS) -->
