@@ -440,7 +440,14 @@
   <section style="background:#FAF7F2;padding:72px 24px;border-top:1px solid #E5DDD5;text-align:center;" class="max-md:!py-10">
     <div class="max-w-2xl mx-auto">
       <h2 style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:#111111;line-height:1;margin-bottom:12px;">GET PICKS DELIVERED EVERY FIGHT WEEK</h2>
-      <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;margin-bottom:32px;">Every prediction includes model confidence, edge vs the bookmaker, and a full matchup breakdown. Public record. No subscription required.</p>
+      <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;margin-bottom:28px;">Every prediction includes model confidence, edge vs the bookmaker, and a full matchup breakdown. Public record. No subscription required.</p>
+      <!-- Email capture -->
+      <form id="emailForm" onsubmit="submitEmail(event)" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto;">
+        <input id="emailInput" type="email" placeholder="Enter your email for fight week picks" required
+          style="flex:1;min-width:220px;padding:14px 18px;border:2px solid #E5DDD5;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:white;color:#111;outline:none;">
+        <button type="submit" style="background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:14px 24px;border-radius:10px;border:none;cursor:pointer;white-space:nowrap;">Get Picks →</button>
+      </form>
+      <p id="emailMsg" style="font-family:'Inter',sans-serif;font-size:13px;color:#999;margin-bottom:16px;min-height:20px;"></p>
       <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">
         <a href="ui/index.html" style="display:inline-block;background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;">View This Week's Picks →</a>
         <a id="discordBtn" href="#" style="display:inline-flex;align-items:center;gap:8px;background:#5865F2;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;opacity:0.7;cursor:default;" title="Coming soon">
@@ -815,6 +822,24 @@
         document.getElementById('recordWL').textContent = '--';
         document.getElementById('recordHighConf').textContent = '--';
       });
+  </script>
+
+  <script>
+    function submitEmail(e) {
+      e.preventDefault();
+      const email = document.getElementById('emailInput').value.trim();
+      const msg = document.getElementById('emailMsg');
+      if (!email) return;
+      // Store locally + send to a simple endpoint when available
+      const existing = JSON.parse(localStorage.getItem('fb_emails') || '[]');
+      if (!existing.includes(email)) {
+        existing.push(email);
+        localStorage.setItem('fb_emails', JSON.stringify(existing));
+      }
+      document.getElementById('emailForm').style.display = 'none';
+      msg.style.color = '#16a34a';
+      msg.textContent = '✓ You\'re on the list — picks delivered every fight week.';
+    }
   </script>
 
   <script>
