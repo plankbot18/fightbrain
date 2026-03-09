@@ -1024,6 +1024,13 @@
       return html;
     }
 
+    function stakeLabel(conf) {
+      if (conf >= 85) return '2u LOCK';
+      if (conf >= 75) return '1.5u STRONG';
+      if (conf >= 65) return '1u MEDIUM';
+      return '0.5u LEAN';
+    }
+
     function sharePick(f1, f2, winner, conf, event) {
       const loser = winner === f1 ? f2 : f1;
       const eventShort = event.replace(/UFC (Fight Night|[0-9]+):?\s*/i, '').replace(/\s*\(.*\)/, '').trim();
@@ -1112,7 +1119,7 @@
           </div>
           <div class="fight-card-conf">
             <div class="fight-card-conf-num">${f.conf}%</div>
-            <div class="fight-card-conf-label">Confidence</div>
+            <div class="fight-card-conf-label">${stakeLabel(f.conf)}</div>
             <div class="fight-card-conf-winner">${winnerShort}</div>
           </div>
           <div class="fight-card-chevron" id="${rowId}-chev">&#9660;</div>
@@ -1362,15 +1369,23 @@
       ${record && !_recordEventFilter ? `<div class="text-xs text-gray-400 text-right mb-4">Updated ${new Date(record.updated_at).toLocaleString()}</div>` : ''}`;
 
       if (record && record.by_tier && !_recordEventFilter) {
-        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:12px;">By Confidence Tier</h3>
-        <div class="grid md:grid-cols-3 gap-4 mb-8">`;
-        const tierLabels = { high: 'High (70%+)', medium: 'Med (60-70%)', low: 'Low (<60%)' };
-        const tierColors = { high: '#D91A1A', medium: '#b45309', low: '#777' };
-        ['high', 'medium', 'low'].forEach(tier => {
-          const t = record.by_tier[tier];
+        const u = record.units || {};
+        html += `<h3 class="section-title" style="font-size:24px;margin-bottom:8px;">By Confidence Tier</h3>`;
+        if (u.tiered_flat !== undefined) {
+          html += `<p style="font-size:13px;color:#777;margin-bottom:12px;">Tiered staking: LEAN 0.5u · MEDIUM 1u · STRONG 1.5u · LOCK 2u</p>`;
+        }
+        html += `<div class="grid md:grid-cols-4 gap-4 mb-8">`;
+        const tierLabels = { lock: 'LOCK (85%+)', strong: 'STRONG (75-84%)', medium: 'MEDIUM (65-74%)', lean: 'LEAN (<65%)' };
+        const tierStake = { lock: '2u', strong: '1.5u', medium: '1u', lean: '0.5u' };
+        const tierColors = { lock: '#D91A1A', strong: '#c05c00', medium: '#b45309', lean: '#777' };
+        ['lock', 'strong', 'medium', 'lean'].forEach(tier => {
+          const t = record.by_tier[tier] || { wins:0, losses:0, total:0, accuracy:0 };
           html += `<div class="record-summary-card">
-            <div class="text-xs font-semibold mb-2" style="color:${tierColors[tier]}">${tierLabels[tier]}</div>
-            <div class="record-summary-num" style="font-size:36px;">${t.wins}W - ${t.losses}L</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <div class="text-xs font-semibold" style="color:${tierColors[tier]}">${tierLabels[tier]}</div>
+              <div style="font-size:10px;color:#aaa;font-family:'Bebas Neue',sans-serif;">${tierStake[tier]}</div>
+            </div>
+            <div class="record-summary-num" style="font-size:30px;">${t.wins}W - ${t.losses}L</div>
             <div class="text-sm text-gray-500 mt-1">${t.total > 0 ? t.accuracy + '%' : '--'}</div>
           </div>`;
         });

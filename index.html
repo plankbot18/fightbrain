@@ -310,7 +310,7 @@
         <span style="color:#ddd;">·</span>
         <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">7–5</strong> record</span>
         <span style="color:#ddd;">·</span>
-        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#D91A1A;">+2u</strong> flat</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#D91A1A;">+3u</strong> tiered</span>
       </div>
     </div>
 
@@ -400,15 +400,15 @@
   <!-- UNIT TRACKER -->
   <section style="background:#D91A1A;padding:56px 24px;text-align:center;">
     <div class="max-w-4xl mx-auto">
-      <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;" id="unitLabel">UNIT TRACKER</p>
+      <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;" id="unitLabel">UNIT TRACKER — TIERED STAKING</p>
       <div style="display:flex;justify-content:center;align-items:baseline;gap:16px;flex-wrap:wrap;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+2</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+3</div>
         <div style="text-align:left;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:rgba(255,255,255,0.9);">UNITS</div>
-          <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);" id="unitSub">+16.7% ROI · 7W–5L · 12 picks</div>
+          <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);" id="unitSub">+23.1% ROI · 7W–5L · 12 picks</div>
         </div>
       </div>
-      <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-top:16px;">Risk 1 unit per pick · Profit based on book odds · All picks public &amp; verified</p>
+      <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-top:16px;">LEAN 0.5u · MEDIUM 1u · STRONG 1.5u · LOCK 2u · All picks public &amp; verified</p>
     </div>
   </section>
 
@@ -788,14 +788,10 @@
           document.getElementById('recordHighConf').textContent = record.by_tier.high.accuracy + '%';
         }
 
-        // Unit tracker: prefer odds-adjusted if available, else flat
-        const flatUnits = u.flat !== undefined ? u.flat : (o.wins - o.losses);
-        const oddsUnits = u.odds_adjusted;
-        const displayUnits = (oddsUnits !== null && oddsUnits !== undefined) ? oddsUnits : flatUnits;
-        const isOddsAdj = (oddsUnits !== null && oddsUnits !== undefined);
-        const displayROI = isOddsAdj ? u.odds_roi : u.flat_roi;
-        const unitLabel = isOddsAdj ? 'ODDS-ADJ UNITS' : 'UNITS (FLAT)';
-        const unitNote = isOddsAdj ? (u.odds_note === 'estimated' ? 'est. opening odds' : 'verified odds') : 'flat +1/-1 per pick';
+        // Unit tracker: tiered flat is primary (honest, auditable, no odds estimates needed)
+        const displayUnits = u.tiered_flat !== undefined ? u.tiered_flat : (u.flat !== undefined ? u.flat : (o.wins - o.losses));
+        const displayROI = u.tiered_flat_roi !== undefined ? u.tiered_flat_roi : u.flat_roi;
+        const unitLabel = 'UNIT TRACKER — TIERED STAKING';
 
         // Update unit tracker section
         const unitCountEl = document.getElementById('unitCount');

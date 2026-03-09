@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-09T12:58:14.678554+00:00",
+  "updated_at": "2026-03-09T13:27:19.237398+00:00",
   "overall": {
     "wins": 7,
     "losses": 5,
@@ -10,29 +10,38 @@
   "units": {
     "flat": 2,
     "flat_roi": 16.7,
-    "odds_adjusted": -1.56,
-    "odds_roi": -13.0,
+    "tiered_flat": 3.0,
+    "tiered_flat_roi": 23.1,
+    "tiered_staked": 13.0,
+    "odds_adjusted": -1.22,
+    "odds_roi": -9.4,
     "odds_picks": 12,
     "odds_note": "estimated"
   },
   "by_tier": {
-    "high": {
-      "wins": 4,
+    "lock": {
+      "wins": 2,
       "losses": 1,
-      "total": 5,
-      "accuracy": 80.0
+      "total": 3,
+      "accuracy": 66.7
+    },
+    "strong": {
+      "wins": 0,
+      "losses": 0,
+      "total": 0,
+      "accuracy": 0
     },
     "medium": {
       "wins": 3,
-      "losses": 3,
-      "total": 6,
-      "accuracy": 50.0
+      "losses": 2,
+      "total": 5,
+      "accuracy": 60.0
     },
-    "low": {
-      "wins": 0,
-      "losses": 1,
-      "total": 1,
-      "accuracy": 0.0
+    "lean": {
+      "wins": 2,
+      "losses": 2,
+      "total": 4,
+      "accuracy": 50.0
     }
   },
   "by_event": {
