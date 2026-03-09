@@ -402,13 +402,13 @@
     <div class="max-w-4xl mx-auto">
       <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;" id="unitLabel">UNIT TRACKER</p>
       <div style="display:flex;justify-content:center;align-items:baseline;gap:16px;flex-wrap:wrap;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+5</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+0.78</div>
         <div style="text-align:left;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:rgba(255,255,255,0.9);">UNITS</div>
-          <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);" id="unitSub">+23.1% ROI · 7W–4L · 12 picks</div>
+          <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);" id="unitSub">+7.1% ROI · 7W–4L · 11 picks · est. odds</div>
         </div>
       </div>
-      <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-top:16px;">LEAN 0.5u · MEDIUM 1u · STRONG 1.5u · LOCK 2u · All picks public &amp; verified</p>
+      <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-top:16px;">Odds-adjusted · Tiered staking · All picks public &amp; verified</p>
     </div>
   </section>
 
@@ -795,10 +795,13 @@
           document.getElementById('recordHighConf').textContent = record.by_tier.high.accuracy + '%';
         }
 
-        // Unit tracker: tiered staking (LEAN 0.5u / MEDIUM 1u / STRONG 1.5u / LOCK 2u)
-        const displayUnits = u.pnl !== undefined ? u.pnl : (o.wins - o.losses);
-        const displayROI = u.roi !== undefined ? u.roi : 0;
-        const unitLabel = 'UNIT TRACKER';
+        // Unit tracker: odds-adjusted P&L is the honest figure (actual return based on odds)
+        // Fallback to tiered flat if odds not available
+        const hasOdds = u.odds_adjusted !== null && u.odds_adjusted !== undefined;
+        const displayUnits = hasOdds ? u.odds_adjusted : (u.pnl !== undefined ? u.pnl : (o.wins - o.losses));
+        const displayROI = hasOdds ? u.odds_roi : (u.roi !== undefined ? u.roi : 0);
+        const oddsNote = hasOdds && u.odds_note === 'estimated' ? ' · est. odds' : '';
+        const unitLabel = 'UNIT TRACKER (ODDS-ADJUSTED)';
 
         // Update unit tracker section
         const unitCountEl = document.getElementById('unitCount');
@@ -814,7 +817,7 @@
           unitCountEl.textContent = sign + displayUnits.toFixed(2);
         }
         if (unitSubEl) {
-          unitSubEl.textContent = (displayROI >= 0 ? '+' : '') + displayROI + '% ROI · ' + o.wins + 'W–' + o.losses + 'L · ' + o.total + ' picks · LEAN 0.5u / MED 1u / STRONG 1.5u / LOCK 2u';
+          unitSubEl.textContent = (displayROI >= 0 ? '+' : '') + displayROI + '% ROI · ' + o.wins + 'W–' + o.losses + 'L · ' + o.total + ' picks' + oddsNote;
         }
         if (unitLabelEl) unitLabelEl.textContent = unitLabel;
       })
