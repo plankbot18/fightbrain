@@ -77,6 +77,7 @@
     }
     .tab-bar-inner button:hover { color: #111; }
     .tab-divider { color: #ddd; padding: 0 4px; align-self: center; font-size: 14px; }
+    .full-analysis-btn:hover { text-decoration: underline; opacity: 0.8; }
     .tab-secondary { font-size: 11px !important; color: #bbb !important; padding: 6px 10px !important; }
     .tab-secondary:hover { color: #888 !important; }
     .tab-secondary.tab-active { color: #D91A1A !important; }
@@ -961,15 +962,15 @@
       }
 
       // Full analysis toggle
-      html += `<button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn"
-        style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;">
+      html += `<button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn" class="full-analysis-btn"
+        style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;transition:opacity 0.2s;">
         Full Analysis ↓
       </button>`;
 
       html += '</div>';
 
       // ── LEVEL 2: Deep dive (hidden by default) ────────────────────────
-      html += `<div id="${fullId}" style="display:none;" class="space-y-4 mt-3 pt-3" style="border-top:1px solid #E5DDD5">`;
+      html += `<div id="${fullId}" data-open="false" style="display:none;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.3s ease;" class="space-y-4 mt-3 pt-3"`;
 
       // Scout reports
       html += (f.f1_scout_obj ? renderScoutSection(f.f1_scout_obj, f.f1) : '');
@@ -987,9 +988,24 @@
       const el = document.getElementById(id);
       const btn = document.getElementById(id + '-btn');
       if (!el) return;
-      const isOpen = el.style.display !== 'none';
-      el.style.display = isOpen ? 'none' : 'block';
-      if (btn) btn.textContent = isOpen ? 'Full Analysis ↓' : 'Hide Analysis ↑';
+      const isOpen = el.dataset.open === 'true';
+      if (isOpen) {
+        el.style.maxHeight = '0';
+        el.style.opacity = '0';
+        el.dataset.open = 'false';
+        if (btn) btn.textContent = 'Full Analysis ↓';
+        setTimeout(() => { el.style.display = 'none'; }, 350);
+      } else {
+        el.style.display = 'block';
+        el.style.maxHeight = '0';
+        el.style.opacity = '0';
+        el.dataset.open = 'true';
+        requestAnimationFrame(() => {
+          el.style.maxHeight = '2400px';
+          el.style.opacity = '1';
+        });
+        if (btn) btn.textContent = 'Hide Analysis ↑';
+      }
     }
 
     function renderFightRow(f) {

@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FightBrain — Data-Driven UFC Predictions</title>
+  <title>FightBrain — UFC Picks · 75% Win Rate</title>
+  <meta property="og:title" content="FightBrain — UFC Predictions Powered by ML" />
+  <meta property="og:description" content="Machine learning UFC picks. 75% win rate. 9-3 record. +6 units. Every pick public and tracked." />
+  <meta property="og:url" content="https://plankbot18.github.io/fightbrain/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="FightBrain — UFC Picks" />
+  <meta name="twitter:description" content="75% win rate. +6 units. 9-3 record. ML-powered UFC predictions. Every fight week." />
   <meta name="description" content="Data-driven UFC predictions powered by machine learning. 76.1% accuracy. Real track record.">
   <meta name="theme-color" content="#111111">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -135,6 +142,60 @@
       height: 1px;
       background: #333;
     }
+  /* === FIGHTER PROMO CARDS === */
+  .fight-promo-card {
+    border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    margin-bottom: 0;
+  }
+  .fight-promo-inner {
+    display: flex; align-items: stretch; min-height: 90px;
+    background: linear-gradient(135deg, #111 0%, #1a0000 50%, #111 100%);
+    background-size: 200% 200%;
+    animation: kenBurns 9s ease-in-out infinite;
+  }
+  @keyframes kenBurns {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .fight-promo-winner {
+    flex: 1; padding: 20px 20px 20px 24px; background: linear-gradient(90deg, rgba(217,26,26,0.18) 0%, transparent 100%);
+    border-left: 3px solid #D91A1A; display: flex; flex-direction: column; justify-content: center;
+  }
+  .fight-promo-opponent {
+    flex: 1; padding: 20px 24px 20px 20px; text-align: right;
+    display: flex; flex-direction: column; justify-content: center; align-items: flex-end;
+  }
+  .fight-promo-name {
+    font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #ffffff; line-height: 1.1;
+  }
+  .fight-promo-name.opp { color: #aaaaaa; }
+  .fight-promo-sublabel {
+    font-family: 'Inter', sans-serif; font-size: 9px; color: #D91A1A; text-transform: uppercase;
+    letter-spacing: 0.1em; margin-top: 3px; font-weight: 600;
+  }
+  .fight-promo-sublabel.opp { color: #555; }
+  .fight-promo-vs {
+    padding: 16px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06);
+    min-width: 80px;
+  }
+  .fight-promo-conf {
+    font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #D91A1A; line-height: 1;
+  }
+
+  /* === VALUE CARD WATERMARK === */
+  .value-card { position: relative; overflow: hidden; }
+  .value-card-watermark {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif; font-size: 110px; color: rgba(217,26,26,0.04);
+    white-space: nowrap; pointer-events: none; user-select: none; line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  /* === UNIT TRACKER ANIMATION === */
+  #unitCount { transition: color 0.3s; }
+
   </style>
 </head>
 <body class="font-sans antialiased">
@@ -450,19 +511,35 @@
 
         if (featuredPicks.length > 0) {
           featuredContainer.innerHTML = featuredPicks.map((p, i) => {
-            const opponent = p.predicted_winner === p.fighter1 ? p.fighter2 : p.fighter1;
+            const isF1Winner = p.predicted_winner === p.fighter1;
+            const winner = p.predicted_winner;
+            const loser = isF1Winner ? p.fighter2 : p.fighter1;
+            const winnerLast = winner.split(' ').pop().toUpperCase();
+            const loserLast = loser.split(' ').pop().toUpperCase();
             return `
-              <div class="fade-in visible bg-surface border border-border border-l-[3px] border-l-accent rounded-2xl px-6 py-5 flex items-center justify-between transition-colors" style="transition-delay:${i * 0.08}s">
-                <div class="flex-1 min-w-0">
-                  <div class="text-lg font-bold text-white truncate">${p.predicted_winner}</div>
-                  <div class="text-sm text-muted">vs ${opponent}</div>
-                </div>
-                <div class="flex items-center gap-3 ml-4 shrink-0">
-                  <span class="text-lg font-black text-gold">${p.conf.toFixed(1)}%</span>
+              <div class="fight-promo-card fade-in visible" style="transition-delay:${i * 0.1}s;animation-delay:${i * 0.3}s;">
+                <div class="fight-promo-inner">
+                  <!-- Winner side -->
+                  <div class="fight-promo-winner">
+                    <div class="fight-promo-name">${winner}</div>
+                    <div class="fight-promo-sublabel">PREDICTED WINNER</div>
+                  </div>
+                  <!-- VS badge -->
+                  <div class="fight-promo-vs">
+                    <div class="fight-promo-conf">${p.conf.toFixed(0)}<span style="font-size:18px;">%</span></div>
+                    <div style="font-size:10px;color:#999;letter-spacing:0.1em;margin-top:2px;">CONFIDENCE</div>
+                  </div>
+                  <!-- Opponent side -->
+                  <div class="fight-promo-opponent">
+                    <div class="fight-promo-name opp">${loser}</div>
+                    <div class="fight-promo-sublabel opp">OPPONENT</div>
+                  </div>
                 </div>
               </div>
             `;
           }).join('');
+          // Trigger Ken Burns after render
+          document.querySelectorAll('.fight-promo-inner').forEach(el => el.classList.add('kb-active'));
         }
 
         // Re-observe any new fade-in elements
@@ -518,6 +595,7 @@
             const opponent = pickName === p.fighter1 ? p.fighter2 : p.fighter1;
             return `
               <div class="value-card fade-in visible" style="transition-delay:${i * 0.1}s">
+                <div class="value-card-watermark">${pickName.split(' ').pop().toUpperCase()}</div>
                 <div class="value-card-bar"></div>
                 <div class="value-card-body">
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -569,7 +647,34 @@
       });
   </script>
 
-  <!-- Ken Burns fallback code removed: kb1/kb2/kb3 elements no longer in DOM -->
+  <!-- Unit tracker count-up animation -->
+  <script>
+    (function() {
+      const unitEl = document.getElementById('unitCount');
+      if (!unitEl) return;
+      let animated = false;
+      const target = 6;
+      function animateCount() {
+        if (animated) return;
+        animated = true;
+        const duration = 1600;
+        const start = performance.now();
+        function update(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = Math.round(eased * target);
+          unitEl.textContent = '+' + current;
+          if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+      }
+      const obs = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) { animateCount(); obs.disconnect(); }
+      }, { threshold: 0.4 });
+      obs.observe(unitEl);
+    })();
+  </script>
 
 </body>
 </html>
