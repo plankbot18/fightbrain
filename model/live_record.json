@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-03-08T14:53:51.914131+00:00",
+  "updated_at": "2026-03-09T02:28:33.185891+00:00",
   "overall": {
-    "wins": 7,
+    "wins": 9,
     "losses": 3,
-    "total": 10,
-    "pending": 2,
-    "accuracy": 70.0
+    "total": 12,
+    "pending": 0,
+    "accuracy": 75.0
   },
   "by_tier": {
     "high": {
-      "wins": 3,
+      "wins": 4,
       "losses": 1,
-      "total": 4,
-      "accuracy": 75.0
+      "total": 5,
+      "accuracy": 80.0
     },
     "medium": {
-      "wins": 3,
+      "wins": 4,
       "losses": 2,
-      "total": 5,
-      "accuracy": 60.0
+      "total": 6,
+      "accuracy": 66.7
     },
     "low": {
       "wins": 1,
@@ -29,10 +29,10 @@
   },
   "by_event": {
     "UFC 326: Holloway vs. Oliveira 2": {
-      "wins": 7,
+      "wins": 9,
       "losses": 3,
-      "total": 10,
-      "accuracy": 70.0
+      "total": 12,
+      "accuracy": 75.0
     }
   }
 }
