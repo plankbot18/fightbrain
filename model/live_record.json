@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-09T17:50:45.720066+00:00",
+  "updated_at": "2026-03-09T17:55:32.371619+00:00",
   "overall": {
     "wins": 7,
     "losses": 4,
@@ -8,11 +8,9 @@
     "accuracy": 63.6
   },
   "units": {
-    "flat": 3,
-    "flat_roi": 27.3,
-    "tiered_flat": 5.0,
-    "tiered_flat_roi": 45.5,
-    "tiered_staked": 11.0,
+    "pnl": 5.0,
+    "roi": 45.5,
+    "staked": 11.0,
     "odds_adjusted": 0.78,
     "odds_roi": 7.1,
     "odds_picks": 11,
@@ -50,8 +48,8 @@
       "losses": 4,
       "total": 11,
       "accuracy": 63.6,
-      "flat_units": 3,
-      "odds_units": -0.56
+      "units": 5.0,
+      "staked": 11.0
     }
   }
 }

@@ -400,9 +400,9 @@
   <!-- UNIT TRACKER -->
   <section style="background:#D91A1A;padding:56px 24px;text-align:center;">
     <div class="max-w-4xl mx-auto">
-      <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;" id="unitLabel">UNIT TRACKER — TIERED STAKING</p>
+      <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;" id="unitLabel">UNIT TRACKER</p>
       <div style="display:flex;justify-content:center;align-items:baseline;gap:16px;flex-wrap:wrap;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+3</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:96px;color:white;line-height:1;" id="unitCount">+5</div>
         <div style="text-align:left;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:rgba(255,255,255,0.9);">UNITS</div>
           <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);" id="unitSub">+23.1% ROI · 7W–4L · 12 picks</div>
@@ -788,10 +788,10 @@
           document.getElementById('recordHighConf').textContent = record.by_tier.high.accuracy + '%';
         }
 
-        // Unit tracker: tiered flat is primary (honest, auditable, no odds estimates needed)
-        const displayUnits = u.tiered_flat !== undefined ? u.tiered_flat : (u.flat !== undefined ? u.flat : (o.wins - o.losses));
-        const displayROI = u.tiered_flat_roi !== undefined ? u.tiered_flat_roi : u.flat_roi;
-        const unitLabel = 'UNIT TRACKER — TIERED STAKING';
+        // Unit tracker: tiered staking (LEAN 0.5u / MEDIUM 1u / STRONG 1.5u / LOCK 2u)
+        const displayUnits = u.pnl !== undefined ? u.pnl : (o.wins - o.losses);
+        const displayROI = u.roi !== undefined ? u.roi : 0;
+        const unitLabel = 'UNIT TRACKER';
 
         // Update unit tracker section
         const unitCountEl = document.getElementById('unitCount');
@@ -807,7 +807,7 @@
           unitCountEl.textContent = sign + displayUnits.toFixed(2);
         }
         if (unitSubEl) {
-          unitSubEl.textContent = (displayROI >= 0 ? '+' : '') + displayROI + '% ROI · ' + o.wins + 'W–' + o.losses + 'L · ' + o.total + ' picks';
+          unitSubEl.textContent = (displayROI >= 0 ? '+' : '') + displayROI + '% ROI · ' + o.wins + 'W–' + o.losses + 'L · ' + o.total + ' picks · LEAN 0.5u / MED 1u / STRONG 1.5u / LOCK 2u';
         }
         if (unitLabelEl) unitLabelEl.textContent = unitLabel;
       })
