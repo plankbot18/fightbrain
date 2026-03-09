@@ -374,7 +374,8 @@
   <!-- SECTION 4: LIVE RECORD -->
   <section id="record" style="background:#111111;padding:96px 24px;" class="max-md:!py-12">
     <div class="max-w-5xl mx-auto">
-      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:64px;color:white;text-align:center;line-height:1;margin-bottom:12px;">TRACK RECORD</h2>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:64px;color:white;text-align:center;line-height:1;margin-bottom:4px;">TRACK RECORD</h2>
+      <p id="dataFreshness" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;text-align:center;margin-bottom:12px;">Loading...</p>
       <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;text-align:center;margin-bottom:48px;">Every pick public. Every result tracked.</p>
 
       <div class="grid md:grid-cols-3 gap-6">
@@ -800,8 +801,8 @@
         document.getElementById('recordEventLabel').textContent = eventCount + ' EVENT' + (eventCount !== 1 ? 'S' : '') + ' TRACKED';
 
         // High confidence accuracy
-        if (record.by_tier && record.by_tier.high) {
-          document.getElementById('recordHighConf').textContent = record.by_tier.high.accuracy + '%';
+        if (record.by_tier && record.by_tier.lock) {
+          document.getElementById('recordHighConf').textContent = record.by_tier.lock.accuracy + '%';
         }
 
         // Hero record banner — lead with record + accuracy, show units as tertiary
@@ -824,10 +825,23 @@
         }
         if (unitSubEl) unitSubEl.textContent = 'ODDS-ADJ P\u0026L \u00b7 ' + (displayROI >= 0 ? '+' : '') + displayROI + '% ROI';
         if (unitLabelEl) unitLabelEl.textContent = 'LIVE RECORD \u2014 ' + (Object.keys(record.by_event || {})[0] || 'UFC');
+
+        // Data freshness
+        if (record.updated_at) {
+          const mins = Math.round((Date.now() - new Date(record.updated_at).getTime()) / 60000);
+          let freshnessStr;
+          if (mins < 5) freshnessStr = 'just now';
+          else if (mins < 60) freshnessStr = mins + ' mins ago';
+          else { const hrs = Math.round(mins / 60); freshnessStr = hrs + ' hour' + (hrs === 1 ? '' : 's') + ' ago'; }
+          const el = document.getElementById('dataFreshness');
+          if (el) el.textContent = 'Model data updated ' + freshnessStr;
+        }
       })
       .catch(() => {
         document.getElementById('recordWL').textContent = '--';
         document.getElementById('recordHighConf').textContent = '--';
+        const el = document.getElementById('dataFreshness');
+        if (el) el.textContent = '';
       });
   </script>
 

@@ -523,6 +523,7 @@
   <header class="site-header">
     <div class="site-header-inner">
       <div class="site-logo">FIGHTBRAIN<sup>MMA</sup></div>
+      <div id="uiFreshness" style="font-family:'Inter',sans-serif;font-size:10px;color:#aaa;white-space:nowrap;"></div>
       <div class="header-center">
         <select id="event-selector" class="event-selector" onchange="selectEvent(this.value)"></select>
       </div>
@@ -538,6 +539,7 @@
       <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active">Upcoming Picks</button>
       <button onclick="showTab('value')" id="tab-value" class="tab-inactive">Value Picks</button>
       <button onclick="showTab('record')" id="tab-record" class="tab-inactive">Picks Record</button>
+      <button onclick="showTab('archive')" id="tab-archive" class="tab-inactive">Archive</button>
       <span class="tab-divider">|</span>
       <button onclick="showTab('analysis')" id="tab-analysis" class="tab-inactive tab-secondary">Fight Analysis</button>
       <button onclick="showTab('outcomes')" id="tab-outcomes" class="tab-inactive tab-secondary">Outcomes</button>
@@ -646,6 +648,12 @@
       </div>
     </section>
 
+    <!-- Archive -->
+    <section id="panel-archive" class="hidden">
+      <div id="archive-loading" style="padding:40px;text-align:center;color:#888;font-family:'Inter',sans-serif;">Loading archive...</div>
+      <div id="archive-content" style="max-width:900px;margin:0 auto;padding:24px 16px;"></div>
+    </section>
+
     <!-- Fight Analysis -->
     <section id="panel-analysis" class="hidden">
       <div class="model-card mb-6">
@@ -743,10 +751,11 @@
 
     // ===== TAB SWITCHING =====
     function showTab(name) {
-      ['upcoming', 'value', 'record', 'model', 'analysis', 'outcomes'].forEach(t => {
-        document.getElementById('panel-' + t).classList.toggle('hidden', t !== name);
+      ['upcoming', 'value', 'record', 'archive', 'model', 'analysis', 'outcomes'].forEach(t => {
+        const panel = document.getElementById('panel-' + t);
+        if (panel) panel.classList.toggle('hidden', t !== name);
         const btn = document.getElementById('tab-' + t);
-        btn.className = t === name ? 'tab-active' : 'tab-inactive';
+        if (btn) btn.className = t === name ? 'tab-active' : (btn.classList.contains('tab-secondary') ? 'tab-inactive tab-secondary' : 'tab-inactive');
       });
       // Show/hide search bar (only for upcoming)
       document.getElementById('search-bar-wrapper').style.display = name === 'upcoming' ? '' : 'none';
@@ -754,8 +763,80 @@
       if (name === 'analysis' && !window._analysisLoaded) loadChartJS().then(() => loadAnalysis());
       if (name === 'outcomes' && !window._outcomesLoaded) loadChartJS().then(() => loadOutcomes());
       if (name === 'analysis') {
-        // Re-render radar on tab switch for animation
         setTimeout(() => { if (document.getElementById('radar-fight-select').value) renderRadarChart(); }, 100);
+      }
+      if (name === 'archive' && !window._archiveLoaded) renderArchive();
+    }
+
+    async function renderArchive() {
+      window._archiveLoaded = true;
+      const loadingEl = document.getElementById('archive-loading');
+      const contentEl = document.getElementById('archive-content');
+      try {
+        const picks = _allPicks || await fetch('../picks/picks_log.json').then(r => r.json());
+        const resolved = picks.filter(p => p.result !== null);
+        if (!resolved.length) {
+          loadingEl.textContent = 'No archived picks yet.';
+          return;
+        }
+        // Group by event (preserve order, most recent first)
+        const byEvent = {};
+        resolved.forEach(p => { if (!byEvent[p.event]) byEvent[p.event] = []; byEvent[p.event].push(p); });
+        const events = Object.keys(byEvent).reverse();
+
+        let html = '';
+        events.forEach(ev => {
+          const picks = byEvent[ev];
+          const wins = picks.filter(p => p.result === 'correct').length;
+          const losses = picks.filter(p => p.result === 'wrong').length;
+          const unitPnl = picks.reduce((sum, p) => {
+            const stake = p.recommended_units || 1;
+            return sum + (p.result === 'correct' ? stake : -stake);
+          }, 0);
+          const pnlStr = (unitPnl >= 0 ? '+' : '') + unitPnl.toFixed(1) + 'u';
+
+          html += `<div style="margin-bottom:32px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #D91A1A;padding-bottom:8px;margin-bottom:12px;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#111;letter-spacing:1px;">${ev}</div>
+              <div style="font-family:'Inter',sans-serif;font-size:13px;color:#555;">
+                ${wins}W–${losses}L &nbsp;·&nbsp; <span style="color:${unitPnl >= 0 ? '#16a34a' : '#dc2626'};font-weight:600;">${pnlStr}</span>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-family:'Inter',sans-serif;font-size:13px;">
+              <thead>
+                <tr style="color:#888;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;border-bottom:1px solid #eee;">
+                  <th style="text-align:left;padding:6px 8px;">Fight</th>
+                  <th style="text-align:left;padding:6px 8px;">Predicted</th>
+                  <th style="text-align:center;padding:6px 8px;">Result</th>
+                  <th style="text-align:left;padding:6px 8px;">Actual Winner</th>
+                  <th style="text-align:left;padding:6px 8px;">Method</th>
+                  <th style="text-align:right;padding:6px 8px;">Stake</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+          picks.forEach(p => {
+            const icon = p.result === 'correct' ? '✅' : '❌';
+            const method = p.method || '—';
+            const stake = (p.recommended_units || 1) + 'u';
+            html += `<tr style="border-bottom:1px solid #f5f5f5;">
+              <td style="padding:8px;color:#333;">${p.fight}</td>
+              <td style="padding:8px;"><strong>${p.predicted_winner}</strong> <span style="color:#888;">(${p.confidence}%)</span></td>
+              <td style="padding:8px;text-align:center;">${icon}</td>
+              <td style="padding:8px;color:#333;">${p.actual_winner || '—'}</td>
+              <td style="padding:8px;color:#888;">${method}</td>
+              <td style="padding:8px;text-align:right;color:#888;">${stake}</td>
+            </tr>`;
+          });
+
+          html += `</tbody></table></div></div>`;
+        });
+
+        loadingEl.classList.add('hidden');
+        contentEl.innerHTML = html;
+      } catch(e) {
+        loadingEl.textContent = 'Failed to load archive.';
       }
     }
 
@@ -1587,6 +1668,17 @@
 
         _allPicks = picksRes;
         _recordData = recordRes;
+
+        // Data freshness
+        if (recordRes && recordRes.updated_at) {
+          const mins = Math.round((Date.now() - new Date(recordRes.updated_at).getTime()) / 60000);
+          let fs;
+          if (mins < 5) fs = 'just now';
+          else if (mins < 60) fs = mins + ' mins ago';
+          else { const h = Math.round(mins / 60); fs = h + ' hr' + (h === 1 ? '' : 's') + ' ago'; }
+          const el = document.getElementById('uiFreshness');
+          if (el) el.textContent = 'Data: ' + fs;
+        }
 
         // Populate event filter dropdown
         const events = [...new Set(_allPicks.map(p => p.event))];
