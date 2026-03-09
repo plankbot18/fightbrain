@@ -76,6 +76,10 @@
       min-height: 48px;
     }
     .tab-bar-inner button:hover { color: #111; }
+    .tab-divider { color: #ddd; padding: 0 4px; align-self: center; font-size: 14px; }
+    .tab-secondary { font-size: 11px !important; color: #bbb !important; padding: 6px 10px !important; }
+    .tab-secondary:hover { color: #888 !important; }
+    .tab-secondary.tab-active { color: #D91A1A !important; }
     .tab-active { color: #D91A1A !important; border-bottom-color: #D91A1A !important; }
     .tab-inactive { color: #888; }
     .tab-inactive:hover { color: #111; }
@@ -513,10 +517,11 @@
     <div class="tab-bar-inner">
       <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active">Upcoming Picks</button>
       <button onclick="showTab('value')" id="tab-value" class="tab-inactive">Value Picks</button>
-      <button onclick="showTab('analysis')" id="tab-analysis" class="tab-inactive">Fight Analysis</button>
-      <button onclick="showTab('outcomes')" id="tab-outcomes" class="tab-inactive">Outcomes</button>
       <button onclick="showTab('record')" id="tab-record" class="tab-inactive">Picks Record</button>
-      <button onclick="showTab('model')" id="tab-model" class="tab-inactive">Model Info</button>
+      <span class="tab-divider">|</span>
+      <button onclick="showTab('analysis')" id="tab-analysis" class="tab-inactive tab-secondary">Fight Analysis</button>
+      <button onclick="showTab('outcomes')" id="tab-outcomes" class="tab-inactive tab-secondary">Outcomes</button>
+      <button onclick="showTab('model')" id="tab-model" class="tab-inactive tab-secondary">Model Info</button>
     </div>
   </nav>
 
@@ -891,59 +896,100 @@
       if (chevron) chevron.classList.toggle('open');
     }
 
+    function truncateToSentences(text, n) {
+      if (!text) return '';
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      const preview = sentences.slice(0, n).join(' ').trim();
+      return sentences.length > n ? preview + '…' : preview;
+    }
+
+    function renderMethodBar(methodData) {
+      if (!methodData) return '';
+      const decPct = parseFloat(methodData.decision_pct) || 0;
+      const koPct = parseFloat(methodData.ko_pct) || 0;
+      const subPct = parseFloat(methodData.sub_pct) || 0;
+      const total = decPct + koPct + subPct;
+      const decW = total > 0 ? (decPct / total * 100) : 33;
+      const koW = total > 0 ? (koPct / total * 100) : 33;
+      const subW = total > 0 ? (subPct / total * 100) : 34;
+      return `<div>
+        <div class="text-xs text-gray-500 mb-1.5">Method of Victory</div>
+        <div class="flex rounded-lg overflow-hidden text-xs font-medium text-white" style="height:36px">
+          <div style="background:#999999;width:${decW}%" class="analysis-method-bar">${decPct >= 5 ? decPct + '% DEC' : ''}</div>
+          <div style="background:#D91A1A;width:${koW}%" class="analysis-method-bar">${koPct >= 5 ? koPct + '% KO' : ''}</div>
+          <div style="background:#8B0000;width:${subW}%" class="analysis-method-bar">${subPct >= 5 ? subPct + '% SUB' : ''}</div>
+        </div>
+        <div class="flex justify-between text-xs mt-1">
+          <span style="color:#D91A1A">${(methodData.finish_label && methodData.finish_label !== 'undefined') ? methodData.finish_label : ''}</span>
+          <span class="text-gray-500">${(methodData.method_label && methodData.method_label !== 'undefined') ? methodData.method_label : ''}</span>
+        </div>
+      </div>`;
+    }
+
+    function renderValueBar(valuePick) {
+      if (!valuePick || valuePick.odds_source !== 'BOOK') return '';
+      const vpAmerican = valuePick.book_odds_american || (valuePick.book_odds ? (valuePick.book_odds >= 2.0 ? '+' + Math.round((valuePick.book_odds - 1) * 100) : '-' + Math.round(100 / (valuePick.book_odds - 1))) : 'N/A');
+      return `<div class="rounded-lg p-3 border" style="background:#FAF7F2;border-color:#E5DDD5">
+        <div class="text-xs text-gray-500 mb-2">Model vs Bookmaker</div>
+        <div style="display:flex;gap:16px;" class="text-sm">
+          <div><span class="text-gray-500 text-xs">Model</span><div class="text-gray-900 font-semibold">${valuePick.confidence}%</div></div>
+          <div><span class="text-gray-500 text-xs">Book (${valuePick.bookmaker || 'N/A'})</span><div class="text-gray-900 font-semibold">${valuePick.book_prob}% <span class="font-mono text-xs text-gray-400">${vpAmerican}</span></div></div>
+          <div><span class="text-gray-500 text-xs">Edge</span><div class="${valuePick.edge > 0 ? 'text-green-600' : 'text-red-600'} font-semibold">${valuePick.edge > 0 ? '+' : ''}${valuePick.edge}%</div></div>
+        </div>
+      </div>`;
+    }
+
     function renderExpandedContent(f) {
       const report = findMatchupReport(f.f1, f.f2);
       const methodKey = f.f1 + ' vs ' + f.f2;
       const methodData = _methodPredictions[methodKey] || _methodPredictions[f.f2 + ' vs ' + f.f1];
       const valuePick = findValuePick(f.f1, f.f2);
+      const fullId = 'full-' + (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
 
-      let html = '<div class="space-y-4">';
+      // ── LEVEL 1: What every visitor sees ──────────────────────────────
+      let html = '<div class="space-y-3">';
 
-      // Method probability bars
-      if (methodData) {
-        const decPct = parseFloat(methodData.decision_pct) || 0;
-        const koPct = parseFloat(methodData.ko_pct) || 0;
-        const subPct = parseFloat(methodData.sub_pct) || 0;
-        const total = decPct + koPct + subPct;
-        const decW = total > 0 ? (decPct / total * 100) : 33;
-        const koW = total > 0 ? (koPct / total * 100) : 33;
-        const subW = total > 0 ? (subPct / total * 100) : 34;
-        html += `<div>
-          <div class="text-xs text-gray-500 mb-1.5">Method of Victory</div>
-          <div class="flex rounded-lg overflow-hidden text-xs font-medium text-white" style="height:36px">
-            <div style="background:#999999;width:${decW}%" class="analysis-method-bar">${decPct >= 5 ? decPct + '% DEC' : ''}</div>
-            <div style="background:#D91A1A;width:${koW}%" class="analysis-method-bar">${koPct >= 5 ? koPct + '% KO' : ''}</div>
-            <div style="background:#8B0000;width:${subW}%" class="analysis-method-bar">${subPct >= 5 ? subPct + '% SUB' : ''}</div>
-          </div>
-          <div class="flex justify-between text-xs mt-1">
-            <span style="color:#D91A1A">${(methodData.finish_label && methodData.finish_label !== 'undefined') ? methodData.finish_label : ''}</span>
-            <span class="text-gray-500">${(methodData.method_label && methodData.method_label !== 'undefined') ? methodData.method_label : ''}</span>
-          </div>
-        </div>`;
+      // Method bar
+      html += renderMethodBar(methodData);
+
+      // Value edge (if exists)
+      html += renderValueBar(valuePick);
+
+      // 2-sentence preview of the matchup narrative
+      if (report && report.report_text) {
+        html += `<div style="font-size:13px;color:#555;line-height:1.6;">${truncateToSentences(report.report_text, 2)}</div>`;
       }
 
-      // Bookmaker odds vs model
-      if (valuePick && valuePick.odds_source === 'BOOK') {
-        const vpAmerican = valuePick.book_odds_american || (valuePick.book_odds ? (valuePick.book_odds >= 2.0 ? '+' + Math.round((valuePick.book_odds - 1) * 100) : '-' + Math.round(100 / (valuePick.book_odds - 1))) : 'N/A');
-        html += `<div class="rounded-lg p-3 border" style="background:#FAF7F2;border-color:#E5DDD5">
-          <div class="text-xs text-gray-500 mb-2">Model vs Bookmaker</div>
-          <div class="grid grid-cols-3 gap-3 text-sm">
-            <div><span class="text-gray-500 text-xs">Model</span><div class="text-gray-900 font-semibold">${valuePick.confidence}%</div></div>
-            <div><span class="text-gray-500 text-xs">Book (${valuePick.bookmaker || 'N/A'})</span><div class="text-gray-900 font-semibold">${valuePick.book_prob}% <span class="font-mono text-xs text-gray-400">${vpAmerican}</span></div></div>
-            <div><span class="text-gray-500 text-xs">Edge</span><div class="${valuePick.edge > 0 ? 'text-green-600' : 'text-red-600'} font-semibold">${valuePick.edge > 0 ? '+' : ''}${valuePick.edge}%</div></div>
-          </div>
-        </div>`;
-      }
+      // Full analysis toggle
+      html += `<button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn"
+        style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;">
+        Full Analysis ↓
+      </button>`;
+
+      html += '</div>';
+
+      // ── LEVEL 2: Deep dive (hidden by default) ────────────────────────
+      html += `<div id="${fullId}" style="display:none;" class="space-y-4 mt-3 pt-3" style="border-top:1px solid #E5DDD5">`;
 
       // Scout reports
       html += (f.f1_scout_obj ? renderScoutSection(f.f1_scout_obj, f.f1) : '');
       html += (f.f2_scout_obj ? renderScoutSection(f.f2_scout_obj, f.f2) : '');
 
-      // Matchup report
+      // Full matchup report
       if (report) html += renderMatchupReport(report);
 
       html += '</div>';
+
       return html;
+    }
+
+    function toggleFullAnalysis(id) {
+      const el = document.getElementById(id);
+      const btn = document.getElementById(id + '-btn');
+      if (!el) return;
+      const isOpen = el.style.display !== 'none';
+      el.style.display = isOpen ? 'none' : 'block';
+      if (btn) btn.textContent = isOpen ? 'Full Analysis ↓' : 'Hide Analysis ↑';
     }
 
     function renderFightRow(f) {
