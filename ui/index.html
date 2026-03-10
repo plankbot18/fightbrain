@@ -1300,12 +1300,13 @@
             const f1wins = r.higher ? r.v1 >= r.v2 : r.v1 <= r.v2;
             const f1fmt = Number.isInteger(r.v1) ? r.v1 : parseFloat(r.v1).toFixed(1);
             const f2fmt = Number.isInteger(r.v2) ? r.v2 : parseFloat(r.v2).toFixed(1);
-            h2hMini += `<div class="h2h-row" data-f1share="${f1share}" data-f2share="${f2share}" style="margin-bottom:6px;">
+            // Set widths directly — no animation needed, bars visible on load
+            h2hMini += `<div class="h2h-row" style="margin-bottom:6px;">
               <div class="h2h-stat-f1 ${f1wins?'h2h-winner':''}">${f1fmt}${r.unit}</div>
               <div class="h2h-bar-wrap">
                 <div class="h2h-bar-inner">
-                  <div class="h2h-bar-f1" style="width:0%;background:${f1wins?'#D91A1A':'#CBD5E1'};"></div>
-                  <div class="h2h-bar-f2" style="width:0%;background:${!f1wins?'#D91A1A':'#CBD5E1'};"></div>
+                  <div class="h2h-bar-f1" style="width:${f1share}%;background:${f1wins?'#D91A1A':'#CBD5E1'};"></div>
+                  <div class="h2h-bar-f2" style="width:${f2share}%;background:${!f1wins?'#D91A1A':'#CBD5E1'};"></div>
                 </div>
                 <div class="h2h-label">${r.label}</div>
               </div>
