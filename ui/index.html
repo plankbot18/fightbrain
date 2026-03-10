@@ -1278,9 +1278,20 @@
       // Expanded content
       const expandedContent = renderExpandedContent(f);
 
-      // Safe image tags — no onerror data URI injection
-      const f1BannerImg = f1ImgSrc ? `<img src="${f1ImgSrc}" alt="" style="height:130px;max-width:100%;object-fit:contain;object-position:bottom;display:block;${isF1?'':'filter:grayscale(90%) brightness(0.55);'}" onerror="this.style.display='none'" loading="lazy">` : '';
-      const f2BannerImg = f2ImgSrc ? `<img src="${f2ImgSrc}" alt="" style="height:130px;max-width:100%;object-fit:contain;object-position:bottom;display:block;${!isF1?'':'filter:grayscale(90%) brightness(0.55);'}" onerror="this.style.display='none'" loading="lazy">` : '';
+      // Banner image builder — only uses real UFC image URLs, falls back to initials block
+      function bannerImg(name, imgUrl, winner) {
+        const filt = winner ? '' : 'filter:grayscale(90%) brightness(0.55);';
+        if (imgUrl) {
+          return '<img src="' + imgUrl + '" alt="" style="height:130px;max-width:100%;object-fit:contain;object-position:bottom;display:block;' + filt + '" onerror="this.style.display=\'none\'" loading="lazy">';
+        }
+        const parts = name.trim().split(' ');
+        const initials = parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+        return '<div style="height:130px;width:80px;display:flex;align-items:center;justify-content:center;font-family:\'Bebas Neue\',sans-serif;font-size:40px;color:#444;">' + initials + '</div>';
+      }
+      const f1RealImg = getFighterImg(f.f1);
+      const f2RealImg = getFighterImg(f.f2);
+      const f1BannerImg = bannerImg(f.f1, f1RealImg, isF1);
+      const f2BannerImg = bannerImg(f.f2, f2RealImg, !isF1);
 
       return `<div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.07);margin-bottom:20px;overflow:hidden;border:1px solid #f0f0f0;">
 
