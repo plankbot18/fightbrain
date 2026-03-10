@@ -2589,25 +2589,15 @@
           if (el) el.textContent = 'Data: ' + fs;
         }
 
-        // (Event filter removed — replaced by event-grouped pick tables)
-
-
-        const picks = picksRes;
-        const record = recordRes;
-
-        const decided = picks.filter(p => p.result !== null);
-        const pending = picks.filter(p => p.result === null);
-        document.getElementById('record-loading').classList.add('hidden');
-        try {
-          renderRecord();
-        } catch(renderErr) {
-          console.error('renderRecord error:', renderErr);
-          document.getElementById('record-content').innerHTML =
-            `<div style="color:#ef4444;font-family:Inter,sans-serif;padding:12px;">Render error: ${renderErr.message}</div>`;
-        }
+        const loadingEl = document.getElementById('record-loading');
+        if (loadingEl) loadingEl.classList.add('hidden');
+        renderRecord();
       } catch (e) {
-        console.error('loadRecord fetch error:', e);
-        document.getElementById('record-loading').textContent = 'Failed to load picks log: ' + e.message;
+        console.error('loadRecord error:', e);
+        const loadingEl = document.getElementById('record-loading');
+        const contentEl = document.getElementById('record-content');
+        if (loadingEl) loadingEl.classList.add('hidden');
+        if (contentEl) contentEl.innerHTML = `<div style="color:#ef4444;font-family:Inter,sans-serif;padding:16px;font-size:13px;">Error loading record: ${e.message}</div>`;
       }
     }
 
