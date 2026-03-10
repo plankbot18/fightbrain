@@ -311,9 +311,9 @@
       <a href="ui/index.html" style="display:block;background:#D91A1A;color:white;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:16px;border-radius:12px;text-decoration:none;text-align:center;">View This Week's Picks →</a>
 
       <div style="display:flex;gap:16px;justify-content:center;padding:4px 0;">
-        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">63.6%</strong> win rate</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;" id="heroAcc">--</strong> win rate</span>
         <span style="color:#ddd;">·</span>
-        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">7–4</strong> record</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;" id="heroWL">--</strong> record</span>
         <span style="color:#ddd;">·</span>
         <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;" id="heroPnlStrip"><strong style="color:#D91A1A;" id="heroPnlVal">--</strong> <span id="heroPnlLabel">odds-adj</span></span>
       </div>
@@ -841,9 +841,13 @@
           document.getElementById('recordHighConf').textContent = record.by_tier.lock.accuracy + '%';
         }
 
-        // Hero stat strip (mobile CTA)
+        // Hero stat strip (mobile CTA) — all three stats dynamic
+        const heroAcc = document.getElementById('heroAcc');
+        const heroWL  = document.getElementById('heroWL');
         const heroPnlVal = document.getElementById('heroPnlVal');
         const heroPnlLabel = document.getElementById('heroPnlLabel');
+        if (heroAcc) heroAcc.textContent = o.accuracy + '%';
+        if (heroWL)  heroWL.textContent  = o.wins + '\u2013' + o.losses;
         const hasOdds = u.odds_adjusted !== null && u.odds_adjusted !== undefined;
         const displayUnits = hasOdds ? u.odds_adjusted : (u.pnl !== undefined ? u.pnl : (o.wins - o.losses));
         if (heroPnlVal) {
