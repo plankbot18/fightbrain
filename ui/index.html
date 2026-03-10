@@ -1327,20 +1327,19 @@
           return profile.elo_history.slice(-10).map(h => h.elo);
         };
 
-        const careerPhase = (elos, recentFights, age) => {
-          if (!elos || elos.length < 2) return null;
-          const trend = elos[elos.length - 1] - elos[0];
-          const last3 = (recentFights || []).slice(0, 3);
-          const recentW = last3.filter(r => r.result === 'W').length;
-          const recentL = last3.filter(r => r.result === 'L').length;
-          if (age && age > 35 && trend < -30) return ['FADING', '#9ca3af'];
-          if (age && age > 33)                return ['VETERAN', '#6366f1'];
-          if (trend > 100 && recentW >= 2)    return ['EMERGING', '#0ea5e9'];
-          if (recentL >= 2 && trend < -40)    return ['DECLINING', '#ef4444'];
-          if (recentL >= 1 && trend > 20)     return ['RESURGENT', '#f59e0b'];
-          if (trend > 40)                     return ['RISING', '#16a34a'];
-          if (trend > -20)                    return ['PRIME', '#D91A1A'];
-          return ['DECLINING', '#ef4444'];
+        const streakBadge = (recentFights) => {
+          if (!recentFights || recentFights.length < 2) return null;
+          const results = recentFights.slice(0, 5).map(r => r.result);
+          // Count leading streak
+          let streak = 1;
+          const first = results[0];
+          for (let i = 1; i < results.length; i++) {
+            if (results[i] === first) streak++;
+            else break;
+          }
+          if (streak >= 2 && first === 'W') return [`🔥 W${streak}`, '#16a34a'];
+          if (streak >= 2 && first === 'L') return [`❄️ L${streak}`, '#ef4444'];
+          return null; // Mixed — show nothing, let dots speak
         };
 
         const elos1 = getEloSeries(p1); const elos2 = getEloSeries(p2);
@@ -1378,24 +1377,16 @@
             const dots = recent.map(r => {
               const dc = r.result === 'W' ? '#16a34a' : r.result === 'L' ? '#ef4444' : '#d1d5db';
               const label = `${r.result} vs ${r.opponent} (${r.method}, R${r.round})`;
-              return `<span title="${label}" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dc};margin-right:3px;cursor:default;vertical-align:middle;"></span>`;
+              return `<span title="${label}" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dc};margin-right:3px;cursor:default;vertical-align:middle;flex-shrink:0;"></span>`;
             }).join('');
 
-            const peak = elos ? Math.max(...elos) : null;
-            const curr = elos ? elos[elos.length - 1] : null;
-            const diff = (peak && curr) ? Math.round(curr - peak) : null;
-            const diffStr = diff !== null ? (diff >= 0 ? `+${diff}` : `${diff}`) : '';
-            const diffColor = diff !== null && diff >= -15 ? '#16a34a' : '#ef4444';
+            const badge = streakBadge(recent);
 
-            const age = profile.age || null;
-            const phase = careerPhase(elos, recent, age);
-
-            return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-family:'Inter',sans-serif;">
+            return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-family:'Inter',sans-serif;flex-wrap:nowrap;min-width:0;">
               <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
-              <span style="font-size:12px;font-weight:700;color:#111;min-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</span>
-              ${phase ? `<span style="font-size:10px;font-weight:700;color:${phase[1]};background:${phase[1]}18;padding:1px 6px;border-radius:4px;letter-spacing:0.04em;flex-shrink:0;">${phase[0]}</span>` : ''}
-              <span style="display:flex;align-items:center;gap:0;flex-shrink:0;">${dots}</span>
-              ${peak ? `<span style="font-size:10px;color:#aaa;flex-shrink:0;margin-left:auto;">Peak <strong style="color:#555;">${Math.round(peak)}</strong> → <strong style="color:${diffColor};">${Math.round(curr)}</strong> <span style="color:${diffColor};">(${diffStr})</span></span>` : ''}
+              <span style="font-size:12px;font-weight:700;color:#111;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${name}</span>
+              ${badge ? `<span style="font-size:11px;font-weight:700;color:${badge[1]};background:${badge[1]}18;padding:1px 7px;border-radius:4px;flex-shrink:0;white-space:nowrap;">${badge[0]}</span>` : ''}
+              <span style="display:flex;align-items:center;flex-shrink:0;">${dots}</span>
             </div>`;
           };
 
