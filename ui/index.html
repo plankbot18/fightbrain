@@ -85,9 +85,6 @@
     .tab-bar-inner button:hover { color: #111; }
     .tab-divider { color: #ddd; padding: 0 4px; align-self: center; font-size: 14px; }
     .full-analysis-btn:hover { text-decoration: underline; opacity: 0.8; }
-    .tab-secondary { font-size: 11px !important; color: #bbb !important; padding: 6px 10px !important; }
-    .tab-secondary:hover { color: #888 !important; }
-    .tab-secondary.tab-active { color: #D91A1A !important; }
     .tab-active { color: #D91A1A !important; border-bottom-color: #D91A1A !important; }
     .tab-inactive { color: #888; }
     .tab-inactive:hover { color: #111; }
@@ -540,11 +537,10 @@
       <button onclick="showTab('value')" id="tab-value" class="tab-inactive">Value Picks</button>
       <button onclick="showTab('record')" id="tab-record" class="tab-inactive">Picks Record</button>
 
-      <span class="tab-divider">|</span>
 
       <button onclick="showTab('simulator')" id="tab-simulator" class="tab-inactive">⚡ Simulator</button>
 
-      <button onclick="showTab('model')" id="tab-model" class="tab-inactive tab-secondary">Model Info</button>
+      <button onclick="showTab('model')" id="tab-model" class="tab-inactive">Model Info</button>
     </div>
   </nav>
 
@@ -622,7 +618,7 @@
 
     <!-- Model Info -->
     <section id="panel-simulator" class="hidden">
-      <div style="max-width:640px;margin:0 auto;padding:24px 16px;">
+      <div style="max-width:860px;margin:0 auto;padding:24px 16px;">
 
         <!-- Header -->
         <div style="margin-bottom:24px;">
@@ -662,6 +658,25 @@
         <!-- Result area -->
         <div id="sim-result" style="margin-top:24px;"></div>
 
+        <!-- Suggested matchups -->
+        <div id="sim-suggestions" style="margin-top:20px;">
+          <div style="font-size:11px;color:#bbb;font-family:'Inter',sans-serif;margin-bottom:8px;letter-spacing:0.04em;">TRY THESE MATCHUPS</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;">
+            ${[
+              ['Islam Makhachev','Ilia Topuria'],
+              ['Jon Jones','Tom Aspinall'],
+              ['Israel Adesanya','Sean Strickland'],
+              ['Leon Edwards','Belal Muhammad'],
+              ['Alex Pereira','Dricus Du Plessis'],
+            ].map(([a,b]) => `<button onclick="simFill('${a}','${b}')"
+              style="font-size:11px;padding:5px 10px;border-radius:16px;border:1px solid #e5e7eb;background:#f9f9f9;color:#555;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;"
+              onmouseover="this.style.borderColor='#D91A1A';this.style.color='#D91A1A'"
+              onmouseout="this.style.borderColor='#e5e7eb';this.style.color='#555'">
+              ${a} vs ${b}
+            </button>`).join('')}
+          </div>
+        </div>
+
         <!-- Disclaimer -->
         <div style="margin-top:32px;font-size:11px;color:#bbb;font-family:'Inter',sans-serif;text-align:center;line-height:1.6;">
           Predictions based on career stats, Elo ratings, recent form, and strength of schedule.<br>
@@ -684,19 +699,36 @@
         <p style="color:#888;font-size:13px;line-height:1.6;">
           Every pick goes live on this site before fight night — publicly visible, never edited after the fact. The record you see is the real record.
         </p>
-        <div style="display:flex;gap:24px;margin-top:16px;flex-wrap:wrap;">
-          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#D91A1A;">73.7%</div><div style="font-size:11px;color:#666;">backtested accuracy</div></div>
-          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;">10K+</div><div style="font-size:11px;color:#666;">fights in training data</div></div>
-          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;">52</div><div style="font-size:11px;color:#666;">model features</div></div>
-          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;">FightBrain</div><div style="font-size:11px;color:#666;">gradient boosted model</div></div>
+        <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+          <div style="background:#1a1a1a;border-radius:8px;padding:10px 14px;border:1px solid #D91A1A33;">
+            <div style="font-size:9px;color:#D91A1A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">BACKTESTED</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#D91A1A;line-height:1;">73.7%</div>
+            <div style="font-size:10px;color:#666;">held-out accuracy</div>
+          </div>
+          <div style="background:#1a1a1a;border-radius:8px;padding:10px 14px;border:1px solid #16a34a33;" id="model-live-stat">
+            <div style="font-size:9px;color:#16a34a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">LIVE RECORD</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#16a34a;line-height:1;" id="model-live-acc">--</div>
+            <div style="font-size:10px;color:#666;" id="model-live-wl">loading...</div>
+          </div>
+          <div style="background:#1a1a1a;border-radius:8px;padding:10px 14px;">
+            <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">TRAINING DATA</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;line-height:1;">10K+</div>
+            <div style="font-size:10px;color:#666;">UFC fights</div>
+          </div>
+          <div style="background:#1a1a1a;border-radius:8px;padding:10px 14px;">
+            <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">FEATURES</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;line-height:1;">52</div>
+            <div style="font-size:10px;color:#666;">model inputs</div>
+          </div>
         </div>
       </div>
 
       <div class="grid md:grid-cols-2 gap-6">
         <div class="model-card">
-          <h3 class="text-lg font-semibold mb-2 text-gray-900">Model Performance</h3>
+          <h3 class="text-lg font-semibold mb-2 text-gray-900">Backtested Performance</h3>
+          <div style="font-size:11px;color:#b45309;background:#fff8e1;border-radius:6px;padding:5px 8px;margin-bottom:10px;display:inline-block;">Backtest — held-out data, not live picks</div>
           <div class="model-stat-num" style="font-size:72px;line-height:1;margin:16px 0;">73.7%</div>
-          <p class="text-gray-500 text-sm">Backtested accuracy on held-out UFC bouts. FightBrain Model trained on fighter stat differentials, competition history, and recent form.</p>
+          <p class="text-gray-500 text-sm">Accuracy on held-out UFC bouts. FightBrain Model trained on fighter stat differentials, competition history, and recent form.</p>
         </div>
         <div class="model-card">
           <h3 class="text-lg font-semibold mb-2 text-gray-900">What The Model Sees</h3>
@@ -714,6 +746,14 @@
         <h3 class="text-lg font-semibold mb-2 text-gray-900">Top Features by Importance</h3>
         <p style="font-size:12px;color:#aaa;margin-bottom:16px;font-family:'Inter',sans-serif;">How much each factor contributed to model predictions. Longer bar = more influential.</p>
         <div style="max-height:500px"><canvas id="featureChart"></canvas></div>
+      </div>
+
+      <!-- Calibration scatter: model confidence vs actual win rate -->
+      <div class="model-card mt-6" id="calib-scatter-card" style="display:none;">
+        <h3 class="text-lg font-semibold mb-1 text-gray-900">Confidence Calibration</h3>
+        <p style="font-size:12px;color:#aaa;margin-bottom:16px;font-family:'Inter',sans-serif;">Each dot = one pick. A well-calibrated model clusters near the diagonal.</p>
+        <div id="calib-scatter" style="position:relative;height:200px;"></div>
+        <div style="font-size:10px;color:#bbb;margin-top:8px;">● Correct &nbsp; ● Wrong &nbsp; — Ideal calibration</div>
       </div>
     </section>
 
@@ -802,8 +842,28 @@
         if (btn) btn.className = t === name ? 'tab-active' : (btn.classList.contains('tab-secondary') ? 'tab-inactive tab-secondary' : 'tab-inactive');
       });
       // Show/hide search bar (only for upcoming)
-      document.getElementById('search-bar-wrapper').style.display = name === 'upcoming' ? '' : 'none';
-      if (name === 'model' && !window._chartLoaded) loadChartJS().then(() => loadFeatureChart());
+      const sbw = document.getElementById('search-bar-wrapper');
+      if (sbw) {
+        sbw.style.display = '';
+        const si = document.getElementById('fight-search');
+        if (si) {
+          si.placeholder = name === 'upcoming' ? 'Search fighters...' : name === 'simulator' ? 'Search & simulate...' : 'Search fighters...';
+          si.dataset.tab = name;
+        }
+      }
+      if (name === 'model') {
+        if (!window._chartLoaded) loadChartJS().then(() => loadFeatureChart());
+        // Populate live record stats
+        const rd = _recordData && _recordData.overall;
+        if (rd) {
+          const el = document.getElementById('model-live-acc');
+          const wl = document.getElementById('model-live-wl');
+          if (el) el.textContent = (rd.accuracy || '--') + '%';
+          if (wl) wl.textContent = (rd.wins||0) + 'W–' + (rd.losses||0) + 'L · ' + (rd.total||0) + ' picks';
+        }
+        // Render calibration scatter from picks_log
+        if (_allPicks) renderCalibScatter();
+      }
       if (name === 'simulator') loadSimulator();
     }
 
@@ -1518,6 +1578,13 @@
       });
     });
 
+    function simFill(f1, f2) {
+      document.getElementById('sim-f1').value = f1;
+      document.getElementById('sim-f2').value = f2;
+      document.getElementById('sim-suggestions').style.display = 'none';
+      runSimulator();
+    }
+
     function runSimulator() {
       const f1 = document.getElementById('sim-f1').value.trim();
       const f2 = document.getElementById('sim-f2').value.trim();
@@ -1548,8 +1615,15 @@
       const result = _simData.matchups[key1] || _simData.matchups[key2];
 
       if (!result) {
-        el.innerHTML = `<div style="color:#888;font-family:'Inter',sans-serif;font-size:13px;padding:8px 0;">
-          No prediction available for this matchup. One or both fighters may not be in the active pool, or stats were insufficient.
+        const inPool1 = _simData.fighters && _simData.fighters.includes(f1);
+        const inPool2 = _simData.fighters && _simData.fighters.includes(f2);
+        const missing = [!inPool1 && f1, !inPool2 && f2].filter(Boolean);
+        el.innerHTML = `<div style="background:#fff8e1;border:1px solid #fde68a;border-radius:12px;padding:14px 16px;font-family:'Inter',sans-serif;">
+          <div style="font-weight:700;color:#b45309;margin-bottom:4px;">⚠ Fighter not in simulator pool</div>
+          <div style="font-size:12px;color:#78350f;line-height:1.6;">
+            ${missing.length ? '<strong>' + missing.join(', ') + '</strong> — not found in the active fighter database.' : 'Matchup not found.'}
+            <br>The simulator includes fighters who have competed in the last 12 months with 3+ UFC fights.
+          </div>
         </div>`;
         return;
       }
@@ -1708,6 +1782,41 @@
     }
 
     // ===== FAIR PRICE CALCULATOR =====
+    function renderCalibScatter() {
+      const decided = (_allPicks || []).filter(p => p.result !== null && p.confidence);
+      if (decided.length < 3) return;
+      const card = document.getElementById('calib-scatter-card');
+      const el = document.getElementById('calib-scatter');
+      if (!card || !el) return;
+      card.style.display = '';
+      const W = el.offsetWidth || 300, H = 200;
+      const pad = {l:30,r:10,t:10,b:24};
+      const iW = W - pad.l - pad.r, iH = H - pad.t - pad.b;
+      const tx = c => pad.l + ((c - 50) / 50) * iW;
+      const ty = v => pad.t + (1 - v) * iH;
+      let svgDots = decided.map(p => {
+        const c = parseFloat(p.confidence);
+        const win = p.result === 'correct';
+        const x = tx(c) + (Math.random()-0.5)*4;
+        const y = ty(win ? 1 : 0) + (Math.random()-0.5)*8;
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${win?'#16a34a':'#ef4444'}" fill-opacity="0.7"/>`;
+      }).join('');
+      // Ideal calibration line: from (50%, 50%) to (100%, 100%)
+      const lineX1 = tx(50), lineX2 = tx(100), lineY1 = ty(0.5), lineY2 = ty(1);
+      // Axes labels
+      const xLabels = [50,60,70,80,90,100].map(v =>
+        `<text x="${tx(v)}" y="${H-4}" font-size="9" fill="#bbb" text-anchor="middle">${v}%</text>`).join('');
+      el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;overflow:visible;">
+        <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+iH}" stroke="#eee" stroke-width="1"/>
+        <line x1="${pad.l}" y1="${pad.t+iH}" x2="${W-pad.r}" y2="${pad.t+iH}" stroke="#eee" stroke-width="1"/>
+        <line x1="${lineX1}" y1="${lineY1}" x2="${lineX2}" y2="${lineY2}" stroke="#D91A1A" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>
+        ${svgDots}
+        ${xLabels}
+        <text x="${pad.l-4}" y="${ty(1)}" font-size="9" fill="#bbb" text-anchor="end">W</text>
+        <text x="${pad.l-4}" y="${ty(0)}" font-size="9" fill="#bbb" text-anchor="end">L</text>
+      </svg>`;
+    }
+
     function updateParlayBuilder() {
       const pool = window._parlayPool || [];
       const selected = pool.filter((p, i) => {
@@ -1743,7 +1852,14 @@
           '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">¼ Kelly (max 5%)</div>' +
           '<div style="font-size:18px;font-weight:700;color:' + kellyColor + ';">' + (parlayKelly*100).toFixed(1) + '%</div></div>' +
         '</div>' +
-        '<div style="font-size:11px;color:#bbb;margin-top:6px;">' + selected.length + ' legs · ' + dec.toFixed(2) + 'x payout · ' + (1/prob).toFixed(1) + ':1 true odds</div>';
+        (()=>{
+          // Same-event correlation warning
+          const events = selected.map(l=>l.event).filter(Boolean);
+          const uniqueEvents = [...new Set(events)];
+          const sameCard = events.length > uniqueEvents.length;
+          const warn = sameCard ? '<div style="margin-top:6px;font-size:11px;color:#b45309;background:#fff8e1;border-radius:5px;padding:4px 8px;">⚠ Multiple legs from the same event — outcomes may be correlated (same judging, venue, conditions). EV assumes independence.</div>' : '';
+          return '<div style="font-size:11px;color:#bbb;margin-top:6px;">' + selected.length + ' legs · ' + dec.toFixed(2) + 'x payout · ' + (1/prob).toFixed(1) + ':1 true odds</div>' + warn;
+        })()
     }
 
     function calcFairPrice() {
@@ -1966,7 +2082,7 @@
         const edgeStr = valuePick.edge != null ? `+${valuePick.edge}%` : '';
         const tierColor = valuePick.tier === 'STRONG' ? '#D91A1A' : '#b45309';
         // Upset alert: model backs the underdog (positive American odds = underdog)
-        if (odds != null && odds > 0) upsetAlert = true;
+        if (odds != null && odds >= 200) upsetAlert = true;
         valueLine = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           ${upsetAlert ? `<span style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.05em;color:#f59e0b;border:1px solid #f59e0b;border-radius:4px;padding:1px 8px;">⚡ UPSET ALERT</span>` : ''}
           <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.05em;color:${tierColor};border:1px solid ${tierColor};border-radius:4px;padding:1px 7px;">${valuePick.tier} VALUE</span>
@@ -2104,7 +2220,20 @@
               style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;">
               Full Analysis ↓
             </button>
-            ${f.data_quality_flag === 'LOW_DATA' ? '<span style="font-size:10px;color:#f59e0b;border:1px solid #f59e0b;border-radius:4px;padding:1px 6px;">LOW DATA</span>' : ''}
+            ${f.data_quality_flag === 'LOW_DATA' ? '<span style="font-size:10px;color:#f59e0b;border:1px solid #f59e0b;border-radius:4px;padding:1px 6px;cursor:help;" title="Fewer than 5 UFC fights on record — model confidence is lower than usual">LOW DATA</span>' : ''}
+            ${(()=>{
+              const mp = _methodPredictions && _methodPredictions[f.f1+' vs '+f.f2];
+              if (!mp || !mp.predicted_method) return '';
+              const m = mp.predicted_method;
+              if (m.includes('KO')) return '<span style="font-size:10px;color:#ef4444;border:1px solid #ef4444;border-radius:4px;padding:1px 6px;">KO likely</span>';
+              if (m.includes('Sub')) return '<span style="font-size:10px;color:#7c3aed;border:1px solid #7c3aed;border-radius:4px;padding:1px 6px;">Sub likely</span>';
+              return '';
+            })()}
+            ${(()=>{
+              const r = _matchupReports && _matchupReports[f.f1+'::'+f.f2];
+              if (r && r.previous_meeting && r.previous_meeting.winner) return '<span style="font-size:10px;color:#4338ca;border:1px solid #4338ca;border-radius:4px;padding:1px 6px;">REMATCH</span>';
+              return '';
+            })()}
           </div>
           <div id="${fullId}" data-open="false" style="display:none;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.3s ease;" class="space-y-4 mt-3 pt-3">
             ${expandedContent}
@@ -2251,6 +2380,16 @@
 
     function filterFights(query) {
       _searchQuery = query.trim();
+      const tab = (document.getElementById('fight-search') || {}).dataset?.tab || 'upcoming';
+      if (tab === 'simulator' && query.trim().length >= 2) {
+        // Route search to simulator: fill fighter 1 and auto-suggest
+        showTab('simulator');
+        setTimeout(() => {
+          const inp = document.getElementById('sim-f1');
+          if (inp) { inp.value = query.trim(); simAutocomplete(inp,'sim-f1-list'); }
+        }, 100);
+        return;
+      }
       renderUpcomingView();
     }
 
@@ -2302,8 +2441,18 @@
         }
 
         document.getElementById('upcoming-loading').classList.add('hidden');
-        document.getElementById('upcoming-controls').classList.remove('hidden');
-        renderUpcomingView();
+        if (_upcomingFights.length === 0) {
+          document.getElementById('upcoming-loading').innerHTML = `
+            <div style="text-align:center;padding:48px 20px;font-family:'Inter',sans-serif;">
+              <div style="font-size:40px;margin-bottom:12px;">🥊</div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#111;margin-bottom:6px;">NO EVENT LOADED</div>
+              <p style="font-size:13px;color:#aaa;line-height:1.6;">No upcoming fights in the model right now.<br>Run the full pipeline before the next event to populate picks.</p>
+            </div>`;
+          document.getElementById('upcoming-loading').classList.remove('hidden');
+        } else {
+          document.getElementById('upcoming-controls').classList.remove('hidden');
+          renderUpcomingView();
+        }
 
         // Populate radar fight selector
         populateRadarSelector();
@@ -2452,6 +2601,64 @@
           html += `<div style="font-size:10px;color:#bbb;margin-top:4px;">│ = expected confidence level</div></div>`;
         }
       }
+      // Rolling accuracy (last 5 and last 10 picks)
+      if (decided.length >= 3) {
+        const windows = [5, 10].filter(w => decided.length >= w);
+        html += '<div style="margin-bottom:24px;">';
+        html += '<div style="font-size:11px;color:#888;margin-bottom:10px;font-family:\'Inter\',sans-serif;">Rolling accuracy windows</div>';
+        html += '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+        [5, 10].forEach(w => {
+          if (decided.length < w) return;
+          const window = decided.slice(0, w);
+          const wWins = window.filter(p => p.result === 'correct').length;
+          const wAcc = Math.round(wWins/w*100);
+          const wColor = wAcc >= 60 ? '#16a34a' : '#ef4444';
+          html += '<div style="background:#f9f9f9;border-radius:8px;padding:8px 14px;text-align:center;">' +
+            '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:' + wColor + ';">' + wAcc + '%</div>' +
+            '<div style="font-size:10px;color:#aaa;">Last ' + w + ' picks · ' + wWins + '/' + w + '</div>' +
+          '</div>';
+        });
+        // Overall trend arrow
+        if (decided.length >= 6) {
+          const recent5 = Math.round(decided.slice(0,5).filter(p=>p.result==='correct').length/5*100);
+          const older5 = Math.round(decided.slice(5,10).filter(p=>p.result==='correct').length/Math.min(5,decided.length-5)*100);
+          if (older5 > 0) {
+            const trend = recent5 > older5 ? '▲ Improving' : recent5 < older5 ? '▼ Declining' : '→ Stable';
+            const tColor = recent5 > older5 ? '#16a34a' : recent5 < older5 ? '#ef4444' : '#888';
+            html += '<div style="background:#f9f9f9;border-radius:8px;padding:8px 14px;text-align:center;">' +
+              '<div style="font-size:15px;color:' + tColor + ';font-weight:700;">' + trend + '</div>' +
+              '<div style="font-size:10px;color:#aaa;">Last 5 vs prior 5</div>' +
+            '</div>';
+          }
+        }
+        html += '</div></div>';
+      }
+
+      // Upset history
+      if (decided.length > 0) {
+        // An "upset" from model perspective: model confidence < 50% on the fight they picked (or result was wrong but model was confident)
+        // Simpler: model picks someone at <55% confidence = treating as "lean/uncertain"
+        // Actually: upset = model was WRONG on a pick ≥70% confidence (model was confident, lost)
+        const modelUpsets = decided.filter(p => p.result !== 'correct' && p.confidence >= 70);
+        const modelCalls = decided.filter(p => p.result === 'correct' && p.confidence < 60);
+        html += '<div style="background:#f9f7f4;border-radius:12px;padding:14px 16px;margin-bottom:24px;">' +
+          '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;color:#111;letter-spacing:0.05em;margin-bottom:10px;">UPSET TRACKER</div>' +
+          '<div style="display:flex;gap:12px;flex-wrap:wrap;">' +
+          '<div style="flex:1;min-width:120px;background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #eee;">' +
+            '<div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Model missed</div>' +
+            '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;color:#ef4444;">' + modelUpsets.length + '</div>' +
+            '<div style="font-size:11px;color:#aaa;">confident pick (≥70%) that lost</div>' +
+          '</div>' +
+          '<div style="flex:1;min-width:120px;background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #eee;">' +
+            '<div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Lean calls hit</div>' +
+            '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;color:#16a34a;">' + modelCalls.length + '</div>' +
+            '<div style="font-size:11px;color:#aaa;">uncertain pick (<60%) that won</div>' +
+          '</div>' +
+          '</div>' +
+        '</div>';
+      }
+
+
 
       // By Event
       if (record && record.by_event && Object.keys(record.by_event).length > 0 && !_recordEventFilter) {
@@ -2744,21 +2951,32 @@
 
       let html = '';
 
-      // Explanation header
-      html += `<div style="background:#f8f8f8;border-radius:12px;padding:14px 18px;margin-bottom:20px;border-left:3px solid #D91A1A;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#D91A1A;letter-spacing:0.05em;margin-bottom:6px;">WHAT IS VALUE?</div>
-        <div style="font-size:12px;color:#555;line-height:1.6;font-family:'Inter',sans-serif;">
-          <strong>Edge %</strong> = model's win probability minus the market's implied probability. Positive edge means the model sees more chance of winning than the bookmakers price in.<br>
+      // Explanation header — collapsed by default after first visit
+      const _vxSeen = localStorage.getItem('fb_vx_seen');
+      html += `<div style="background:#f8f8f8;border-radius:12px;margin-bottom:16px;border-left:3px solid #D91A1A;overflow:hidden;">
+        <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.vx-chev').textContent=this.nextElementSibling.style.display==='none'?'▸':'▾';"
+          style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#D91A1A;letter-spacing:0.05em;">WHAT IS VALUE?</span>
+          <span class="vx-chev" style="font-size:12px;color:#aaa;">${_vxSeen ? '▸' : '▾'}</span>
+        </div>
+        <div style="display:${_vxSeen ? 'none' : 'block'};padding:0 14px 12px;font-size:12px;color:#555;line-height:1.6;font-family:'Inter',sans-serif;">
+          <strong>Edge %</strong> = model's win probability minus the market's implied probability. Positive edge means the model sees more chance than bookmakers price in.<br>
           <strong>STRONG</strong> picks = edge ≥ 8% · <strong>LEAN</strong> picks = edge 4–8%. Only fights where the model disagrees meaningfully with the market.
         </div>
       </div>`;
+      if (!_vxSeen) localStorage.setItem('fb_vx_seen', '1');
 
-      // Sort controls
-      html += `<div class="flex items-center gap-4 mb-6 text-xs text-gray-500">
-        <span>Sort by:</span>
-        <span class="sort-btn ${_valueSortKey==='edge'?'text-gray-900':''}" onclick="sortValuePicks('edge')">Edge % ${sortArrow('edge')}</span>
-        <span class="sort-btn ${_valueSortKey==='ev'?'text-gray-900':''}" onclick="sortValuePicks('ev')">EV ${sortArrow('ev')}</span>
-        <span class="sort-btn ${_valueSortKey==='confidence'?'text-gray-900':''}" onclick="sortValuePicks('confidence')">Confidence ${sortArrow('confidence')}</span>
+      // Sort controls — pill style matching Fight Card filters
+      html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:#aaa;font-family:'Inter',sans-serif;">Sort:</span>
+        ${['edge','ev','confidence'].map(k => {
+          const labels = {edge:'Edge %', ev:'EV', confidence:'Confidence'};
+          const active = _valueSortKey === k;
+          return `<button onclick="sortValuePicks('${k}')"
+            style="font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid ${active?'#D91A1A':'#ddd'};background:${active?'#D91A1A':'#fff'};color:${active?'#fff':'#555'};cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;">
+            ${labels[k]} ${_valueSortKey===k?((_valueSortDir==='desc'?'↓':'↑')):''}
+          </button>`;
+        }).join('')}
       </div>`;
 
       function renderValueCard(pick) {
@@ -2813,9 +3031,17 @@
         : [...strong, ...lean];
 
       if (tieredPicks.length === 0) {
-        html += `<div class="model-card text-center py-12">
-          <div style="font-size:48px;opacity:0.2;margin-bottom:12px;">&#9878;</div>
-          <p class="text-gray-500" style="font-size:15px;">No strong picks for this event — check back as odds update.</p>
+        const hasPending = _oddsPending && _oddsPending.length > 0;
+        html += `<div style="background:#fff8e1;border:1px solid #fde68a;border-radius:14px;padding:24px;text-align:center;margin-bottom:20px;">
+          <div style="font-size:32px;margin-bottom:10px;">${hasPending ? '⏳' : '🔍'}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#b45309;margin-bottom:6px;">
+            ${hasPending ? 'ODDS NOT POSTED YET' : 'NO VALUE PICKS THIS WEEK'}
+          </div>
+          <p style="font-size:13px;color:#78350f;font-family:'Inter',sans-serif;line-height:1.6;">
+            ${hasPending
+              ? 'Bookmakers haven\'t posted lines for ' + _oddsPending.length + ' fight' + (_oddsPending.length>1?'s':'') + ' yet. Value picks will appear as odds become available — usually 7–10 days before the event.'
+              : 'The model doesn\'t see enough edge vs current market prices to recommend any picks. Check back after odds move.'}
+          </p>
         </div>`;
       } else {
         // Summary bar
@@ -3335,6 +3561,46 @@
               </div>
             </div>
           </div>`;
+        }
+
+        // FightBrain pick history for this fighter
+        if (_allPicks && _allPicks.length > 0) {
+          const fPicks = _allPicks.filter(p => {
+            const name = fighter.name;
+            return (p.fighter1 === name || p.fighter2 === name || p.predicted_winner === name);
+          }).filter(p => p.result != null);
+          if (fPicks.length > 0) {
+            const fW = fPicks.filter(p => p.result === 'correct').length;
+            const fL = fPicks.length - fW;
+            html += `<div class="mb-6">
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">FightBrain Pick History</h3>
+              <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <div style="background:#dcfce7;border-radius:8px;padding:8px 14px;text-align:center;">
+                  <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#15803d;">${fW}W</div>
+                  <div style="font-size:10px;color:#166534;">correct</div>
+                </div>
+                <div style="background:#fee2e2;border-radius:8px;padding:8px 14px;text-align:center;">
+                  <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#b91c1c;">${fL}L</div>
+                  <div style="font-size:10px;color:#991b1b;">wrong</div>
+                </div>
+                <div style="background:#f3f4f6;border-radius:8px;padding:8px 14px;text-align:center;">
+                  <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#111;">${fPicks.length > 0 ? Math.round(fW/fPicks.length*100) : '--'}%</div>
+                  <div style="font-size:10px;color:#666;">accuracy</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                ${fPicks.slice(0,5).map(p => {
+                  const win = p.result === 'correct';
+                  const opp = p.fighter1 === fighter.name ? p.fighter2 : p.fighter1;
+                  return '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:' + (win?'#f0fdf4':'#fef2f2') + ';border-radius:6px;">' +
+                    '<span style="font-family:\'Bebas Neue\',sans-serif;color:' + (win?'#15803d':'#b91c1c') + ';font-size:13px;">' + (win?'W':'L') + '</span>' +
+                    '<span style="font-size:12px;color:#555;flex:1;">vs ' + (opp||'?') + '</span>' +
+                    '<span style="font-size:11px;color:#aaa;">' + (p.event||'').replace('UFC Fight Night: ','').replace('UFC ','') + '</span>' +
+                  '</div>';
+                }).join('')}
+              </div>
+            </div>`;
+          }
         }
 
         body.innerHTML = html;
