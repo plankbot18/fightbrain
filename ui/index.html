@@ -1068,10 +1068,9 @@
 
     function renderExpandedContent(f) {
       const report = findMatchupReport(f.f1, f.f2);
-      const fullId = 'full-' + (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
 
-      // Single level — everything visible on expand, no inner button, no duplicates
-      let html = `<div id="${fullId}" data-open="false" style="display:none;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.45s ease,opacity 0.35s ease;" class="space-y-4">`;
+      // Return raw content only — wrapper/toggle is handled by the feed card
+      let html = '';
 
       // Scout reports
       html += (f.f1_scout_obj ? renderScoutSection(f.f1_scout_obj, f.f1) : '');
@@ -1084,7 +1083,6 @@
         html += `<div style="font-size:13px;color:#aaa;padding:8px 0;">No detailed analysis available for this fight.</div>`;
       }
 
-      html += '</div>';
       return html;
     }
 
