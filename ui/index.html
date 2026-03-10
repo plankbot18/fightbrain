@@ -539,11 +539,11 @@
       <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active">Fight Card</button>
       <button onclick="showTab('value')" id="tab-value" class="tab-inactive">Value Picks</button>
       <button onclick="showTab('record')" id="tab-record" class="tab-inactive">Picks Record</button>
-      <button onclick="showTab('archive')" id="tab-archive" class="tab-inactive">Archive</button>
+
       <span class="tab-divider">|</span>
 
       <button onclick="showTab('simulator')" id="tab-simulator" class="tab-inactive">⚡ Simulator</button>
-      <button onclick="showTab('outcomes')" id="tab-outcomes" class="tab-inactive tab-secondary">Outcomes</button>
+
       <button onclick="showTab('model')" id="tab-model" class="tab-inactive tab-secondary">Model Info</button>
     </div>
   </nav>
@@ -616,11 +616,7 @@
         <div class="skeleton" style="height:40px;margin-bottom:8px;"></div>
         <div class="skeleton" style="height:40px;"></div>
       </div>
-      <div id="record-filter" class="hidden mb-4">
-        <select id="record-event-filter" class="event-selector" onchange="filterRecord(this.value)">
-          <option value="">All Events</option>
-        </select>
-      </div>
+
       <div id="record-content"></div>
     </section>
 
@@ -721,20 +717,11 @@
       </div>
     </section>
 
-    <!-- Archive -->
-    <section id="panel-archive" class="hidden">
-      <div id="archive-loading" style="padding:40px;text-align:center;color:#888;font-family:'Inter',sans-serif;">Loading archive...</div>
-      <div id="archive-content" style="max-width:900px;margin:0 auto;padding:24px 16px;"></div>
-    </section>
-
     <!-- Fight Analysis -->
 
 
     <!-- Outcomes -->
-    <section id="panel-outcomes" class="hidden">
-      <div id="outcomes-loading" class="text-center text-gray-400 py-12">Loading outcomes...</div>
-      <div id="outcomes-content"></div>
-    </section>
+
 
   </main>
 
@@ -808,7 +795,7 @@
 
     // ===== TAB SWITCHING =====
     function showTab(name) {
-      ['upcoming', 'value', 'record', 'archive', 'model', 'outcomes', 'simulator'].forEach(t => {
+      ['upcoming', 'value', 'record', 'model', 'simulator'].forEach(t => {
         const panel = document.getElementById('panel-' + t);
         if (panel) panel.classList.toggle('hidden', t !== name);
         const btn = document.getElementById('tab-' + t);
@@ -817,8 +804,6 @@
       // Show/hide search bar (only for upcoming)
       document.getElementById('search-bar-wrapper').style.display = name === 'upcoming' ? '' : 'none';
       if (name === 'model' && !window._chartLoaded) loadChartJS().then(() => loadFeatureChart());
-      if (name === 'outcomes' && !window._outcomesLoaded) loadChartJS().then(() => loadOutcomes());
-      if (name === 'archive' && !window._archiveLoaded) renderArchive();
       if (name === 'simulator') loadSimulator();
     }
 
@@ -2450,70 +2435,121 @@
         html += '</div>';
       }
 
-      // #9: Strong filter toggle
-      const showStrongOnly = window._strongFilterOn || false;
-      html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <h3 class="section-title" style="font-size:18px;margin:0;">Decided Picks</h3>
-        <span style="font-size:11px;color:#aaa;">most recent first</span>
-        <button onclick="window._strongFilterOn=!window._strongFilterOn;renderRecord();"
-          style="margin-left:auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid ${showStrongOnly ? '#D91A1A' : '#ddd'};background:${showStrongOnly ? '#D91A1A' : 'white'};color:${showStrongOnly ? 'white' : '#555'};cursor:pointer;font-weight:600;">
-          ${showStrongOnly ? '✓ STRONG+ ONLY' : 'STRONG+ ONLY'}
-        </button>
-      </div>`;
-
-      // #2: Social proof
-      html += `<div style="font-size:11px;color:#aaa;margin-bottom:12px;padding:8px 12px;background:#f9f7f4;border-radius:8px;border-left:3px solid #D91A1A;">
-        All picks live on site before fight night · never edited after the fact
-      </div>`;
-
-      // Decided Picks — most recent first (#4), with running P&L (#5), heavy fav flag (#3), mobile truncation (#9)
-      const filteredDecided = showStrongOnly ? decided.filter(p => p.confidence >= 75) : decided;
-      if (filteredDecided.length > 0) {
-        html += `<div class="space-y-1 mb-4">`;
-        let runningPnl = 0;
-        filteredDecided.forEach(p => {
-          const isWin = p.result === 'correct';
-          const odds = p.book_odds_american;
-          const oddsStr = odds != null ? (odds > 0 ? `+${odds}` : `${odds}`) : '—';
+      // P&L chart + event-grouped pick history (replaces flat pick list)
+      if (decided.length > 0) {
+        // Sort chronologically for chart
+        const chronoPicks = [...decided].sort((a,b) => new Date(a.event_date||0) - new Date(b.event_date||0));
+        let running = 0;
+        const pnlPoints = chronoPicks.map((p,i) => {
           const stake = p.recommended_units || 1;
-          let pnl = null;
-          if (odds != null) {
-            pnl = isWin ? (odds > 0 ? (odds/100)*stake : (100/Math.abs(odds))*stake) : -stake;
-          }
-          if (pnl != null) runningPnl += pnl;
-          const pnlStr = pnl != null ? (pnl >= 0 ? `+${pnl.toFixed(2)}u` : `${pnl.toFixed(2)}u`) : '—';
-          const pnlColor = pnl == null ? '#aaa' : (pnl >= 0 ? '#16a34a' : '#ef4444');
-          const isHeavyFav = odds != null && odds < -400;
-          const fightShort = p.fight.length > 36 ? p.fight.substring(0, 34) + '…' : p.fight;
-          const dateStr = p.resolved_at ? new Date(p.resolved_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
-          html += `<div class="record-table-row" style="flex-direction:column;gap:2px;padding:10px 12px;">
-            <div style="display:flex;align-items:center;gap:8px;width:100%;">
-              <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${isWin ? '#D91A1A' : '#aaa'};min-width:18px;">${isWin ? 'W' : 'L'}</span>
-              <span style="font-weight:700;font-size:14px;color:#111;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.predicted_winner}</span>
-              <span style="font-size:13px;color:#888;">${oddsStr}${isHeavyFav ? '&nbsp;<span style="font-size:10px;color:#f59e0b;font-weight:600;">HVY FAV</span>' : ''}</span>
-              <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${pnlColor};min-width:60px;text-align:right;">${pnlStr}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;padding-left:26px;flex-wrap:nowrap;overflow:hidden;">
-              <span style="font-size:11px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${fightShort}</span>
-              ${dateStr ? `<span style="font-size:10px;color:#ccc;white-space:nowrap;">${dateStr}</span>` : ''}
-              <span style="font-size:11px;color:#ccc;white-space:nowrap;">${stake}u</span>
-            </div>
-          </div>`;
+          running += p.result === 'correct' ? stake : -stake;
+          return { i: i+1, pnl: running, win: p.result === 'correct' };
         });
-        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 12px;border-top:2px solid #111;margin-top:4px;">
-          <div>
-            <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#555;letter-spacing:0.05em;">ALL-TIME P&amp;L</span>
-            <span style="font-size:12px;color:#777;margin-left:10px;">${totalPnl >= 0 ? '+' : ''}${totalRoi}% ROI · ${totalStaked.toFixed(1)}u staked</span>
+        const maxP = Math.max(...pnlPoints.map(p=>p.pnl), 0.1);
+        const minP = Math.min(...pnlPoints.map(p=>p.pnl), -0.1);
+        const rng = maxP - minP || 1;
+        const CW = 400, CH = 72;
+        const tx = i => (i / pnlPoints.length) * CW;
+        const ty = v => CH - ((v - minP) / rng) * CH;
+        const zY = ty(0);
+        const chartColor = running >= 0 ? '#16a34a' : '#ef4444';
+        const pnlStr2 = (running >= 0 ? '+' : '') + running.toFixed(2) + 'u';
+
+        html += `<div style="background:#fff;border-radius:14px;padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#111;letter-spacing:0.04em;">CUMULATIVE P&L</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${chartColor};">${pnlStr2}</div>
           </div>
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:${totalColor};">${totalStr}</span>
+          <svg viewBox="0 0 ${CW} ${CH+4}" style="width:100%;height:${CH+4}px;overflow:visible;">
+            <line x1="0" y1="${zY}" x2="${CW}" y2="${zY}" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4,3"/>
+            <polyline points="${pnlPoints.map((p,i)=>`${tx(i)},${ty(p.pnl)}`).join(' ')}" fill="none" stroke="${chartColor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            ${pnlPoints.map((p,i)=>`<circle cx="${tx(i)}" cy="${ty(p.pnl)}" r="3" fill="${p.win?'#16a34a':'#ef4444'}"/>`).join('')}
+          </svg>
+          <div style="display:flex;gap:14px;margin-top:6px;font-size:11px;color:#bbb;font-family:'Inter',sans-serif;">
+            <span style="color:#16a34a;">● Win</span><span style="color:#ef4444;">● Loss</span>
+            <span style="margin-left:auto;">${decided.length} resolved picks</span>
+          </div>
         </div>`;
-        html += '</div>';
-      } else if (showStrongOnly) {
-        html += `<p style="color:#aaa;text-align:center;padding:24px;">No STRONG+ picks yet — all decided picks were LEAN or MEDIUM.</p>`;
+
+        // Event-grouped pick tables
+        const byEvent = {};
+        decided.forEach(p => { const ev = p.event||'Unknown'; if (!byEvent[ev]) byEvent[ev]=[]; byEvent[ev].push(p); });
+        const evKeys = Object.keys(byEvent).reverse();
+
+        if (!_autopsy) loadAutopsy();
+
+        evKeys.forEach(ev => {
+          const evPicks = byEvent[ev];
+          const evW = evPicks.filter(p=>p.result==='correct').length;
+          const evL = evPicks.filter(p=>p.result!=='correct').length;
+          const evAcc = evPicks.length ? Math.round(evW/evPicks.length*100) : 0;
+          const evPnl = evPicks.reduce((s,p)=>s+(p.result==='correct'?+(p.recommended_units||1):-(p.recommended_units||1)),0);
+          const evPnlStr = (evPnl>=0?'+':'')+evPnl.toFixed(1)+'u';
+
+          html += `<div style="background:#fff;border-radius:14px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">
+            <div style="padding:14px 18px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div>
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#111;letter-spacing:0.03em;">${ev}</div>
+                <div style="font-size:12px;color:#888;font-family:'Inter',sans-serif;margin-top:2px;">
+                  ${evW}W–${evL}L ·
+                  <span style="color:${evPnl>=0?'#16a34a':'#ef4444'};font-weight:600;">${evPnlStr}</span>
+                </div>
+              </div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:${evAcc>=60?'#D91A1A':'#aaa'};">${evAcc}%</div>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-family:'Inter',sans-serif;font-size:13px;">
+              <thead><tr style="color:#bbb;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;background:#fafafa;">
+                <th style="text-align:left;padding:7px 14px;">Pick</th>
+                <th style="text-align:left;padding:7px 8px;">Fight</th>
+                <th style="text-align:center;padding:7px 8px;"></th>
+                <th style="text-align:right;padding:7px 14px;">P&L</th>
+              </tr></thead>
+              <tbody>`;
+
+          evPicks.forEach(p => {
+            const win = p.result==='correct';
+            const stake = p.recommended_units||1;
+            const pnlP = win ? +stake : -stake;
+            const pnlPStr = (pnlP>=0?'+':'')+pnlP.toFixed(1)+'u';
+            const fightStr = (p.fight||(p.fighter1+' vs '+p.fighter2)||'').replace(' vs ',' v ');
+            html += `<tr style="border-bottom:1px solid #f7f7f7;">
+              <td style="padding:9px 14px;"><span style="font-weight:700;color:#111;">${p.predicted_winner}</span> <span style="color:#bbb;font-size:11px;">${p.confidence}%</span></td>
+              <td style="padding:9px 8px;font-size:11px;color:#aaa;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fightStr}</td>
+              <td style="padding:9px 8px;text-align:center;">
+                <span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;background:${win?'#dcfce7':'#fee2e2'};color:${win?'#15803d':'#b91c1c'};">${win?'WIN':'LOSS'}</span>
+              </td>
+              <td style="padding:9px 14px;text-align:right;font-weight:600;color:${pnlP>=0?'#16a34a':'#ef4444'};">${pnlPStr}</td>
+            </tr>`;
+          });
+          html += `</tbody></table>`;
+
+          // Autopsy
+          const autopsy = (_autopsy||[]).find(a=>a.event===ev);
+          if (autopsy && autopsy.signal_report && autopsy.signal_report.length) {
+            html += `<div style="padding:12px 18px;background:#fafafa;border-top:1px solid #f0f0f0;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;color:#aaa;letter-spacing:0.05em;margin-bottom:8px;">MODEL AUTOPSY</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">`;
+            autopsy.signal_report.forEach(s => {
+              const c = s.accuracy>=70?'#16a34a':s.accuracy>=50?'#b45309':'#ef4444';
+              html += `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:7px;padding:5px 9px;">
+                <div style="font-size:10px;color:#aaa;">${s.label}</div>
+                <div style="font-size:12px;font-weight:700;color:${c};">${s.accuracy}% <span style="font-weight:400;color:#ddd;">${s.correct}/${s.total}</span></div>
+              </div>`;
+            });
+            html += `</div>`;
+            if (autopsy.biggest_miss) {
+              html += `<div style="margin-top:8px;font-size:11px;color:#aaa;font-family:'Inter',sans-serif;">
+                Biggest miss: <strong style="color:#ef4444;">${autopsy.biggest_miss.predicted}</strong> at ${autopsy.biggest_miss.confidence}% — actual: ${autopsy.biggest_miss.actual}
+              </div>`;
+            }
+            html += `</div>`;
+          }
+          html += `</div>`;
+        });
       }
 
       if (pending.length > 0) {
-        html += `<h3 class="section-title" style="font-size:18px;margin-bottom:8px;">Pending (${pending.length})</h3>
+        html += `<h3 class="section-title" style="font-size:16px;margin-bottom:8px;margin-top:8px;">Pending (${pending.length})</h3>
         <div class="space-y-1">`;
         pending.forEach(p => {
           html += `<div class="record-table-row">
