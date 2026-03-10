@@ -541,7 +541,7 @@
       <button onclick="showTab('record')" id="tab-record" class="tab-inactive">Picks Record</button>
       <button onclick="showTab('archive')" id="tab-archive" class="tab-inactive">Archive</button>
       <span class="tab-divider">|</span>
-      <button onclick="showTab('analysis')" id="tab-analysis" class="tab-inactive tab-secondary">Fight Analysis</button>
+
       <button onclick="showTab('outcomes')" id="tab-outcomes" class="tab-inactive tab-secondary">Outcomes</button>
       <button onclick="showTab('model')" id="tab-model" class="tab-inactive tab-secondary">Model Info</button>
     </div>
@@ -651,23 +651,7 @@
     </section>
 
     <!-- Fight Analysis -->
-    <section id="panel-analysis" class="hidden">
-      <div class="model-card mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Fighter Comparison Radar</h3>
-          <select id="radar-fight-select" class="event-selector" style="font-size:13px;padding:6px 12px;" onchange="renderRadarChart()">
-            <option value="">Select a fight...</option>
-          </select>
-        </div>
-        <div class="flex items-center gap-4 mb-3 text-xs">
-          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(217,26,26,0.15);border:1px solid #D91A1A;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 1</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:rgba(17,17,17,0.1);border:1px solid #111;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Fighter 2</span>
-        </div>
-        <div style="max-height:400px;display:flex;justify-content:center;"><canvas id="radarChart" style="max-width:500px;"></canvas></div>
-      </div>
-      <div id="analysis-loading" class="text-center text-gray-400 py-12">Loading fight analysis...</div>
-      <div id="analysis-content"></div>
-    </section>
+
 
     <!-- Outcomes -->
     <section id="panel-outcomes" class="hidden">
@@ -747,7 +731,7 @@
 
     // ===== TAB SWITCHING =====
     function showTab(name) {
-      ['upcoming', 'value', 'record', 'archive', 'model', 'analysis', 'outcomes'].forEach(t => {
+      ['upcoming', 'value', 'record', 'archive', 'model', 'outcomes'].forEach(t => {
         const panel = document.getElementById('panel-' + t);
         if (panel) panel.classList.toggle('hidden', t !== name);
         const btn = document.getElementById('tab-' + t);
@@ -756,11 +740,7 @@
       // Show/hide search bar (only for upcoming)
       document.getElementById('search-bar-wrapper').style.display = name === 'upcoming' ? '' : 'none';
       if (name === 'model' && !window._chartLoaded) loadChartJS().then(() => loadFeatureChart());
-      if (name === 'analysis' && !window._analysisLoaded) loadChartJS().then(() => loadAnalysis());
       if (name === 'outcomes' && !window._outcomesLoaded) loadChartJS().then(() => loadOutcomes());
-      if (name === 'analysis') {
-        setTimeout(() => { if (document.getElementById('radar-fight-select').value) renderRadarChart(); }, 100);
-      }
       if (name === 'archive' && !window._archiveLoaded) renderArchive();
     }
 
@@ -1098,16 +1078,43 @@
 
     function renderExpandedContent(f) {
       const report = findMatchupReport(f.f1, f.f2);
+      const fightId = (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
+      const radarCanvasId = 'radar-' + fightId;
 
-      // Return raw content only — wrapper/toggle is handled by the feed card
       let html = '';
 
       // Scout reports
       html += (f.f1_scout_obj ? renderScoutSection(f.f1_scout_obj, f.f1) : '');
       html += (f.f2_scout_obj ? renderScoutSection(f.f2_scout_obj, f.f2) : '');
 
-      // Full matchup report
+      // Full matchup report (narrative + edges + watch for)
       if (report) html += renderMatchupReport(report);
+
+      // Radar chart — only if radar data exists
+      if (report && report.radar) {
+        html += `<div style="margin-top:16px;background:#fafafa;border-radius:12px;padding:16px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#888;letter-spacing:0.05em;margin-bottom:12px;">FIGHTER COMPARISON</div>
+          <div style="display:flex;justify-content:center;max-height:320px;">
+            <canvas id="${radarCanvasId}" style="max-width:360px;"></canvas>
+          </div>
+        </div>`;
+      }
+
+      // Chin / durability notes from method predictions
+      const methKey = f.f1 + ' vs ' + f.f2;
+      const methAlt = f.f2 + ' vs ' + f.f1;
+      const meth = (_methodPredictions && (_methodPredictions[methKey] || _methodPredictions[methAlt])) || null;
+      if (meth) {
+        const c1 = meth.chin_notes_f1 && meth.chin_notes_f1 !== 'Never finished' ? meth.chin_notes_f1 : '';
+        const c2 = meth.chin_notes_f2 && meth.chin_notes_f2 !== 'Never finished' ? meth.chin_notes_f2 : '';
+        if (c1 || c2) {
+          html += `<div style="margin-top:12px;padding:10px 14px;background:#fff8f0;border-radius:10px;border-left:3px solid #f59e0b;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#b45309;letter-spacing:0.05em;margin-bottom:6px;">DURABILITY NOTES</div>
+            ${c1 ? `<div style="font-size:12px;color:#78350f;margin-bottom:3px;">⚠ ${f.f1}: ${c1}</div>` : ''}
+            ${c2 ? `<div style="font-size:12px;color:#78350f;">⚠ ${f.f2}: ${c2}</div>` : ''}
+          </div>`;
+        }
+      }
 
       if (!f.f1_scout_obj && !f.f2_scout_obj && !report) {
         html += `<div style="font-size:13px;color:#aaa;padding:8px 0;">No detailed analysis available for this fight.</div>`;
@@ -1172,6 +1179,19 @@
           el.style.opacity = '1';
         });
         if (btn) btn.textContent = 'Hide Analysis ↑';
+        // Render radar chart after expand (Chart.js needs visible canvas)
+        const radarCanvasId = 'radar-' + id.replace('full-', '');
+        const report = document.getElementById(radarCanvasId) ? (() => {
+          // Find the matchup report by scanning all reports
+          if (!_matchupReports) return null;
+          return Object.values(_matchupReports).find(r => {
+            const key = (r.fighter1 + r.fighter2).replace(/[^a-zA-Z0-9]/g, '');
+            return key === radarCanvasId.replace('radar-', '');
+          }) || null;
+        })() : null;
+        if (report && report.radar) {
+          loadChartJS().then(() => setTimeout(() => renderFightRadar(report, radarCanvasId), 100));
+        }
       }
     }
 
@@ -1484,43 +1504,21 @@
     }
 
     // ===== RADAR CHART (Fight Analysis) =====
-    let _radarChart = null;
+    // Per-fight radar instances (keyed by canvasId)
+    const _radarInstances = {};
 
-    function populateRadarSelector() {
-      const sel = document.getElementById('radar-fight-select');
-      if (!_matchupReports) return;
-      const existing = sel.options.length;
-      if (existing > 1) return; // already populated
-      for (const key of Object.keys(_matchupReports)) {
-        const r = _matchupReports[key];
-        if (r.radar) {
-          const opt = document.createElement('option');
-          opt.value = key;
-          opt.textContent = `${r.fighter1} vs ${r.fighter2}`;
-          sel.appendChild(opt);
-        }
-      }
-    }
+    function renderFightRadar(report, canvasId) {
+      if (!report || !report.radar) return;
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || !window.Chart) return;
+      if (_radarInstances[canvasId]) { _radarInstances[canvasId].destroy(); delete _radarInstances[canvasId]; }
 
-    function renderRadarChart() {
-      const sel = document.getElementById('radar-fight-select');
-      const key = sel.value;
-      if (!key || !_matchupReports || !_matchupReports[key]) {
-        if (_radarChart) { _radarChart.destroy(); _radarChart = null; }
-        return;
-      }
-      const report = _matchupReports[key];
       const radar = report.radar;
-      if (!radar) return;
-
       const labels = ['Striking', 'Grappling', 'Defense', 'Finishing Power', 'Experience', 'Recent Form'];
       const f1Data = labels.map(l => radar.f1[l] || 0);
       const f2Data = labels.map(l => radar.f2[l] || 0);
 
-      const canvas = document.getElementById('radarChart');
-      if (_radarChart) { _radarChart.destroy(); _radarChart = null; }
-
-      _radarChart = new Chart(canvas, {
+      _radarInstances[canvasId] = new Chart(canvas, {
         type: 'radar',
         data: {
           labels,
@@ -1548,22 +1546,17 @@
         options: {
           responsive: true,
           maintainAspectRatio: true,
-          animation: { duration: 800, easing: 'easeOutQuart' },
+          animation: { duration: 600, easing: 'easeOutQuart' },
           scales: {
             r: {
-              beginAtZero: true,
-              max: 100,
+              beginAtZero: true, max: 100,
               grid: { color: 'rgba(0,0,0,0.08)' },
               angleLines: { color: 'rgba(0,0,0,0.08)' },
-              pointLabels: { color: '#666666', font: { size: 12 } },
+              pointLabels: { color: '#666666', font: { size: 11 } },
               ticks: { display: false }
             }
           },
-          plugins: {
-            legend: {
-              labels: { color: '#444444', font: { size: 12 } }
-            }
-          }
+          plugins: { legend: { labels: { color: '#444', font: { size: 12 } } } }
         }
       });
     }
@@ -2046,196 +2039,6 @@
     }
 
     // ===== FIGHT ANALYSIS =====
-    async function loadAnalysis() {
-      try {
-        // Pre-load fighter profiles so H2H tables have stat data
-        if (!_fighterProfiles) await loadFighterProfileData();
-        const res = await fetch('../model/method_predictions.csv');
-        const text = await res.text();
-        const lines = text.trim().split('\n');
-        const headers = parseCSVLine(lines[0]);
-        const fights = lines.slice(1).map(line => {
-          const parts = parseCSVLine(line);
-          const row = {};
-          headers.forEach((h, i) => row[h] = parts[i] || '');
-          row.decision_pct = parseFloat(row.decision_pct) || 0;
-          row.ko_pct = parseFloat(row.ko_pct) || 0;
-          row.sub_pct = parseFloat(row.sub_pct) || 0;
-          row.ko_danger_f1 = parseFloat(row.ko_danger_f1) || 0;
-          row.ko_danger_f2 = parseFloat(row.ko_danger_f2) || 0;
-          row.sub_danger_f1 = parseFloat(row.sub_danger_f1) || 0;
-          row.sub_danger_f2 = parseFloat(row.sub_danger_f2) || 0;
-          return row;
-        });
-
-        const events = {};
-        fights.forEach(f => {
-          if (!events[f.event]) events[f.event] = [];
-          events[f.event].push(f);
-        });
-
-        // H2H stat row — animated bar grows from center, winner side highlighted
-        function h2hRow(label, f1val, f2val, unit, higherIsBetter) {
-          const f1n = parseFloat(f1val) || 0;
-          const f2n = parseFloat(f2val) || 0;
-          const total = f1n + f2n;
-          // f1 gets left bar, f2 gets right bar, proportional to their share
-          const f1share = total > 0 ? (f1n / total * 100) : 50;
-          const f2share = total > 0 ? (f2n / total * 100) : 50;
-          const f1wins = higherIsBetter ? f1n >= f2n : f1n <= f2n;
-          const f1fmt = Number.isInteger(f1n) ? f1n : f1n.toFixed(1);
-          const f2fmt = Number.isInteger(f2n) ? f2n : f2n.toFixed(1);
-          const edgeColor = '#D91A1A';
-          const neutralColor = '#CBD5E1';
-          return `<div class="h2h-row" data-f1share="${f1share}" data-f2share="${f2share}">
-            <div class="h2h-stat-f1 ${f1wins ? 'h2h-winner' : ''}">${f1fmt}${unit}</div>
-            <div class="h2h-bar-wrap">
-              <div class="h2h-bar-inner">
-                <div class="h2h-bar-f1" style="width:0%;background:${f1wins ? edgeColor : neutralColor};"></div>
-                <div class="h2h-bar-f2" style="width:0%;background:${!f1wins ? edgeColor : neutralColor};"></div>
-              </div>
-              <div class="h2h-label">${label}</div>
-            </div>
-            <div class="h2h-stat-f2 ${!f1wins ? 'h2h-winner' : ''}">${f2fmt}${unit}</div>
-          </div>`;
-        }
-
-        function h2hTable(f1name, f2name, profiles) {
-          // Look up stats from fighter_profiles by name
-          const byName = {};
-          if (profiles && profiles.fighters) {
-            for (const p of Object.values(profiles.fighters)) {
-              byName[p.name] = p.stats || {};
-            }
-          }
-          const s1 = byName[f1name] || {};
-          const s2 = byName[f2name] || {};
-          // Stats are stored as {value, label, avg, grade} objects
-          const sv = (s, k) => s[k]?.value ?? s[k] ?? 0;
-          const rows = [
-            h2hRow('Strikes/min',  sv(s1,'slpm'),    sv(s2,'slpm'),    '', true),
-            h2hRow('Str Accuracy', sv(s1,'str_acc'),  sv(s2,'str_acc'),  '%', true),
-            h2hRow('Str Defense',  sv(s1,'str_def'),  sv(s2,'str_def'),  '%', true),
-            h2hRow('TD Average',   sv(s1,'td_avg'),   sv(s2,'td_avg'),   '/15m', true),
-            h2hRow('TD Defense',   sv(s1,'td_def'),   sv(s2,'td_def'),   '%', true),
-          ];
-          const f1HeadImg = fighterImgHtml(f1name, 'h2h');
-          const f2HeadImg = fighterImgHtml(f2name, 'h2h');
-          return `<div class="h2h-table" data-ready="false">
-            <div class="h2h-header">
-              <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                ${f1HeadImg}
-                <span class="h2h-name-f1">${f1name.split(' ').pop()}</span>
-              </div>
-              <span class="h2h-center-label">Head to Head</span>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;">
-                ${f2HeadImg}
-                <span class="h2h-name-f2">${f2name.split(' ').pop()}</span>
-              </div>
-            </div>
-            ${rows.join('')}
-          </div>`;
-        }
-
-        function paceBadge(pace) {
-          const colors = {
-            'High-output war': 'border-red-300 text-red-600 bg-red-50',
-            'Moderate pace': 'border-yellow-300 text-yellow-700 bg-yellow-50',
-            'Grappling match': 'border-purple-300 text-purple-600 bg-purple-50',
-            'Tactical': 'border-blue-300 text-blue-600 bg-blue-50',
-          };
-          const cls = colors[pace] || 'border-gray-300 text-gray-600 bg-gray-50';
-          return `<span class="text-xs px-2 py-0.5 rounded border ${cls}">${pace}</span>`;
-        }
-
-        let html = '';
-        for (const [event, card] of Object.entries(events)) {
-          const safeEvent = event.replace(/"/g, '&quot;');
-          html += `<div class="mb-10 analysis-event-section" data-event="${safeEvent}">
-            <h2 class="section-title" style="font-size:32px;margin-bottom:16px;">${event}</h2>
-            <div class="space-y-4">`;
-          card.forEach(f => {
-            const total = f.decision_pct + f.ko_pct + f.sub_pct;
-            const decW = total > 0 ? (f.decision_pct / total * 100) : 33;
-            const koW = total > 0 ? (f.ko_pct / total * 100) : 33;
-            const subW = total > 0 ? (f.sub_pct / total * 100) : 34;
-
-            const chinF1 = f.chin_notes_f1 && f.chin_notes_f1 !== 'Never finished' ? f.chin_notes_f1 : '';
-            const chinF2 = f.chin_notes_f2 && f.chin_notes_f2 !== 'Never finished' ? f.chin_notes_f2 : '';
-
-            html += `<div class="model-card">
-              <div class="flex items-center justify-between mb-4">
-                <div>
-                  <span class="fight-card-f1-name" style="font-size:24px;">${maybeFighterLink(f.fighter1)}</span>
-                  <span class="text-gray-400 text-sm mx-2">vs</span>
-                  <span class="fight-card-f1-name" style="font-size:24px;">${maybeFighterLink(f.fighter2)}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  ${paceBadge(f.pace_label)}
-                  <span class="text-xs text-gray-500">${f.round_estimate}</span>
-                </div>
-              </div>
-              <div class="mb-4">
-                <div class="text-xs text-gray-500 mb-1.5">Method of Victory</div>
-                <div class="flex rounded-lg overflow-hidden" style="height:36px">
-                  <div style="background:#999;width:${decW}%" class="analysis-method-bar">
-                    ${f.decision_pct >= 5 ? '<span>' + f.decision_pct + '% DEC</span>' : ''}
-                  </div>
-                  <div style="background:#D91A1A;width:${koW}%" class="analysis-method-bar">
-                    ${f.ko_pct >= 5 ? '<span>' + f.ko_pct + '% KO</span>' : ''}
-                  </div>
-                  <div style="background:#8B0000;width:${subW}%" class="analysis-method-bar">
-                    ${f.sub_pct >= 5 ? '<span>' + f.sub_pct + '% SUB</span>' : ''}
-                  </div>
-                </div>
-                <div class="flex justify-between text-xs mt-1">
-                  <span style="color:#D91A1A">${(f.finish_label && f.finish_label !== 'undefined') ? f.finish_label : ''}</span>
-                  <span class="text-gray-500">${f.method_label}</span>
-                </div>
-              </div>
-              ${h2hTable(f.fighter1, f.fighter2, _fighterProfiles)}
-              <div class="analysis-narrative">
-                <p>${f.narrative}</p>
-              </div>
-              ${(chinF1 || chinF2) ? `<div class="mt-3 pt-3 border-t" style="border-color:#E5DDD5">
-                <div class="text-xs text-gray-500 mb-1">Durability Notes</div>
-                ${chinF1 ? `<div class="text-xs" style="color:#b45309">${f.fighter1}: ${chinF1}</div>` : ''}
-                ${chinF2 ? `<div class="text-xs" style="color:#b45309">${f.fighter2}: ${chinF2}</div>` : ''}
-              </div>` : ''}
-            </div>`;
-          });
-          html += '</div></div>';
-        }
-
-        document.getElementById('analysis-loading').classList.add('hidden');
-        document.getElementById('analysis-content').innerHTML = html;
-        window._analysisLoaded = true;
-        // Apply current event filter if one is selected
-        if (_selectedEvent) {
-          document.querySelectorAll('.analysis-event-section').forEach(el => {
-            el.style.display = el.dataset.event === _selectedEvent ? '' : 'none';
-          });
-        }
-
-        // Animate H2H bars when they scroll into view
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting && entry.target.dataset.ready !== 'true') {
-              entry.target.dataset.ready = 'true';
-              entry.target.querySelectorAll('.h2h-row').forEach(row => {
-                const f1share = parseFloat(row.dataset.f1share) || 50;
-                const f2share = parseFloat(row.dataset.f2share) || 50;
-                row.querySelector('.h2h-bar-f1').style.width = f1share + '%';
-                row.querySelector('.h2h-bar-f2').style.width = f2share + '%';
-              });
-            }
-          });
-        }, { threshold: 0.2 });
-        document.querySelectorAll('.h2h-table').forEach(el => observer.observe(el));
-      } catch (e) {
-        document.getElementById('analysis-loading').textContent = 'Failed to load fight analysis. Run method_predict.py first.';
-      }
-    }
 
     // ===== OUTCOMES =====
     async function loadOutcomes() {
