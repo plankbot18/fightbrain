@@ -1316,44 +1316,105 @@
         }
       }
 
-      // Fighter trajectory sparklines (Elo history)
+      // Fighter Momentum (compact dual-chart + phase + dots)
       if (_fighterProfiles && _fighterProfiles.fighters) {
         const byName = {};
         for (const p of Object.values(_fighterProfiles.fighters)) byName[p.name] = p;
         const p1 = byName[f.f1]; const p2 = byName[f.f2];
-        const renderSparkline = (fighter, profile) => {
-          if (!profile || !profile.elo_history || profile.elo_history.length < 2) return '';
-          const hist = profile.elo_history.slice(-8); // last 8 data points
-          const elos = hist.map(h => h.elo);
-          const min = Math.min(...elos); const max = Math.max(...elos);
-          const range = max - min || 1;
-          const W = 120; const H = 36;
-          const pts = elos.map((e, i) => `${(i/(elos.length-1))*W},${H - ((e-min)/range)*H}`).join(' ');
-          const trend = elos[elos.length-1] - elos[0];
-          const trendLabel = trend > 30 ? '↑ Rising' : trend < -30 ? '↓ Declining' : '→ Steady';
-          const trendColor = trend > 30 ? '#16a34a' : trend < -30 ? '#ef4444' : '#888';
-          const recent = (profile.recent_fights || []).slice(0, 5);
-          const pills = recent.map(r => {
-            const c = r.result === 'W' ? '#dcfce7' : '#fee2e2';
-            const tc = r.result === 'W' ? '#15803d' : '#b91c1c';
-            return `<span style="display:inline-block;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:700;background:${c};color:${tc};margin-right:2px;">${r.result}</span>`;
-          }).join('');
-          return `<div style="flex:1;min-width:140px;">
-            <div style="font-size:11px;color:#888;font-family:'Inter',sans-serif;margin-bottom:4px;font-weight:600;">${fighter.split(' ').pop().toUpperCase()}</div>
-            <svg viewBox="0 0 ${W} ${H}" style="width:${W}px;height:${H}px;display:block;margin-bottom:4px;">
-              <polyline points="${pts}" fill="none" stroke="${trendColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              ${elos.map((e, i) => `<circle cx="${(i/(elos.length-1))*W}" cy="${H-((e-min)/range)*H}" r="2.5" fill="${trendColor}"/>`).join('')}
-            </svg>
-            <div style="font-size:11px;color:${trendColor};font-family:'Inter',sans-serif;font-weight:600;">${trendLabel}</div>
-            <div style="margin-top:4px;">${pills}</div>
-          </div>`;
+
+        const getEloSeries = (profile) => {
+          if (!profile || !profile.elo_history || profile.elo_history.length < 2) return null;
+          return profile.elo_history.slice(-10).map(h => h.elo);
         };
-        const s1 = renderSparkline(f.f1, p1); const s2 = renderSparkline(f.f2, p2);
-        if (s1 || s2) {
-          html += `<div style="margin-top:12px;padding:12px 14px;background:#fafafa;border-radius:10px;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#888;letter-spacing:0.05em;margin-bottom:10px;">FIGHTER TRAJECTORY</div>
-            <div style="display:flex;gap:24px;flex-wrap:wrap;">${s1}${s2}</div>
-          </div>`;
+
+        const careerPhase = (elos, recentFights, age) => {
+          if (!elos || elos.length < 2) return null;
+          const trend = elos[elos.length - 1] - elos[0];
+          const last3 = (recentFights || []).slice(0, 3);
+          const recentW = last3.filter(r => r.result === 'W').length;
+          const recentL = last3.filter(r => r.result === 'L').length;
+          if (age && age > 35 && trend < -30) return ['FADING', '#9ca3af'];
+          if (age && age > 33)                return ['VETERAN', '#6366f1'];
+          if (trend > 100 && recentW >= 2)    return ['EMERGING', '#0ea5e9'];
+          if (recentL >= 2 && trend < -40)    return ['DECLINING', '#ef4444'];
+          if (recentL >= 1 && trend > 20)     return ['RESURGENT', '#f59e0b'];
+          if (trend > 40)                     return ['RISING', '#16a34a'];
+          if (trend > -20)                    return ['PRIME', '#D91A1A'];
+          return ['DECLINING', '#ef4444'];
+        };
+
+        const elos1 = getEloSeries(p1); const elos2 = getEloSeries(p2);
+        if (elos1 || elos2) {
+          const C1 = '#D91A1A'; const C2 = '#6366f1';
+          const W = 220; const H = 48;
+
+          // Shared scale across both fighters
+          const allElos = [...(elos1 || []), ...(elos2 || [])];
+          const gMin = Math.min(...allElos) - 10;
+          const gMax = Math.max(...allElos) + 10;
+          const gRange = gMax - gMin || 1;
+
+          const makeLine = (elos, color) => {
+            if (!elos || elos.length < 2) return '';
+            const pts = elos.map((e, i) => `${(i/(elos.length-1))*W},${H - ((e-gMin)/gRange)*H}`).join(' ');
+            const dots = elos.map((e, i) => {
+              const isLast = i === elos.length - 1;
+              return `<circle cx="${(i/(elos.length-1))*W}" cy="${H-((e-gMin)/gRange)*H}" r="${isLast ? 3.5 : 2}" fill="${isLast ? color : 'white'}" stroke="${color}" stroke-width="1.5"/>`;
+            }).join('');
+            return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" opacity="0.9" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="6" opacity="0.08" stroke-linecap="round" stroke-linejoin="round"/>
+                    ${dots}`;
+          };
+
+          const dualChart = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;display:block;overflow:visible;">
+            <line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="#e5e7eb" stroke-width="1"/>
+            ${makeLine(elos1, C1)}${makeLine(elos2, C2)}
+          </svg>`;
+
+          // Dot timeline + phase per fighter
+          const makeRow = (name, profile, elos, color) => {
+            if (!profile) return '';
+            const recent = (profile.recent_fights || []).slice(0, 5);
+            const dots = recent.map(r => {
+              const dc = r.result === 'W' ? '#16a34a' : r.result === 'L' ? '#ef4444' : '#d1d5db';
+              const label = `${r.result} vs ${r.opponent} (${r.method}, R${r.round})`;
+              return `<span title="${label}" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dc};margin-right:3px;cursor:default;vertical-align:middle;"></span>`;
+            }).join('');
+
+            const peak = elos ? Math.max(...elos) : null;
+            const curr = elos ? elos[elos.length - 1] : null;
+            const diff = (peak && curr) ? Math.round(curr - peak) : null;
+            const diffStr = diff !== null ? (diff >= 0 ? `+${diff}` : `${diff}`) : '';
+            const diffColor = diff !== null && diff >= -15 ? '#16a34a' : '#ef4444';
+
+            const age = profile.age || null;
+            const phase = careerPhase(elos, recent, age);
+
+            return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-family:'Inter',sans-serif;">
+              <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
+              <span style="font-size:12px;font-weight:700;color:#111;min-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</span>
+              ${phase ? `<span style="font-size:10px;font-weight:700;color:${phase[1]};background:${phase[1]}18;padding:1px 6px;border-radius:4px;letter-spacing:0.04em;flex-shrink:0;">${phase[0]}</span>` : ''}
+              <span style="display:flex;align-items:center;gap:0;flex-shrink:0;">${dots}</span>
+              ${peak ? `<span style="font-size:10px;color:#aaa;flex-shrink:0;margin-left:auto;">Peak <strong style="color:#555;">${Math.round(peak)}</strong> → <strong style="color:${diffColor};">${Math.round(curr)}</strong> <span style="color:${diffColor};">(${diffStr})</span></span>` : ''}
+            </div>`;
+          };
+
+          const row1 = makeRow(f.f1, p1, elos1, C1);
+          const row2 = makeRow(f.f2, p2, elos2, C2);
+
+          if (row1 || row2) {
+            html += `<div style="margin-top:12px;padding:12px 14px;background:#fafafa;border-radius:10px;border:1px solid #f0f0f0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#888;letter-spacing:0.05em;">MOMENTUM</div>
+                <div style="display:flex;gap:10px;font-size:10px;color:#aaa;font-family:'Inter',sans-serif;">
+                  <span style="display:flex;align-items:center;gap:4px;"><span style="width:16px;height:2px;background:${C1};display:inline-block;"></span>${f.f1.split(' ').pop()}</span>
+                  <span style="display:flex;align-items:center;gap:4px;"><span style="width:16px;height:2px;background:${C2};display:inline-block;"></span>${f.f2.split(' ').pop()}</span>
+                </div>
+              </div>
+              ${dualChart}
+              <div style="margin-top:8px;">${row1}${row2}</div>
+            </div>`;
+          }
         }
       }
 
