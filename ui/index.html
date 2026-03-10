@@ -1068,61 +1068,10 @@
 
     function renderExpandedContent(f) {
       const report = findMatchupReport(f.f1, f.f2);
-      const methodKey = f.f1 + ' vs ' + f.f2;
-      const methodData = _methodPredictions[methodKey] || _methodPredictions[f.f2 + ' vs ' + f.f1];
-      const valuePick = findValuePick(f.f1, f.f2);
       const fullId = 'full-' + (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
 
-      // ── LEVEL 1: What every visitor sees ──────────────────────────────
-      let html = '<div class="space-y-3">';
-
-      // Method bar
-      html += renderMethodBar(methodData);
-
-      // Value edge (if exists)
-      html += renderValueBar(valuePick);
-
-      // 2-sentence preview of the matchup narrative
-      if (report && report.report_text) {
-        html += `<div style="font-size:13px;color:#555;line-height:1.6;">${truncateToSentences(report.report_text, 2)}</div>`;
-      }
-
-      // Button row: Full Analysis + Share
-      html += `<div style="display:flex;align-items:center;gap:14px;margin-top:4px;">
-        <button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn" class="full-analysis-btn"
-          style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;transition:opacity 0.2s;">
-          Full Analysis ↓
-        </button>
-        <button onclick="sharePick('${f.f1.replace(/'/g,"\\'")}','${f.f2.replace(/'/g,"\\'")}','${f.predicted_winner.replace(/'/g,"\\'")}',${f.conf},'${(f.event||'').replace(/'/g,"\\'")}')"
-          style="font-size:11px;color:#999;background:none;border:1px solid #ddd;border-radius:6px;cursor:pointer;padding:3px 10px;font-family:'Inter',sans-serif;font-weight:500;transition:all 0.2s;"
-          onmouseover="this.style.borderColor='#D91A1A';this.style.color='#D91A1A'" onmouseout="this.style.borderColor='#ddd';this.style.color='#999'">
-          ↗ Share
-        </button>
-      </div>`;
-
-      html += '</div>';
-
-      // ── LEVEL 2: Deep dive (hidden by default) ────────────────────────
-      html += `<div id="${fullId}" data-open="false" style="display:none;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.3s ease;" class="space-y-4 mt-3 pt-3"`;
-
-      // Fighter face-off banner
-      const faceF1Src = getFighterImg(f.f1);
-      const faceF2Src = getFighterImg(f.f2);
-      const f1imgTag = faceF1Src ? `<img src="${faceF1Src}" alt="${f.f1}" style="height:110px;width:auto;object-fit:contain;object-position:bottom;" loading="lazy" onerror="this.style.display='none'">` : '';
-      const f2imgTag = faceF2Src ? `<img src="${faceF2Src}" alt="${f.f2}" style="height:110px;width:auto;object-fit:contain;object-position:bottom;transform:scaleX(-1);" loading="lazy" onerror="this.style.display='none'">` : '';
-      if (f1imgTag || f2imgTag) {
-        html += `<div style="display:flex;align-items:flex-end;justify-content:space-between;background:linear-gradient(135deg,rgba(217,26,26,0.06) 0%,rgba(0,0,0,0.03) 100%);border-radius:10px;padding:0 16px;overflow:hidden;min-height:120px;border:1px solid rgba(217,26,26,0.1)">
-          <div style="display:flex;flex-direction:column;align-items:flex-start;">
-            ${f1imgTag}
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#D91A1A;padding:4px 0 6px;">${f.f1.split(' ').pop().toUpperCase()}</div>
-          </div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#ddd;align-self:center;">VS</div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;">
-            ${f2imgTag}
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#888;padding:4px 0 6px;text-align:right;">${f.f2.split(' ').pop().toUpperCase()}</div>
-          </div>
-        </div>`;
-      }
+      // Single level — everything visible on expand, no inner button, no duplicates
+      let html = `<div id="${fullId}" data-open="false" style="display:none;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.45s ease,opacity 0.35s ease;" class="space-y-4">`;
 
       // Scout reports
       html += (f.f1_scout_obj ? renderScoutSection(f.f1_scout_obj, f.f1) : '');
@@ -1131,8 +1080,11 @@
       // Full matchup report
       if (report) html += renderMatchupReport(report);
 
-      html += '</div>';
+      if (!f.f1_scout_obj && !f.f2_scout_obj && !report) {
+        html += `<div style="font-size:13px;color:#aaa;padding:8px 0;">No detailed analysis available for this fight.</div>`;
+      }
 
+      html += '</div>';
       return html;
     }
 
