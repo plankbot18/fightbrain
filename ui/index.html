@@ -1153,8 +1153,6 @@
 
     function renderExpandedContent(f) {
       const report = findMatchupReport(f.f1, f.f2);
-      const fightId = (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
-      const radarCanvasId = 'radar-' + fightId;
 
       let html = '';
 
@@ -1165,15 +1163,6 @@
       // Full matchup report (narrative + edges + watch for)
       if (report) html += renderMatchupReport(report);
 
-      // Radar chart — only if radar data exists
-      if (report && report.radar) {
-        html += `<div style="margin-top:16px;background:#fafafa;border-radius:12px;padding:16px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#888;letter-spacing:0.05em;margin-bottom:12px;">FIGHTER COMPARISON</div>
-          <div style="display:flex;justify-content:center;max-height:320px;">
-            <canvas id="${radarCanvasId}" style="max-width:360px;"></canvas>
-          </div>
-        </div>`;
-      }
 
       // Chin / durability notes from method predictions
       const methKey = f.f1 + ' vs ' + f.f2;
@@ -1282,19 +1271,7 @@
           el.style.opacity = '1';
         });
         if (btn) btn.textContent = 'Hide Analysis ↑';
-        // Render radar chart after expand (Chart.js needs visible canvas)
-        const radarCanvasId = 'radar-' + id.replace('full-', '');
-        const report = document.getElementById(radarCanvasId) ? (() => {
-          // Find the matchup report by scanning all reports
-          if (!_matchupReports) return null;
-          return Object.values(_matchupReports).find(r => {
-            const key = (r.fighter1 + r.fighter2).replace(/[^a-zA-Z0-9]/g, '');
-            return key === radarCanvasId.replace('radar-', '');
-          }) || null;
-        })() : null;
-        if (report && report.radar) {
-          loadChartJS().then(() => setTimeout(() => renderFightRadar(report, radarCanvasId), 100));
-        }
+
       }
     }
 
@@ -1677,62 +1654,7 @@
     }
 
     // ===== RADAR CHART (Fight Analysis) =====
-    // Per-fight radar instances (keyed by canvasId)
-    const _radarInstances = {};
 
-    function renderFightRadar(report, canvasId) {
-      if (!report || !report.radar) return;
-      const canvas = document.getElementById(canvasId);
-      if (!canvas || !window.Chart) return;
-      if (_radarInstances[canvasId]) { _radarInstances[canvasId].destroy(); delete _radarInstances[canvasId]; }
-
-      const radar = report.radar;
-      const labels = ['Striking', 'Grappling', 'Defense', 'Finishing Power', 'Experience', 'Recent Form'];
-      const f1Data = labels.map(l => radar.f1[l] || 0);
-      const f2Data = labels.map(l => radar.f2[l] || 0);
-
-      _radarInstances[canvasId] = new Chart(canvas, {
-        type: 'radar',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: report.fighter1,
-              data: f1Data,
-              backgroundColor: 'rgba(217,26,26,0.15)',
-              borderColor: '#D91A1A',
-              borderWidth: 2,
-              pointBackgroundColor: '#D91A1A',
-              pointRadius: 4,
-            },
-            {
-              label: report.fighter2,
-              data: f2Data,
-              backgroundColor: 'rgba(17,17,17,0.1)',
-              borderColor: '#111111',
-              borderWidth: 2,
-              pointBackgroundColor: '#111111',
-              pointRadius: 4,
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          animation: { duration: 600, easing: 'easeOutQuart' },
-          scales: {
-            r: {
-              beginAtZero: true, max: 100,
-              grid: { color: 'rgba(0,0,0,0.08)' },
-              angleLines: { color: 'rgba(0,0,0,0.08)' },
-              pointLabels: { color: '#666666', font: { size: 11 } },
-              ticks: { display: false }
-            }
-          },
-          plugins: { legend: { labels: { color: '#444', font: { size: 12 } } } }
-        }
-      });
-    }
 
     // ===== PICKS RECORD =====
     let _allPicks = [];
