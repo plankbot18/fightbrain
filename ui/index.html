@@ -1708,6 +1708,44 @@
     }
 
     // ===== FAIR PRICE CALCULATOR =====
+    function updateParlayBuilder() {
+      const pool = window._parlayPool || [];
+      const selected = pool.filter((p, i) => {
+        const cb = document.getElementById('parlay-check-' + i);
+        return cb && cb.checked;
+      });
+      const result = document.getElementById('parlay-result');
+      if (!result) return;
+      if (selected.length < 2) {
+        result.innerHTML = '<span style="color:#aaa;">Select 2+ fights to calculate</span>';
+        return;
+      }
+      const prob = selected.reduce((acc, l) => acc * (l.confidence/100), 1);
+      const odds = selected.reduce((acc, l) => acc * l.book_odds, 1);
+      const ev = prob * (odds - 1) - (1 - prob);
+      const dec = odds;
+      const amOdds = dec >= 2 ? '+' + Math.round((dec-1)*100) : '-' + Math.round(100/(dec-1));
+      const evStr = (ev >= 0 ? '+' : '') + (ev * 100).toFixed(1) + '%';
+      const evColor = ev >= 0 ? '#16a34a' : '#ef4444';
+      const probStr = (prob * 100).toFixed(1) + '%';
+      const kellyB = dec - 1;
+      const kellyRaw = Math.max(0, (prob * kellyB - (1-prob)) / kellyB);
+      const halfKelly = kellyRaw / 2;
+      const kellyColor = kellyRaw > 0.02 ? '#16a34a' : '#888';
+      result.innerHTML =
+        '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">' +
+          '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">Parlay odds</div>' +
+          '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:#111;line-height:1;">' + amOdds + '</div></div>' +
+          '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">Win prob</div>' +
+          '<div style="font-size:18px;font-weight:700;color:#111;">' + probStr + '</div></div>' +
+          '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">EV</div>' +
+          '<div style="font-size:18px;font-weight:700;color:' + evColor + ';">' + evStr + '</div></div>' +
+          '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">½ Kelly</div>' +
+          '<div style="font-size:18px;font-weight:700;color:' + kellyColor + ';">' + (halfKelly*100).toFixed(1) + '%</div></div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#bbb;margin-top:6px;">' + selected.length + ' legs · ' + dec.toFixed(2) + 'x payout · ' + (1/prob).toFixed(1) + ':1 true odds</div>';
+    }
+
     function calcFairPrice() {
       const odds = parseFloat(document.getElementById('calc-odds').value);
       const conf = parseFloat(document.getElementById('calc-conf').value);
@@ -1732,15 +1770,45 @@
       const color = isValue ? '#16a34a' : edge < -5 ? '#ef4444' : '#888';
       const verdict = isValue ? '✅ VALUE BET' : edge < -5 ? '❌ NEGATIVE VALUE — SKIP' : '⚠ MARGINAL — BORDERLINE';
 
-      el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:${color};">${verdict}</div>
-        <div style="font-size:13px;color:#aaa;">
-          Market implies <strong style="color:#fff;">${marketImpl.toFixed(1)}%</strong> ·
-          Fair price <strong style="color:#fff;">${fairStr}</strong> ·
-          Edge <strong style="color:${color};">${edgeStr}</strong> ·
-          EV per 100u staked: <strong style="color:${color};">${evPer100 >= 0 ? '+' : ''}${evPer100.toFixed(1)}u</strong>
+      // Kelly Criterion
+      const decOdds = odds > 0 ? odds/100 + 1 : 100/Math.abs(odds) + 1;
+      const b = decOdds - 1;
+      const p = conf / 100;
+      const q = 1 - p;
+      const kelly = Math.max(0, (b * p - q) / b);
+      const halfKelly = kelly / 2;
+      const kellyColor = kelly > 0.05 ? '#16a34a' : kelly > 0 ? '#b45309' : '#888';
+
+      el.innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:${color};">${verdict}</div>
         </div>
-      </div>`;
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <div style="background:#1a1a1a;border-radius:8px;padding:8px 12px;min-width:80px;">
+            <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Market prob</div>
+            <div style="font-size:16px;font-weight:700;color:#fff;">${marketImpl.toFixed(1)}%</div>
+          </div>
+          <div style="background:#1a1a1a;border-radius:8px;padding:8px 12px;min-width:80px;">
+            <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Fair price</div>
+            <div style="font-size:16px;font-weight:700;color:#fff;">${fairStr}</div>
+          </div>
+          <div style="background:#1a1a1a;border-radius:8px;padding:8px 12px;min-width:80px;">
+            <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Edge</div>
+            <div style="font-size:16px;font-weight:700;color:${color};">${edgeStr}</div>
+          </div>
+          <div style="background:#1a1a1a;border-radius:8px;padding:8px 12px;min-width:80px;">
+            <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">½ Kelly stake</div>
+            <div style="font-size:16px;font-weight:700;color:${kellyColor};">${(halfKelly*100).toFixed(1)}%</div>
+          </div>
+          <div style="background:#1a1a1a;border-radius:8px;padding:8px 12px;min-width:80px;">
+            <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">EV / 100u</div>
+            <div style="font-size:16px;font-weight:700;color:${color};">${evPer100 >= 0 ? '+' : ''}${evPer100.toFixed(1)}u</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:#555;">
+          Full Kelly: ${(kelly*100).toFixed(1)}% · Half Kelly (recommended): ${(halfKelly*100).toFixed(1)}% of bankroll
+          ${kelly === 0 ? ' · Model says skip — negative edge.' : ''}
+        </div>`;
     }
 
     // ===== PERSONAL PICK TRACKER =====
@@ -2831,6 +2899,100 @@
           </div>`;
         });
         html += '</div></div></div>';
+      }
+
+      // ===== PARLAY OPTIMIZER =====
+      const parlayPool = valuePicks.filter(p =>
+        p.odds_source === 'live' && p.book_odds && p.book_odds > 1 && p.confidence >= 60 && p.tier !== 'SKIP'
+      );
+      window._parlayPool = parlayPool;
+
+      const toAmerican = dec => dec >= 2 ? '+' + Math.round((dec-1)*100) : '-' + Math.round(100/(dec-1));
+
+      if (parlayPool.length >= 2) {
+        const genCombos = (pool, size) => {
+          const result = [];
+          const recurse = (start, chosen) => {
+            if (chosen.length === size) {
+              const prob = chosen.reduce((acc, l) => acc * (l.confidence/100), 1);
+              const odds = chosen.reduce((acc, l) => acc * l.book_odds, 1);
+              const ev = prob * (odds - 1) - (1 - prob);
+              result.push({ legs: [...chosen], prob, odds, ev });
+              return;
+            }
+            for (let i = start; i < pool.length; i++) recurse(i+1, [...chosen, pool[i]]);
+          };
+          recurse(0, []);
+          return result;
+        };
+        const allCombos = [
+          ...genCombos(parlayPool, 2),
+          ...(parlayPool.length >= 3 ? genCombos(parlayPool, 3) : [])
+        ].sort((a,b) => b.ev - a.ev).slice(0, 3);
+
+        html += `<div style="margin-top:28px;margin-bottom:24px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#111;letter-spacing:0.04em;margin-bottom:2px;">⚡ PARLAY OPTIMIZER</div>
+          <div style="font-size:12px;color:#888;font-family:'Inter',sans-serif;margin-bottom:16px;">Model-backed parlay combos ranked by expected value. Assumes independence between legs.</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+          ${allCombos.map((combo, idx) => {
+            const amOdds = toAmerican(combo.odds);
+            const evStr = (combo.ev >= 0 ? '+' : '') + (combo.ev * 100).toFixed(1) + '%';
+            const evColor = combo.ev >= 0 ? '#16a34a' : '#ef4444';
+            const prob = (combo.prob * 100).toFixed(1);
+            const kellyB = combo.odds - 1;
+            const kellyRaw = Math.max(0, (combo.prob * kellyB - (1-combo.prob)) / kellyB);
+            const halfK = (kellyRaw/2*100).toFixed(1);
+            const badge = ['🔥 BEST EV', '2ND', '3RD'][idx];
+            const badgeBg = idx === 0 ? '#D91A1A' : '#555';
+            return '<div style="background:#fff;border-radius:12px;padding:14px 16px;border:1px solid ' + (idx===0?'#D91A1A':'#e5e7eb') + ';box-shadow:0 1px 4px rgba(0,0,0,0.06);">' +
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+                '<div style="display:flex;align-items:center;gap:8px;">' +
+                  '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:11px;background:' + badgeBg + ';color:#fff;padding:2px 7px;border-radius:4px;letter-spacing:0.05em;">' + badge + '</span>' +
+                  '<span style="font-size:11px;color:#aaa;">' + combo.legs.length + '-LEG</span>' +
+                '</div>' +
+                '<div style="text-align:right;">' +
+                  '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#111;line-height:1;">' + amOdds + '</div>' +
+                  '<div style="font-size:11px;color:' + evColor + ';font-weight:600;">EV ' + evStr + '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;">' +
+              combo.legs.map(function(l) {
+                var legOdds = l.book_odds_american ? (l.book_odds_american > 0 ? '+'+l.book_odds_american : l.book_odds_american) : toAmerican(l.book_odds);
+                return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:#f9f9f9;border-radius:7px;">' +
+                  '<span style="font-size:13px;font-weight:600;color:#111;">' + l.best_bet + '</span>' +
+                  '<div style="display:flex;gap:10px;align-items:center;">' +
+                    '<span style="font-size:11px;color:#aaa;">' + l.confidence + '% conf</span>' +
+                    '<span style="font-size:12px;font-weight:600;color:#555;">' + legOdds + '</span>' +
+                  '</div>' +
+                '</div>';
+              }).join('') +
+              '</div>' +
+              '<div style="display:flex;gap:16px;font-size:11px;color:#aaa;flex-wrap:wrap;">' +
+                '<span>Win prob: <strong style="color:#555;">' + prob + '%</strong></span>' +
+                '<span>Payout: <strong style="color:#555;">' + combo.odds.toFixed(2) + 'x</strong></span>' +
+                '<span>½ Kelly: <strong style="color:' + (kellyRaw>0?'#16a34a':'#888') + ';">' + halfK + '% of bankroll</strong></span>' +
+              '</div>' +
+            '</div>';
+          }).join('')}
+          </div>
+          <div style="background:#f9f7f4;border-radius:12px;padding:16px;">
+            <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:10px;">Build your own</div>
+            <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
+              ${parlayPool.map(function(p, i) {
+                var legOdds = p.book_odds_american ? (p.book_odds_american > 0 ? '+'+p.book_odds_american : p.book_odds_american) : toAmerican(p.book_odds);
+                return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;">' +
+                  '<input type="checkbox" id="parlay-check-' + i + '" onchange="updateParlayBuilder()" style="width:15px;height:15px;cursor:pointer;accent-color:#D91A1A;flex-shrink:0;">' +
+                  '<span style="flex:1;font-size:13px;font-weight:600;color:#111;">' + p.best_bet + '</span>' +
+                  '<span style="font-size:11px;color:#aaa;">' + p.confidence + '%</span>' +
+                  '<span style="font-size:12px;font-weight:600;color:#555;">' + legOdds + '</span>' +
+                '</label>';
+              }).join('')}
+            </div>
+            <div id="parlay-result" style="padding:12px;background:#fff;border-radius:8px;font-family:\'Inter\',sans-serif;font-size:13px;color:#aaa;text-align:center;border:1px solid #e5e7eb;">
+              Select 2+ fights above to calculate your parlay
+            </div>
+          </div>
+        </div>`;
       }
 
       // Fair Price Calculator
