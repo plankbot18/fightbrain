@@ -7,16 +7,16 @@
   <meta name="description" content="FightBrain uses machine learning to predict UFC fight outcomes. 63.6% win rate. Every pick publicly logged before the event. Free UFC picks every fight week.">
   <meta name="keywords" content="UFC picks, UFC predictions, MMA picks, UFC ML predictions, UFC machine learning, fight predictions, UFC betting picks">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://plankbot18.github.io/fightbrain/">
+  <link rel="canonical" href="https://fightbrain.io/">
   <meta property="og:title" content="FightBrain — UFC Predictions Powered by Machine Learning" />
   <meta property="og:description" content="ML-powered UFC picks. 63.6% win rate. Every pick on the site before fight night — public record, never edited. Free, every fight week." />
-  <meta property="og:url" content="https://plankbot18.github.io/fightbrain/" />
+  <meta property="og:url" content="https://fightbrain.io/" />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://plankbot18.github.io/fightbrain/og-image.jpg" />
+  <meta property="og:image" content="https://fightbrain.io/og-image.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="FightBrain — ML UFC Picks" />
   <meta name="twitter:description" content="Machine learning UFC predictions. 63.6% win rate. Every pick tracked publicly. Free every fight week." />
-  <meta name="twitter:image" content="https://plankbot18.github.io/fightbrain/og-image.jpg" />
+  <meta name="twitter:image" content="https://fightbrain.io/og-image.jpg" />
   <meta name="theme-color" content="#111111">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -474,7 +474,7 @@
         </div>
       </div>
       <div style="text-align:center;margin-top:40px;">
-        <a href="https://plankbot18.github.io/fightbrain/ui/" target="_blank"
+        <a href="https://fightbrain.io/ui/" target="_blank"
           style="font-family:'Inter',sans-serif;font-size:13px;color:#666;text-decoration:none;border-bottom:1px solid #444;padding-bottom:2px;">
           View the full pick history ↗
         </a>
@@ -901,7 +901,7 @@
 
   <script>
     function landingSharePick(winner, loser, conf) {
-      const text = `🧠 FightBrain ML Pick\n\n${winner} to win vs ${loser}\n${conf ? conf.toFixed(1) + '% model confidence\n' : ''}Every pick tracked publicly\n\nhttps://plankbot18.github.io/fightbrain/`;
+      const text = `🧠 FightBrain ML Pick\n\n${winner} to win vs ${loser}\n${conf ? conf.toFixed(1) + '% model confidence\n' : ''}Every pick tracked publicly\n\nhttps://fightbrain.io/`;
       navigator.clipboard.writeText(text).then(() => landingToast('Pick copied — ready to post!')).catch(() => {
         const ta = document.createElement('textarea');
         ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;';
