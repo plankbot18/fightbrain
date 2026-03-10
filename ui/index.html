@@ -1812,41 +1812,6 @@
     }
 
     // ===== PERSONAL PICK TRACKER =====
-    function getTailedPicks() {
-      try { return JSON.parse(localStorage.getItem('fightbrain_tailed') || '[]'); } catch { return []; }
-    }
-    function saveTailedPicks(picks) {
-      localStorage.setItem('fightbrain_tailed', JSON.stringify(picks));
-    }
-    function isTailed(f1, f2) {
-      return getTailedPicks().some(p => p.f1 === f1 && p.f2 === f2);
-    }
-    function tailPick(f1, f2, el) {
-      const already = isTailed(f1, f2);
-      const picks = getTailedPicks();
-      if (already) {
-        saveTailedPicks(picks.filter(p => !(p.f1===f1&&p.f2===f2)));
-        el.querySelector('span:first-child').textContent = '＋';
-      } else {
-        picks.push({ f1, f2, ts: Date.now() });
-        saveTailedPicks(picks);
-        el.querySelector('span:first-child').textContent = '✅';
-      }
-    }
-
-    function toggleTailPick(f1, f2, winner, conf, btn) {
-      let picks = getTailedPicks();
-      const idx = picks.findIndex(p => p.f1 === f1 && p.f2 === f2);
-      if (idx >= 0) {
-        picks.splice(idx, 1);
-        if (btn) { btn.textContent = '+ Tail'; btn.style.color = '#777'; btn.style.borderColor = '#ddd'; btn.style.background = 'none'; }
-      } else {
-        picks.push({ f1, f2, winner, conf, tailedAt: Date.now(), result: null });
-        if (btn) { btn.textContent = '✓ Tailed'; btn.style.color = '#16a34a'; btn.style.borderColor = '#16a34a'; btn.style.background = '#f0fdf4'; }
-      }
-      saveTailedPicks(picks);
-    }
-
     function stakeLabel(conf) {
       if (conf >= 85) return '2u LOCK';
       if (conf >= 75) return '1.5u STRONG';
@@ -2138,11 +2103,6 @@
             <button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn"
               style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;">
               Full Analysis ↓
-            </button>
-            <button onclick="toggleTailPick('${f.f1}','${f.f2}','${f.winner}',${f.conf},this)"
-              id="tail-${fullId}"
-              style="font-size:12px;background:none;border:1px solid #ddd;border-radius:12px;padding:2px 10px;cursor:pointer;font-family:'Inter',sans-serif;color:#777;">
-              ${isTailed(f.f1, f.f2) ? '✓ Tailed' : '+ Tail'}
             </button>
             ${f.data_quality_flag === 'LOW_DATA' ? '<span style="font-size:10px;color:#f59e0b;border:1px solid #f59e0b;border-radius:4px;padding:1px 6px;">LOW DATA</span>' : ''}
           </div>
@@ -2841,9 +2801,8 @@
               ${pick.bookmaker && hasOdds ? `<span style="color:#ddd;">·</span><span style="color:#bbb;">${pick.bookmaker}</span>` : ''}
             </div>
           </div>
-          <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 10px;background:#fafafa;border-left:1px solid #f0f0f0;min-width:44px;cursor:pointer;" onclick="tailPick('${pick.fighter1}','${pick.fighter2}',this)" title="Tail this pick">
-            <span style="font-size:18px;">${isTailed(pick.fighter1,pick.fighter2)?'✅':'＋'}</span>
-            <span style="font-size:9px;color:#bbb;margin-top:2px;">${stake}u</span>
+          <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 10px;background:#fafafa;border-left:1px solid #f0f0f0;min-width:44px;">
+            <span style="font-size:11px;color:#bbb;font-family:'Bebas Neue',sans-serif;">${stake}u</span>
           </div>
         </div>`;
       }
