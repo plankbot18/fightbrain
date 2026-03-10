@@ -939,10 +939,12 @@
           const losses = evPicks.filter(p => p.result === 'wrong' || p.result === 'incorrect').length;
           const acc = evPicks.length > 0 ? Math.round(wins / evPicks.length * 100) : 0;
           const unitPnl = evPicks.reduce((sum, p) => {
-            const stake = p.recommended_units || 1;
-            return sum + (p.result === 'correct' ? stake : -stake);
+            const stake = p.recommended_units || 1, odds = p.book_odds_american;
+            return sum + (p.result === 'correct'
+              ? (odds ? (odds < 0 ? stake*(100/Math.abs(odds)) : stake*(odds/100)) : stake)
+              : -stake);
           }, 0);
-          const pnlStr = (unitPnl >= 0 ? '+' : '') + unitPnl.toFixed(1) + 'u';
+          const pnlStr = (unitPnl >= 0 ? '+' : '') + unitPnl.toFixed(2) + 'u';
           // Best pick and worst miss for event summary
           const bestPick = evPicks.filter(p => p.result === 'correct' && p.confidence >= 80)[0];
           const bigUpset = evPicks.find(p => p.result === 'incorrect' && p.confidence >= 75);
@@ -2738,8 +2740,11 @@
           const evW = evPicks.filter(p=>p.result==='correct').length;
           const evL = evPicks.filter(p=>p.result!=='correct').length;
           const evAcc = evPicks.length ? Math.round(evW/evPicks.length*100) : 0;
-          const evPnl = evPicks.reduce((s,p)=>s+(p.result==='correct'?+(p.recommended_units||1):-(p.recommended_units||1)),0);
-          const evPnlStr = (evPnl>=0?'+':'')+evPnl.toFixed(1)+'u';
+          const evPnl = evPicks.reduce((s,p)=>{
+            const stake=p.recommended_units||1, odds=p.book_odds_american;
+            return s+(p.result==='correct'?(odds?(odds<0?stake*(100/Math.abs(odds)):stake*(odds/100)):stake):-stake);
+          },0);
+          const evPnlStr = (evPnl>=0?'+':'')+evPnl.toFixed(2)+'u';
 
           html += `<div style="background:#fff;border-radius:14px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #f0f0f0;">
             <div style="padding:14px 18px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
@@ -2752,31 +2757,32 @@
               </div>
               <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:${evAcc>=60?'#D91A1A':'#aaa'};">${evAcc}%</div>
             </div>
-            <table style="width:100%;border-collapse:collapse;font-family:'Inter',sans-serif;font-size:13px;">
-              <thead><tr style="color:#bbb;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;background:#fafafa;">
-                <th style="text-align:left;padding:7px 14px;">Pick</th>
-                <th style="text-align:left;padding:7px 8px;">Fight</th>
-                <th style="text-align:center;padding:7px 8px;"></th>
-                <th style="text-align:right;padding:7px 14px;">P&L</th>
-              </tr></thead>
-              <tbody>`;
+            <div style="font-family:'Inter',sans-serif;">`;
 
-          evPicks.forEach(p => {
+          evPicks.forEach((p, idx) => {
             const win = p.result==='correct';
             const stake = p.recommended_units||1;
-            const pnlP = win ? +stake : -stake;
-            const pnlPStr = (pnlP>=0?'+':'')+pnlP.toFixed(1)+'u';
-            const fightStr = (p.fight||(p.fighter1+' vs '+p.fighter2)||'').replace(' vs ',' v ');
-            html += `<tr style="border-bottom:1px solid #f7f7f7;">
-              <td style="padding:9px 14px;"><span style="font-weight:700;color:#111;">${p.predicted_winner}</span> <span style="color:#bbb;font-size:11px;">${p.confidence}%</span></td>
-              <td style="padding:9px 8px;font-size:11px;color:#aaa;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fightStr}</td>
-              <td style="padding:9px 8px;text-align:center;">
-                <span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;background:${win?'#dcfce7':'#fee2e2'};color:${win?'#15803d':'#b91c1c'};">${win?'WIN':'LOSS'}</span>
-              </td>
-              <td style="padding:9px 14px;text-align:right;font-weight:600;color:${pnlP>=0?'#16a34a':'#ef4444'};">${pnlPStr}</td>
-            </tr>`;
+            const odds = p.book_odds_american;
+            const pnlP = win
+              ? (odds ? (odds < 0 ? stake*(100/Math.abs(odds)) : stake*(odds/100)) : stake)
+              : -stake;
+            const pnlPStr = (pnlP>=0?'+':'')+pnlP.toFixed(2)+'u';
+            const opp = p.fighter1 === p.predicted_winner ? p.fighter2 : p.fighter1;
+            const oddsStr = odds ? (odds > 0 ? '+'+odds : ''+odds) : '';
+            const stakeStr = stake+'u';
+            const isLast = idx === evPicks.length - 1;
+            html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;${isLast?'':'border-bottom:1px solid #f5f5f5;'}">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;color:#111;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.predicted_winner}</div>
+                <div style="font-size:11px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">vs ${opp||'?'} · ${p.confidence}% · ${stakeStr}${oddsStr?' · '+oddsStr:''}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span style="display:inline-block;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${win?'#dcfce7':'#fee2e2'};color:${win?'#15803d':'#b91c1c'};">${win?'WIN':'LOSS'}</span>
+                <span style="font-weight:600;font-size:13px;color:${pnlP>=0?'#16a34a':'#ef4444'};min-width:48px;text-align:right;">${pnlPStr}</span>
+              </div>
+            </div>`;
           });
-          html += `</tbody></table>`;
+          html += `</div>`;
 
           // Autopsy
           const autopsy = (_autopsy||[]).find(a=>a.event===ev);
