@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="description" content="FightBrain — data-driven UFC fight predictions, value picks, and fighter analytics.">
   <meta property="og:title" content="FightBrain — UFC Predictions Powered by ML" />
-  <meta property="og:description" content="7W–4L · +0.13u odds-adjusted · 73.7% backtested accuracy. Every pick logged before the event." />
+  <meta property="og:description" content="7W–4L · +0.13u odds-adjusted · 76.2% backtested accuracy. Every pick logged before the event." />
   <meta property="og:image" content="https://fightbrain.io/og-image.jpg" />
   <meta property="og:url" content="https://fightbrain.io/ui/index.html" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -535,12 +535,12 @@
     <div class="tab-bar-inner">
       <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active">Fight Card</button>
       <button onclick="showTab('value')" id="tab-value" class="tab-inactive">Value Picks</button>
-      <button onclick="showTab('record')" id="tab-record" class="tab-inactive">Picks Record</button>
+      <button onclick="showTab('record')" id="tab-record" class="tab-inactive">Record</button>
 
 
       <button onclick="showTab('simulator')" id="tab-simulator" class="tab-inactive">⚡ Simulator</button>
 
-      <button onclick="showTab('model')" id="tab-model" class="tab-inactive">Model Info</button>
+      <button onclick="showTab('model')" id="tab-model" class="tab-inactive">Model</button>
     </div>
   </nav>
 
@@ -661,20 +661,30 @@
         <!-- Suggested matchups -->
         <div id="sim-suggestions" style="margin-top:20px;">
           <div style="font-size:11px;color:#bbb;font-family:'Inter',sans-serif;margin-bottom:8px;letter-spacing:0.04em;">TRY THESE MATCHUPS</div>
-          <div style="display:flex;flex-wrap:wrap;gap:7px;">
-            ${[
-              ['Islam Makhachev','Ilia Topuria'],
-              ['Jon Jones','Tom Aspinall'],
-              ['Israel Adesanya','Sean Strickland'],
-              ['Leon Edwards','Belal Muhammad'],
-              ['Alex Pereira','Dricus Du Plessis'],
-            ].map(([a,b]) => `<button onclick="simFill('${a}','${b}')"
-              style="font-size:11px;padding:5px 10px;border-radius:16px;border:1px solid #e5e7eb;background:#f9f9f9;color:#555;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;"
-              onmouseover="this.style.borderColor='#D91A1A';this.style.color='#D91A1A'"
-              onmouseout="this.style.borderColor='#e5e7eb';this.style.color='#555'">
-              ${a} vs ${b}
-            </button>`).join('')}
-          </div>
+          <div id="sim-suggestion-pills" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+          <script>
+            (function(){
+              var pairs = [
+                ['Islam Makhachev','Ilia Topuria'],
+                ['Jon Jones','Tom Aspinall'],
+                ['Israel Adesanya','Sean Strickland'],
+                ['Alex Pereira','Dricus Du Plessis'],
+                ['Leon Edwards','Belal Muhammad'],
+                ['Dustin Poirier','Justin Gaethje'],
+              ];
+              var el = document.getElementById('sim-suggestion-pills');
+              if (!el) return;
+              pairs.forEach(function(p) {
+                var btn = document.createElement('button');
+                btn.textContent = p[0] + ' vs ' + p[1];
+                btn.onclick = function(){ simFill(p[0], p[1]); };
+                btn.style.cssText = 'font-size:11px;padding:5px 10px;border-radius:16px;border:1px solid #e5e7eb;background:#f9f9f9;color:#555;cursor:pointer;font-family:Inter,sans-serif;transition:all 0.15s;';
+                btn.onmouseover = function(){ this.style.borderColor='#D91A1A'; this.style.color='#D91A1A'; };
+                btn.onmouseout  = function(){ this.style.borderColor='#e5e7eb'; this.style.color='#555'; };
+                el.appendChild(btn);
+              });
+            })();
+          </script>
         </div>
 
         <!-- Disclaimer -->
@@ -691,7 +701,7 @@
       <div style="background:#111;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#888;letter-spacing:0.1em;margin-bottom:12px;">HOW FIGHTBRAIN WORKS</div>
         <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:12px;">
-          FightBrain is a machine learning model trained on 10,000+ UFC fights going back to 2010. Before each event, it analyzes both fighters' stats — striking output, takedown defense, finishing rate, Elo rating, recent form — and outputs a win probability for each matchup.
+          FightBrain is an ensemble machine learning model trained on 10,000+ UFC fights going back to 2010. It combines gradient boosting and logistic regression, tuned with Bayesian optimization and calibrated for accurate probabilities. Before each event, it analyzes 68 signals per fighter — striking efficiency, grappling control, KO power, Elo rating, recent form, and style archetype matchup dynamics — then outputs a win probability.
         </p>
         <p style="color:#aaa;font-size:14px;line-height:1.7;margin-bottom:12px;">
           When the model's confidence meaningfully exceeds what the bookmaker implies (the "edge"), that becomes a pick. The bigger the edge, the higher the stake: LEAN 0.5u · MEDIUM 1u · STRONG 1.5u · LOCK 2u.
@@ -702,7 +712,7 @@
         <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
           <div style="background:#1a1a1a;border-radius:8px;padding:10px 14px;border:1px solid #D91A1A33;">
             <div style="font-size:9px;color:#D91A1A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">BACKTESTED</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#D91A1A;line-height:1;">73.7%</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#D91A1A;line-height:1;">76.2%</div>
             <div style="font-size:10px;color:#666;">held-out accuracy</div>
           </div>
           <div style="background:#1a1a1a;border-radius:8px;padding:10px 14px;border:1px solid #16a34a33;" id="model-live-stat">
@@ -717,7 +727,7 @@
           </div>
           <div style="background:#1a1a1a;border-radius:8px;padding:10px 14px;">
             <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">FEATURES</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;line-height:1;">52</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:white;line-height:1;">68</div>
             <div style="font-size:10px;color:#666;">model inputs</div>
           </div>
         </div>
@@ -725,20 +735,26 @@
 
       <div class="grid md:grid-cols-2 gap-6">
         <div class="model-card">
-          <h3 class="text-lg font-semibold mb-2 text-gray-900">Backtested Performance</h3>
+          <h3 class="text-lg font-semibold mb-2 text-gray-900">Model Performance</h3>
           <div style="font-size:11px;color:#b45309;background:#fff8e1;border-radius:6px;padding:5px 8px;margin-bottom:10px;display:inline-block;">Backtest — held-out data, not live picks</div>
-          <div class="model-stat-num" style="font-size:72px;line-height:1;margin:16px 0;">73.7%</div>
-          <p class="text-gray-500 text-sm">Accuracy on held-out UFC bouts. FightBrain Model trained on fighter stat differentials, competition history, and recent form.</p>
+          <div class="model-stat-num" style="font-size:72px;line-height:1;margin:16px 0;">76.2%</div>
+          <p class="text-gray-500 text-sm">Accuracy on 1,477 held-out UFC bouts (2023–2026). Ensemble model: XGBoost + Logistic Regression, Optuna-tuned, isotonic calibration. 95% CI: [73.9%, 78.0%].</p>
         </div>
         <div class="model-card">
           <h3 class="text-lg font-semibold mb-2 text-gray-900">What The Model Sees</h3>
           <ul class="text-gray-500 text-sm space-y-2 mt-3 list-disc list-inside">
-            <li>Striking output, accuracy &amp; defense differentials</li>
-            <li>Takedown offense &amp; defense differentials</li>
-            <li>Submission attempt rate differential</li>
-            <li>Elo rating (dynamic, updates after each fight)</li>
+            <li>Striking output, accuracy &amp; defense — weight-class normalised</li>
+            <li>Striking efficiency ratio &amp; absorption rate</li>
+            <li>Takedown offense, accuracy &amp; defense differentials</li>
+            <li>Submission attempt rate &amp; finish rate</li>
+            <li>Knockdown rate (power signal)</li>
+            <li>Elo rating + momentum (updates after every fight)</li>
             <li>Recent form &amp; strength of schedule</li>
-            <li>Age, reach, win/loss streak</li>
+            <li>Age curve, prime years flag, fighter experience</li>
+            <li>Days since last fight (freshness)</li>
+            <li>KO/TKO loss history (chin damage signal)</li>
+            <li>Style archetype matchup advantage (13 archetypes)</li>
+            <li>Southpaw vs orthodox directional edge</li>
           </ul>
         </div>
       </div>
