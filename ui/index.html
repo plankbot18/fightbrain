@@ -1352,7 +1352,7 @@
           </div>
           <div style="text-align:center;">
             <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#D91A1A;line-height:1;">${f.conf}%</div>
-            <div style="font-size:11px;color:#aaa;font-family:'Inter',sans-serif;">${stake}</div>
+            ${(!valuePick || valuePick.tier !== 'SKIP') ? `<div style="font-size:11px;color:#aaa;font-family:'Inter',sans-serif;">${stake}</div>` : ''}
           </div>
           <div style="text-align:right;">
             ${valueLine}
