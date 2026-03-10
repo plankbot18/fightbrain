@@ -1322,21 +1322,25 @@
       // Expanded content
       const expandedContent = renderExpandedContent(f);
 
+      // Safe image tags — no onerror data URI injection
+      const f1BannerImg = f1ImgSrc ? `<img src="${f1ImgSrc}" alt="" style="height:130px;max-width:100%;object-fit:contain;object-position:bottom;display:block;${isF1?'':'filter:grayscale(90%) brightness(0.55);'}" onerror="this.style.display='none'" loading="lazy">` : '';
+      const f2BannerImg = f2ImgSrc ? `<img src="${f2ImgSrc}" alt="" style="height:130px;max-width:100%;object-fit:contain;object-position:bottom;display:block;${!isF1?'':'filter:grayscale(90%) brightness(0.55);'}" onerror="this.style.display='none'" loading="lazy">` : '';
+
       return `<div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.07);margin-bottom:20px;overflow:hidden;border:1px solid #f0f0f0;">
 
-        <!-- BANNER: fighter portraits -->
-        <div style="background:#0d0d0d;display:flex;align-items:flex-end;justify-content:space-between;min-height:160px;position:relative;overflow:hidden;">
+        <!-- BANNER: fighter portraits — CSS grid for reliable side-by-side on all screen sizes -->
+        <div style="background:#0d0d0d;display:grid;grid-template-columns:1fr 36px 1fr;align-items:end;min-height:160px;">
           <!-- F1 side -->
-          <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;padding:16px 12px 0;position:relative;${isF1?'border-left:3px solid #D91A1A;':''}" >
-            <img src="${f1ImgSrc}" alt="${f.f1}" style="height:130px;width:auto;object-fit:contain;object-position:bottom;${isF1?'':'filter:grayscale(90%) brightness(0.55);'}" onerror="this.src='${getFighterFallback(f.f1)}'" loading="lazy">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.04em;color:${isF1?'#fff':'#555'};padding:6px 0 10px;line-height:1;">${f.f1}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;padding:16px 8px 0 14px;${isF1?'border-left:3px solid #D91A1A;':''}">
+            ${f1BannerImg}
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.04em;color:${isF1?'#fff':'#555'};padding:5px 0 10px;line-height:1;word-break:break-word;">${f.f1}</div>
           </div>
           <!-- VS -->
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#333;padding:0 6px;align-self:center;flex-shrink:0;">VS</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#333;text-align:center;padding-bottom:42px;">VS</div>
           <!-- F2 side -->
-          <div style="flex:1;display:flex;flex-direction:column;align-items:flex-end;padding:16px 12px 0;position:relative;${!isF1?'border-right:3px solid #D91A1A;':''}">
-            <img src="${f2ImgSrc}" alt="${f.f2}" style="height:130px;width:auto;object-fit:contain;object-position:bottom;${!isF1?'':'filter:grayscale(90%) brightness(0.55);'}" onerror="this.src='${getFighterFallback(f.f2)}'" loading="lazy">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.04em;color:${!isF1?'#fff':'#555'};padding:6px 0 10px;text-align:right;line-height:1;">${f.f2}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;padding:16px 14px 0 8px;${!isF1?'border-right:3px solid #D91A1A;':''}">
+            ${f2BannerImg}
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.04em;color:${!isF1?'#fff':'#555'};padding:5px 0 10px;text-align:right;line-height:1;word-break:break-word;">${f.f2}</div>
           </div>
         </div>
 
