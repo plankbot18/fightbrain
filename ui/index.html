@@ -1395,7 +1395,7 @@
             const a2rate = rec.a2 === a2 ? rec.a2_winrate : rec.a1_winrate;
             const favStyle = a1rate >= a2rate ? a1 : a2;
             const favRate = Math.max(a1rate, a2rate);
-            const ARCHETYPE_EMOJI = { STRIKER:'🥊', PRESSURE:'💥', GRAPPLER:'🤼', WRESTLER:'🏋️', SUBMISSION:'🔒', COUNTER:'🛡️', 'ALL-ROUNDER':'⚖️', BOXER:'🎯', BRAWLER:'🔥', 'ELITE WRESTLER':'🥇' };
+            const ARCHETYPE_EMOJI = { STRIKER:'🥊', PRESSURE:'💥', GRAPPLER:'🤼', WRESTLER:'🏋️', SUBMISSION:'🔒', COUNTER:'🛡️', 'ALL-ROUNDER':'⚖️', BOXER:'🎯', BRAWLER:'🔥', 'ELITE WRESTLER':'🥇', 'POWER STRIKER':'💣', 'CLINCH FIGHTER':'🤛', 'OUT-FIGHTER':'📐' };
             html += `<div style="margin-top:12px;padding:12px 14px;background:#f8f8f8;border-radius:10px;border-left:3px solid #6366f1;">
               <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#4338ca;letter-spacing:0.05em;margin-bottom:8px;">STYLE MATCHUP RECORD</div>
               <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:'Inter',sans-serif;">
@@ -2114,31 +2114,69 @@
         const s1 = byName[f.f1] || {}; const s2 = byName[f.f2] || {};
         const p1 = byNameFull[f.f1] || {}; const p2 = byNameFull[f.f2] || {};
 
-        // Parse reach: "70\"" → 70
-        const parseReach = r => r ? parseFloat(r.toString().replace(/[^0-9.]/g,'')) : 0;
-        const r1reach = parseReach(p1.reach); const r2reach = parseReach(p2.reach);
+        // Parse reach/height: "70\"" → 70  |  "5' 10\"" → 70 inches
+        const parseInches = r => {
+          if (!r) return 0;
+          const ft = r.toString().match(/(\d+)'\s*(\d+)/);
+          if (ft) return parseInt(ft[1])*12 + parseInt(ft[2]);
+          return parseFloat(r.replace(/[^0-9.]/g,'')) || 0;
+        };
+        const r1reach = parseInches(p1.reach); const r2reach = parseInches(p2.reach);
         const r1age = parseFloat(p1.age) || 0; const r2age = parseFloat(p2.age) || 0;
+        const r1ht = parseInches(p1.height); const r2ht = parseInches(p2.height);
+
+        // Pull from style_matchups fighter_style_meta for additional stats
+        const sm1 = (_styleMatchups && _styleMatchups.fighter_style_meta && _styleMatchups.fighter_style_meta[f.f1]) || {};
+        const sm2 = (_styleMatchups && _styleMatchups.fighter_style_meta && _styleMatchups.fighter_style_meta[f.f2]) || {};
+
+        // Stance badge builder (shown as text suffix, not numeric)
+        const stanceBadge = stance => {
+          if (!stance) return '';
+          const s = stance.toLowerCase();
+          if (s === 'southpaw') return ' 🔄';
+          if (s === 'switch')   return ' ⚡';
+          return '';
+        };
+        const st1 = sm1.stance || p1.stance || ''; const st2 = sm2.stance || p2.stance || '';
 
         const statRows = [
-          { label: 'Strikes/min',   v1: sv(s1,'slpm'),    v2: sv(s2,'slpm'),    unit: '',   higher: true },
-          { label: 'Str Accuracy',  v1: sv(s1,'str_acc'), v2: sv(s2,'str_acc'), unit: '%',  higher: true },
-          { label: 'Str Defense',   v1: sv(s1,'str_def'), v2: sv(s2,'str_def'), unit: '%',  higher: true },
-          { label: 'TD Avg/15min',  v1: sv(s1,'td_avg'),  v2: sv(s2,'td_avg'),  unit: '',   higher: true },
-          { label: 'TD Defense',    v1: sv(s1,'td_def'),  v2: sv(s2,'td_def'),  unit: '%',  higher: true },
-          { label: 'Sub Attempts',  v1: sv(s1,'sub_avg'), v2: sv(s2,'sub_avg'), unit: '/15m', higher: true },
-          ...(r1reach > 0 || r2reach > 0 ? [{ label: 'Reach', v1: r1reach, v2: r2reach, unit: '"', higher: true }] : []),
-          ...(r1age > 0 || r2age > 0 ? [{ label: 'Age', v1: r1age, v2: r2age, unit: '', higher: false }] : []),
+          // Physical
+          ...(r1ht   > 0 || r2ht   > 0 ? [{ label: 'Height',       v1: r1ht,               v2: r2ht,               unit: '"',    higher: true  }] : []),
+          ...(r1reach > 0 || r2reach > 0 ? [{ label: 'Reach',       v1: r1reach,            v2: r2reach,            unit: '"',    higher: true  }] : []),
+          ...(r1age   > 0 || r2age   > 0 ? [{ label: 'Age',         v1: r1age,              v2: r2age,              unit: '',     higher: false }] : []),
+          // Striking
+          { label: 'Strikes/min',     v1: sv(s1,'slpm'),              v2: sv(s2,'slpm'),              unit: '',    higher: true  },
+          { label: 'Str Accuracy',    v1: sv(s1,'str_acc'),           v2: sv(s2,'str_acc'),           unit: '%',   higher: true  },
+          { label: 'Str Defense',     v1: sv(s1,'str_def'),           v2: sv(s2,'str_def'),           unit: '%',   higher: true  },
+          { label: 'Absorbed/min',    v1: sm1.sapm||sv(s1,'sapm')||0, v2: sm2.sapm||sv(s2,'sapm')||0, unit: '',   higher: false },
+          { label: 'KD Rate',         v1: sm1.kd_rate||0,             v2: sm2.kd_rate||0,             unit: '',    higher: true  },
+          // Grappling
+          { label: 'TD Avg/15min',    v1: sv(s1,'td_avg'),            v2: sv(s2,'td_avg'),            unit: '',    higher: true  },
+          { label: 'TD Accuracy',     v1: sm1.td_acc||sv(s1,'td_acc')||0, v2: sm2.td_acc||sv(s2,'td_acc')||0, unit: '%', higher: true },
+          { label: 'TD Defense',      v1: sv(s1,'td_def'),            v2: sv(s2,'td_def'),            unit: '%',   higher: true  },
+          { label: 'Sub Attempts',    v1: sv(s1,'sub_avg'),           v2: sv(s2,'sub_avg'),           unit: '/15m', higher: true },
         ].filter(r => r.v1 > 0 || r.v2 > 0);
 
         if (statRows.length) {
           const f1Last = f.f1.split(' ').pop();
           const f2Last = f.f2.split(' ').pop();
+          // Southpaw matchup note
+          const spNote = (() => {
+            const s1l = st1.toLowerCase(); const s2l = st2.toLowerCase();
+            const spWr = _styleMatchups && _styleMatchups.southpaw_winrate;
+            if ((s1l === 'southpaw' && s2l === 'orthodox') || (s1l === 'orthodox' && s2l === 'southpaw')) {
+              const sp = s1l === 'southpaw' ? f1Last : f2Last;
+              return spWr ? `<div style="font-size:10px;color:#6366f1;background:#eef2ff;border-radius:5px;padding:3px 8px;margin-bottom:6px;text-align:center;">🔄 ${sp} is southpaw — historically wins ${spWr}% of ortho vs. southpaw fights</div>` : '';
+            }
+            return '';
+          })();
           h2hMini = `<div style="margin-top:14px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:11px;font-weight:700;color:${isF1?'#D91A1A':'#888'};">${f1Last}</span>
+              <span style="font-size:11px;font-weight:700;color:${isF1?'#D91A1A':'#888'};">${f1Last}${stanceBadge(st1)}</span>
               <span style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;">Head to Head</span>
-              <span style="font-size:11px;font-weight:700;color:${!isF1?'#D91A1A':'#888'};">${f2Last}</span>
-            </div>`;
+              <span style="font-size:11px;font-weight:700;color:${!isF1?'#D91A1A':'#888'};">${stanceBadge(st2)}${f2Last}</span>
+            </div>
+            ${spNote}`;
           statRows.forEach(r => {
             const total = r.v1 + r.v2;
             const f1share = total > 0 ? (r.v1 / total * 100) : 50;
