@@ -1573,66 +1573,143 @@
       const loser = winner === f1 ? f2 : f1;
       const conf = result.c;
       const edges = result.e || [];
+      const loserConf = Math.round((100 - conf) * 10) / 10;
+
+      // Stats
+      const fs = _simData.fighter_stats || {};
+      const s1 = fs[f1] || {}; const s2 = fs[f2] || {};
+      const sW = fs[winner] || {}; const sL = fs[loser] || {};
 
       // Confidence tier
-      const tier = conf >= 75 ? ['LOCK','#D91A1A'] : conf >= 65 ? ['STRONG','#D91A1A'] : conf >= 57 ? ['MEDIUM','#b45309'] : ['LEAN','#888'];
+      const tier = conf >= 75 ? ['LOCK','#D91A1A'] : conf >= 65 ? ['STRONG','#D91A1A'] : conf >= 57 ? ['MEDIUM','#f59e0b'] : ['LEAN','#888'];
 
-      // Method bars
+      // Fighter images
+      const imgW = getFighterImg(winner);
+      const imgL = getFighterImg(loser);
+      const fbW  = getFighterFallback(winner);
+      const fbL  = getFighterFallback(loser);
+      const imgStyle = 'width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:top;border:3px solid';
+      const photoW = `<img src="${imgW}" onerror="this.src='${fbW}'" style="${imgStyle} #D91A1A;">`;
+      const photoL = `<img src="${imgL}" onerror="this.src='${fbL}'" style="${imgStyle} #333;filter:grayscale(40%);">`;
+
+      // Records
+      const recW = (sW.wins != null) ? `${sW.wins}–${sW.losses}` : '';
+      const recL = (sL.wins != null) ? `${sL.wins}–${sL.losses}` : '';
+
+      // H2H stat rows
+      const statRows = [
+        { label:'Elo Rating',    v1: s1.elo,    v2: s2.elo,    fmt: v => Math.round(v), higher: true },
+        { label:'Striking/min',  v1: s1.slpm,   v2: s2.slpm,   fmt: v => v?.toFixed(2), higher: true },
+        { label:'Str Accuracy',  v1: s1.sacc,   v2: s2.sacc,   fmt: v => v + '%', higher: true },
+        { label:'TD Avg/15min',  v1: s1.tdavg,  v2: s2.tdavg,  fmt: v => v?.toFixed(2), higher: true },
+        { label:'TD Defense',    v1: s1.tddef,  v2: s2.tddef,  fmt: v => v + '%', higher: true },
+      ];
+
+      const h2hHtml = statRows.filter(r => r.v1 != null && r.v2 != null).map(r => {
+        const total = (r.v1 || 0) + (r.v2 || 0) || 1;
+        const pct1 = Math.round((r.v1 / total) * 100);
+        const pct2 = 100 - pct1;
+        const w1leads = r.higher ? r.v1 >= r.v2 : r.v1 <= r.v2;
+        return `<div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Inter',sans-serif;margin-bottom:3px;">
+            <span style="font-weight:${w1leads?'700':'400'};color:${w1leads?'#fff':'#666'}">${r.fmt(r.v1)}</span>
+            <span style="color:#555;font-size:10px;">${r.label}</span>
+            <span style="font-weight:${!w1leads?'700':'400'};color:${!w1leads?'#fff':'#666'}">${r.fmt(r.v2)}</span>
+          </div>
+          <div style="height:4px;background:#222;border-radius:2px;overflow:hidden;display:flex;">
+            <div style="width:${pct1}%;background:${w1leads?'#D91A1A':'#444'};"></div>
+            <div style="width:${pct2}%;background:${!w1leads?'#6366f1':'#333'};"></div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Method bars (from pre-computed probs)
       let methodHtml = '';
       if (result.ko != null) {
         const bars = [
-          { label: 'KO/TKO', pct: result.ko, color: '#D91A1A' },
-          { label: 'Submission', pct: result.sub, color: '#6366f1' },
-          { label: 'Decision', pct: result.dec, color: '#888' },
+          { label:'KO/TKO', pct: result.ko, color:'#D91A1A' },
+          { label:'Submission', pct: result.sub, color:'#6366f1' },
+          { label:'Decision', pct: result.dec, color:'#555' },
         ].sort((a,b) => b.pct - a.pct);
-        const dominant = bars[0];
-        methodHtml = `
-          <div style="margin-top:16px;">
-            <div style="font-size:11px;color:#aaa;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:0.04em;margin-bottom:8px;">HOW IT ENDS</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:${dominant.color};margin-bottom:8px;">${dominant.label} <span style="font-size:20px;">${dominant.pct}%</span></div>
-            ${bars.slice(1).map(b => `<div style="font-size:12px;color:#888;font-family:'Inter',sans-serif;">${b.label}: ${b.pct}%</div>`).join('')}
-          </div>`;
+        const dom = bars[0];
+        methodHtml = `<div style="padding:14px 20px;border-top:1px solid #1a1a1a;">
+          <div style="font-size:10px;color:#555;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:0.08em;margin-bottom:8px;">HOW IT ENDS</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${dom.color};">${dom.label}</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${dom.color};">${dom.pct}%</span>
+          </div>
+          ${bars.slice(1).map(b => `<div style="font-size:12px;color:#555;font-family:'Inter',sans-serif;">${b.label}: ${b.pct}%</div>`).join('')}
+        </div>`;
+      }
+
+      // Previous meeting
+      let prevHtml = '';
+      if (result.pm) {
+        const pm = result.pm;
+        prevHtml = `<div style="padding:12px 20px;border-top:1px solid #1a1a1a;font-family:'Inter',sans-serif;">
+          <div style="font-size:10px;color:#555;font-weight:600;letter-spacing:0.08em;margin-bottom:4px;">LAST TIME THEY MET</div>
+          <div style="font-size:13px;color:#aaa;"><strong style="color:#fff;">${pm.winner}</strong> won by ${pm.method} (R${pm.round}) · ${pm.date}</div>
+        </div>`;
       }
 
       // Edge bullets
-      const edgeHtml = edges.length ? `
-        <div style="margin-top:16px;">
-          <div style="font-size:11px;color:#aaa;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:0.04em;margin-bottom:6px;">KEY EDGES FOR ${winner.split(' ').pop().toUpperCase()}</div>
-          ${edges.map(e => `<div style="font-size:13px;color:#555;font-family:'Inter',sans-serif;padding:2px 0;">→ ${e}</div>`).join('')}
-        </div>` : '';
+      const edgeHtml = edges.length ? `<div style="padding:14px 20px;border-top:1px solid #1a1a1a;">
+        <div style="font-size:10px;color:#555;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:0.08em;margin-bottom:6px;">KEY EDGES FOR ${winner.split(' ').pop().toUpperCase()}</div>
+        ${edges.map(e => `<div style="font-size:13px;color:#888;font-family:'Inter',sans-serif;padding:2px 0;">→ ${e}</div>`).join('')}
+      </div>` : '';
 
       el.innerHTML = `
         <div style="background:#111;border-radius:14px;overflow:hidden;">
 
-          <!-- Winner banner -->
-          <div style="padding:20px 22px 16px;border-bottom:1px solid #222;">
-            <div style="font-size:11px;color:#555;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:0.08em;margin-bottom:6px;">MODEL PREDICTS</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:38px;color:#fff;line-height:1;letter-spacing:0.02em;">${winner}</div>
-            <div style="font-size:13px;color:#555;font-family:'Inter',sans-serif;margin-top:4px;">def. ${loser}</div>
+          <!-- Fighter photos + names -->
+          <div style="display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;padding:20px 16px 16px;gap:8px;border-bottom:1px solid #1a1a1a;">
+            <div style="text-align:center;">
+              ${photoW}
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#fff;margin-top:6px;line-height:1.1;">${winner}</div>
+              <div style="font-size:11px;color:#888;font-family:'Inter',sans-serif;">${recW}</div>
+            </div>
+            <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#444;">VS</div>
+            <div style="text-align:center;">
+              ${photoL}
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#666;margin-top:6px;line-height:1.1;">${loser}</div>
+              <div style="font-size:11px;color:#555;font-family:'Inter',sans-serif;">${recL}</div>
+            </div>
           </div>
 
           <!-- Confidence -->
-          <div style="padding:16px 22px;border-bottom:1px solid #1a1a1a;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-              <span style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:#D91A1A;">${conf}%</span>
-              <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${tier[1]};background:${tier[1]}22;padding:3px 10px;border-radius:5px;letter-spacing:0.06em;">${tier[0]}</span>
+          <div style="padding:16px 20px;border-bottom:1px solid #1a1a1a;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:38px;color:#D91A1A;line-height:1;">${conf}%</span>
+              <div>
+                <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:${tier[1]};background:${tier[1]}22;padding:2px 8px;border-radius:4px;letter-spacing:0.06em;display:block;">${tier[0]}</span>
+                <span style="font-size:11px;color:#444;font-family:'Inter',sans-serif;">MODEL PREDICTS ${winner.split(' ').pop().toUpperCase()}</span>
+              </div>
             </div>
-            <div style="height:6px;background:#222;border-radius:3px;overflow:hidden;">
-              <div style="height:100%;width:${conf}%;background:linear-gradient(90deg,#D91A1A,#ff6b6b);border-radius:3px;"></div>
+            <div style="height:5px;background:#222;border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${conf}%;background:linear-gradient(90deg,#D91A1A,#ff6b6b);border-radius:3px;margin-left:auto;"></div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px;color:#444;margin-top:3px;font-family:'Inter',sans-serif;">
-              <span>${loser}</span><span>${winner}</span>
+              <span style="color:#555;">${loser.split(' ').pop()} ${loserConf}%</span>
+              <span style="color:#888;">${winner.split(' ').pop()} ${conf}%</span>
             </div>
           </div>
 
-          <!-- Method + Edges -->
-          <div style="padding:16px 22px;color:#fff;">
-            ${methodHtml}
-            ${edgeHtml}
+          <!-- H2H Stats -->
+          <div style="padding:14px 20px;border-bottom:1px solid #1a1a1a;">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#444;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:0.08em;margin-bottom:10px;">
+              <span style="color:#888;">${f1.split(' ').pop().toUpperCase()}</span>
+              <span>STATS</span>
+              <span style="color:#888;">${f2.split(' ').pop().toUpperCase()}</span>
+            </div>
+            ${h2hHtml}
           </div>
 
+          ${methodHtml}
+          ${edgeHtml}
+          ${prevHtml}
+
           <!-- Disclaimer -->
-          <div style="padding:10px 22px 14px;font-size:10px;color:#444;font-family:'Inter',sans-serif;border-top:1px solid #1a1a1a;">
+          <div style="padding:10px 20px 14px;font-size:10px;color:#333;font-family:'Inter',sans-serif;border-top:1px solid #1a1a1a;">
             Hypothetical matchup — based on current stats and Elo. Not a scheduled fight.
           </div>
         </div>`;
