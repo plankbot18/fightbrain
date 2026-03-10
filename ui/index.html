@@ -1604,14 +1604,9 @@
           if (pnl != null) runningPnl += pnl;
           const pnlStr = pnl != null ? (pnl >= 0 ? `+${pnl.toFixed(2)}u` : `${pnl.toFixed(2)}u`) : '—';
           const pnlColor = pnl == null ? '#aaa' : (pnl >= 0 ? '#16a34a' : '#ef4444');
-          const runStr = (runningPnl >= 0 ? '+' : '') + runningPnl.toFixed(2) + 'u';
-          const runColor = runningPnl >= 0 ? '#16a34a' : '#ef4444';
           const isHeavyFav = odds != null && odds < -400;
           const fightShort = p.fight.length > 36 ? p.fight.substring(0, 34) + '…' : p.fight;
-          // #7: fight date from resolved_at or logged_at
           const dateStr = p.resolved_at ? new Date(p.resolved_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
-          // #5: share button
-          const shareText = encodeURIComponent(`${isWin ? '✅' : '❌'} ${p.predicted_winner} ${oddsStr} — ${isWin ? 'WIN' : 'LOSS'}\n${pnlStr} | Model: ${p.confidence}%\n\nFightBrain record: 7W–4L · +0.13u\nplankbot18.github.io/fightbrain/`);
           html += `<div class="record-table-row" style="flex-direction:column;gap:2px;padding:10px 12px;">
             <div style="display:flex;align-items:center;gap:8px;width:100%;">
               <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${isWin ? '#D91A1A' : '#aaa'};min-width:18px;">${isWin ? 'W' : 'L'}</span>
@@ -1620,10 +1615,9 @@
               <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:${pnlColor};min-width:60px;text-align:right;">${pnlStr}</span>
             </div>
             <div style="display:flex;align-items:center;gap:6px;padding-left:26px;flex-wrap:nowrap;overflow:hidden;">
-              <span style="font-size:11px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%;">${fightShort}</span>
+              <span style="font-size:11px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${fightShort}</span>
               ${dateStr ? `<span style="font-size:10px;color:#ccc;white-space:nowrap;">${dateStr}</span>` : ''}
-              <span style="font-size:11px;color:#ccc;margin-left:auto;white-space:nowrap;">${stake}u · <span style="color:${runColor};font-weight:600;">${runStr}</span></span>
-              <a href="https://twitter.com/intent/tweet?text=${shareText}" target="_blank" style="font-size:10px;color:#888;text-decoration:none;white-space:nowrap;" title="Share on X">𝕏</a>
+              <span style="font-size:11px;color:#ccc;white-space:nowrap;">${stake}u</span>
             </div>
           </div>`;
         });
