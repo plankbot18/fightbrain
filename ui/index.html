@@ -776,6 +776,7 @@
       const loadingEl = document.getElementById('archive-loading');
       const contentEl = document.getElementById('archive-content');
       try {
+        if (!_autopsy) await loadAutopsy();
         const picks = _allPicks || await fetch('../picks/picks_log.json').then(r => r.json());
         const resolved = picks.filter(p => p.result && p.result !== 'pending');
         if (!resolved.length) {
@@ -886,7 +887,29 @@
             </tr>`;
           });
 
-          html += `</tbody></table></div></div>`;
+          // Post-Fight Autopsy for this event
+          const autopsy = (_autopsy || []).find(a => a.event === ev);
+          if (autopsy && autopsy.signal_report && autopsy.signal_report.length > 0) {
+            html += `<div style="padding:14px 20px;background:#fafafa;border-top:1px solid #f0f0f0;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#888;letter-spacing:0.05em;margin-bottom:10px;">MODEL AUTOPSY — WHICH SIGNALS WORKED</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">`;
+            autopsy.signal_report.forEach(s => {
+              const color = s.accuracy >= 70 ? '#16a34a' : s.accuracy >= 50 ? '#b45309' : '#ef4444';
+              html += `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-family:'Inter',sans-serif;">
+                <div style="font-size:10px;color:#888;">${s.label}</div>
+                <div style="font-size:13px;font-weight:700;color:${color};">${s.accuracy}% <span style="font-weight:400;color:#bbb;">${s.correct}/${s.total}</span></div>
+              </div>`;
+            });
+            html += `</div>`;
+            if (autopsy.biggest_miss) {
+              html += `<div style="margin-top:10px;font-size:12px;color:#888;font-family:'Inter',sans-serif;">
+                Biggest miss: <strong style="color:#ef4444;">${autopsy.biggest_miss.predicted}</strong> at ${autopsy.biggest_miss.confidence}% confidence — actual winner: ${autopsy.biggest_miss.actual}
+              </div>`;
+            }
+            html += `</div>`;
+          }
+
+          html += `</div>`;
         });
 
         loadingEl.classList.add('hidden');
@@ -979,6 +1002,20 @@
     }
 
     // ===== MATCHUP REPORTS =====
+    let _styleMatchups = null;
+    let _autopsy = null;
+
+    async function loadStyleMatchups() {
+      try {
+        _styleMatchups = await fetch('../model/style_matchups.json').then(r => r.json());
+      } catch(e) {}
+    }
+    async function loadAutopsy() {
+      try {
+        _autopsy = await fetch('../model/autopsy.json').then(r => r.json());
+      } catch(e) {}
+    }
+
     let _matchupReports = null;
     async function loadMatchupReports() {
       if (_matchupReports) return _matchupReports;
@@ -1241,6 +1278,85 @@
       if (report) html += renderMatchupReport(report);
 
 
+      // Style Matchup Record
+      if (_styleMatchups && _styleMatchups.fighter_archetypes) {
+        const a1 = _styleMatchups.fighter_archetypes[f.f1];
+        const a2 = _styleMatchups.fighter_archetypes[f.f2];
+        if (a1 && a2 && a1 !== a2) {
+          const key1 = `${a1}_vs_${a2}`;
+          const key2 = `${a2}_vs_${a1}`;
+          const rec = _styleMatchups.matchups.find(m => m.key === key1 || m.key === key2);
+          if (rec) {
+            const a1rate = rec.a1 === a1 ? rec.a1_winrate : rec.a2_winrate;
+            const a2rate = rec.a2 === a2 ? rec.a2_winrate : rec.a1_winrate;
+            const favStyle = a1rate >= a2rate ? a1 : a2;
+            const favRate = Math.max(a1rate, a2rate);
+            const ARCHETYPE_EMOJI = { STRIKER:'🥊', PRESSURE:'💥', GRAPPLER:'🤼', WRESTLER:'🏋️', SUBMISSION:'🔒', COUNTER:'🛡️', 'ALL-ROUNDER':'⚖️' };
+            html += `<div style="margin-top:12px;padding:12px 14px;background:#f8f8f8;border-radius:10px;border-left:3px solid #6366f1;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#4338ca;letter-spacing:0.05em;margin-bottom:8px;">STYLE MATCHUP RECORD</div>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:'Inter',sans-serif;">
+                <div style="font-size:13px;color:#111;">
+                  <span style="font-weight:600;">${ARCHETYPE_EMOJI[a1] || ''} ${a1}</span>
+                  <span style="color:#aaa;margin:0 8px;">vs</span>
+                  <span style="font-weight:600;">${ARCHETYPE_EMOJI[a2] || ''} ${a2}</span>
+                </div>
+                <div style="font-size:12px;color:#555;">
+                  Historically: <strong style="color:${favRate >= 58 ? '#D91A1A' : '#555'};">${favStyle} wins ${favRate}%</strong>
+                  <span style="color:#bbb;margin-left:4px;">(${rec.total} UFC fights)</span>
+                </div>
+              </div>
+              <div style="margin-top:8px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${a1rate}%;background:#6366f1;border-radius:3px;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-top:3px;font-family:'Inter',sans-serif;">
+                <span>${a1} ${a1rate}%</span><span>${a2} ${a2rate}%</span>
+              </div>
+            </div>`;
+          }
+        }
+      }
+
+      // Fighter trajectory sparklines (Elo history)
+      if (_fighterProfiles && _fighterProfiles.fighters) {
+        const byName = {};
+        for (const p of Object.values(_fighterProfiles.fighters)) byName[p.name] = p;
+        const p1 = byName[f.f1]; const p2 = byName[f.f2];
+        const renderSparkline = (fighter, profile) => {
+          if (!profile || !profile.elo_history || profile.elo_history.length < 2) return '';
+          const hist = profile.elo_history.slice(-8); // last 8 data points
+          const elos = hist.map(h => h.elo);
+          const min = Math.min(...elos); const max = Math.max(...elos);
+          const range = max - min || 1;
+          const W = 120; const H = 36;
+          const pts = elos.map((e, i) => `${(i/(elos.length-1))*W},${H - ((e-min)/range)*H}`).join(' ');
+          const trend = elos[elos.length-1] - elos[0];
+          const trendLabel = trend > 30 ? '↑ Rising' : trend < -30 ? '↓ Declining' : '→ Steady';
+          const trendColor = trend > 30 ? '#16a34a' : trend < -30 ? '#ef4444' : '#888';
+          const recent = (profile.recent_fights || []).slice(0, 5);
+          const pills = recent.map(r => {
+            const c = r.result === 'W' ? '#dcfce7' : '#fee2e2';
+            const tc = r.result === 'W' ? '#15803d' : '#b91c1c';
+            return `<span style="display:inline-block;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:700;background:${c};color:${tc};margin-right:2px;">${r.result}</span>`;
+          }).join('');
+          return `<div style="flex:1;min-width:140px;">
+            <div style="font-size:11px;color:#888;font-family:'Inter',sans-serif;margin-bottom:4px;font-weight:600;">${fighter.split(' ').pop().toUpperCase()}</div>
+            <svg viewBox="0 0 ${W} ${H}" style="width:${W}px;height:${H}px;display:block;margin-bottom:4px;">
+              <polyline points="${pts}" fill="none" stroke="${trendColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              ${elos.map((e, i) => `<circle cx="${(i/(elos.length-1))*W}" cy="${H-((e-min)/range)*H}" r="2.5" fill="${trendColor}"/>`).join('')}
+            </svg>
+            <div style="font-size:11px;color:${trendColor};font-family:'Inter',sans-serif;font-weight:600;">${trendLabel}</div>
+            <div style="margin-top:4px;">${pills}</div>
+          </div>`;
+        };
+        const s1 = renderSparkline(f.f1, p1); const s2 = renderSparkline(f.f2, p2);
+        if (s1 || s2) {
+          html += `<div style="margin-top:12px;padding:12px 14px;background:#fafafa;border-radius:10px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#888;letter-spacing:0.05em;margin-bottom:10px;">FIGHTER TRAJECTORY</div>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">${s1}${s2}</div>
+          </div>`;
+        }
+      }
+
       // Chin / durability notes from method predictions
       const methKey = f.f1 + ' vs ' + f.f2;
       const methAlt = f.f2 + ' vs ' + f.f1;
@@ -1262,6 +1378,42 @@
       }
 
       return html;
+    }
+
+    // ===== FAIR PRICE CALCULATOR =====
+    function calcFairPrice() {
+      const odds = parseFloat(document.getElementById('calc-odds').value);
+      const conf = parseFloat(document.getElementById('calc-conf').value);
+      const el = document.getElementById('calc-result');
+      if (isNaN(odds) || isNaN(conf)) { el.innerHTML = '<span style="color:#888;">Enter both fields.</span>'; return; }
+
+      // Market implied probability
+      const marketImpl = odds > 0 ? (100 / (odds + 100)) * 100 : (Math.abs(odds) / (Math.abs(odds) + 100)) * 100;
+      // Fair odds from model confidence
+      const modelImpl = conf;
+      const fairOddsAmer = conf > 50
+        ? -(conf / (100 - conf)) * 100
+        : ((100 - conf) / conf) * 100;
+      const edge = modelImpl - marketImpl;
+      const isValue = edge > 3;
+      const evPer100 = odds > 0
+        ? (conf/100 * odds) - ((100-conf)/100 * 100)
+        : (conf/100 * (100/Math.abs(odds) * 100)) - ((100-conf)/100 * 100);
+
+      const fairStr = fairOddsAmer > 0 ? '+' + Math.round(fairOddsAmer) : Math.round(fairOddsAmer);
+      const edgeStr = (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%';
+      const color = isValue ? '#16a34a' : edge < -5 ? '#ef4444' : '#888';
+      const verdict = isValue ? '✅ VALUE BET' : edge < -5 ? '❌ NEGATIVE VALUE — SKIP' : '⚠ MARGINAL — BORDERLINE';
+
+      el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:${color};">${verdict}</div>
+        <div style="font-size:13px;color:#aaa;">
+          Market implies <strong style="color:#fff;">${marketImpl.toFixed(1)}%</strong> ·
+          Fair price <strong style="color:#fff;">${fairStr}</strong> ·
+          Edge <strong style="color:${color};">${edgeStr}</strong> ·
+          EV per 100u staked: <strong style="color:${color};">${evPer100 >= 0 ? '+' : ''}${evPer100.toFixed(1)}u</strong>
+        </div>
+      </div>`;
     }
 
     // ===== PERSONAL PICK TRACKER =====
@@ -1661,6 +1813,68 @@
             </div>
           </div>
           <div>`;
+
+        // --- UPSET RANKER ---
+        const upsets = [...card]
+          .map(f => ({ f, upsetProb: Math.round((1 - f.conf / 100) * 100) }))
+          .filter(x => x.upsetProb >= 30)
+          .sort((a, b) => b.upsetProb - a.upsetProb)
+          .slice(0, 3);
+        if (upsets.length) {
+          html += `<div style="background:#fff8f0;border-radius:12px;padding:14px 18px;margin-bottom:16px;border-left:3px solid #f59e0b;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#b45309;letter-spacing:0.05em;margin-bottom:10px;">⚡ UPSET WATCH — HIGHEST UPSET PROBABILITY</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;">`;
+          upsets.forEach(({ f, upsetProb }) => {
+            const dog = f.winner === f.f1 ? f.f2 : f.f1;
+            html += `<div style="background:#fff;border-radius:8px;padding:8px 12px;border:1px solid #fde68a;font-family:'Inter',sans-serif;">
+              <div style="font-size:12px;color:#b45309;font-weight:700;">${upsetProb}% upset chance</div>
+              <div style="font-size:13px;color:#111;font-weight:600;">${dog}</div>
+              <div style="font-size:11px;color:#888;">vs ${f.winner}</div>
+            </div>`;
+          });
+          html += `</div></div>`;
+        }
+
+        // --- DANGER FIGHTS ---
+        const danger = card.filter(f => f.conf < 62);
+        if (danger.length) {
+          html += `<div style="background:#fdf2f2;border-radius:12px;padding:14px 18px;margin-bottom:16px;border-left:3px solid #D91A1A;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#D91A1A;letter-spacing:0.05em;margin-bottom:8px;">⚠ DANGER FIGHTS — MODEL LOW CONFIDENCE</div>
+            <div style="font-size:12px;color:#888;font-family:'Inter',sans-serif;margin-bottom:8px;">These fights look closer than the market implies. Tread carefully.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">`;
+          danger.forEach(f => {
+            html += `<div style="background:#fff;border-radius:8px;padding:6px 12px;border:1px solid #fca5a5;font-size:12px;font-family:'Inter',sans-serif;">
+              <span style="font-weight:600;color:#111;">${f.f1} vs ${f.f2}</span>
+              <span style="color:#D91A1A;margin-left:6px;">${f.conf}% conf</span>
+            </div>`;
+          });
+          html += `</div></div>`;
+        }
+
+        // --- TRAP FLAG ---
+        const traps = card.filter(f => {
+          const vp = findValuePick(f.f1, f.f2);
+          if (!vp || !vp.market_implied) return false;
+          const marketFav = vp.market_implied > 65;
+          const modelDisagrees = f.conf < vp.market_implied - 15;
+          return marketFav && modelDisagrees;
+        });
+        if (traps.length) {
+          html += `<div style="background:#f0fdf4;border-radius:12px;padding:14px 18px;margin-bottom:16px;border-left:3px solid #16a34a;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#15803d;letter-spacing:0.05em;margin-bottom:8px;">🪤 IS THIS A TRAP?</div>
+            <div style="font-size:12px;color:#888;font-family:'Inter',sans-serif;margin-bottom:8px;">Market heavily backs these fighters — FightBrain isn't as convinced.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">`;
+          traps.forEach(f => {
+            const vp = findValuePick(f.f1, f.f2);
+            html += `<div style="background:#fff;border-radius:8px;padding:6px 12px;border:1px solid #86efac;font-size:12px;font-family:'Inter',sans-serif;">
+              <span style="font-weight:600;color:#111;">${f.winner}</span>
+              <span style="color:#888;margin:0 4px;">·</span>
+              <span style="color:#15803d;">Market ${vp.market_implied}% vs Model ${f.conf}%</span>
+            </div>`;
+          });
+          html += `</div></div>`;
+        }
+
         card.forEach(f => { html += renderFightCard(f, false); });
         html += '</div></div>';
       }
@@ -1674,7 +1888,7 @@
 
     async function loadUpcoming() {
       try {
-        await Promise.all([loadMatchupReports(), loadMethodPredictions(), loadValuePicksData()]);
+        await Promise.all([loadMatchupReports(), loadMethodPredictions(), loadValuePicksData(), loadStyleMatchups()]);
         const res = await fetch('../model/upcoming_predictions.csv');
         const text = await res.text();
         const lines = text.trim().split('\n');
@@ -2250,6 +2464,29 @@
         });
         html += '</div></div></div>';
       }
+
+      // Fair Price Calculator
+      html += `<div style="margin-top:32px;background:#111;border-radius:14px;padding:20px 22px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:0.04em;margin-bottom:4px;">FAIR PRICE CALCULATOR</div>
+        <div style="font-size:12px;color:#666;font-family:'Inter',sans-serif;margin-bottom:16px;">Enter the odds you're seeing — we'll tell you if it's worth it.</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div>
+            <div style="font-size:11px;color:#888;margin-bottom:4px;font-family:'Inter',sans-serif;">American Odds (e.g. -165 or +130)</div>
+            <input id="calc-odds" type="number" placeholder="-165"
+              style="width:130px;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#222;color:#fff;font-family:'Inter',sans-serif;font-size:14px;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#888;margin-bottom:4px;font-family:'Inter',sans-serif;">Model Confidence %</div>
+            <input id="calc-conf" type="number" placeholder="71" min="1" max="99"
+              style="width:100px;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#222;color:#fff;font-family:'Inter',sans-serif;font-size:14px;">
+          </div>
+          <button onclick="calcFairPrice()"
+            style="padding:10px 20px;background:#D91A1A;color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-weight:700;cursor:pointer;font-size:14px;">
+            Calculate
+          </button>
+        </div>
+        <div id="calc-result" style="margin-top:14px;font-family:'Inter',sans-serif;min-height:20px;"></div>
+      </div>`;
 
       document.getElementById('value-loading').classList.add('hidden');
       document.getElementById('value-content').innerHTML = html;

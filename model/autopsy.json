@@ -1,0 +1,112 @@
+[
+  {
+    "event": "UFC 326: Holloway vs. Oliveira 2",
+    "wins": 7,
+    "losses": 4,
+    "total": 11,
+    "accuracy": 64,
+    "insight": "Mixed card \u2014 7W\u20134L. Review high-confidence misses below.",
+    "signal_report": [],
+    "best_pick": {
+      "fight": "Donte Johnson vs Cody Brundage",
+      "predicted": "Donte Johnson",
+      "confidence": 90.1
+    },
+    "biggest_miss": {
+      "fight": "Cody Garbrandt vs Xiao Long",
+      "predicted": "Xiao Long",
+      "actual": "Cody Garbrandt",
+      "confidence": 67.9
+    },
+    "picks": [
+      {
+        "fight": "Max Holloway vs Charles Oliveira",
+        "predicted": "Max Holloway",
+        "actual": "Charles Oliveira",
+        "correct": false,
+        "confidence": 65.1,
+        "primary_signal": null
+      },
+      {
+        "fight": "Caio Borralho vs Reinier de Ridder",
+        "predicted": "Caio Borralho",
+        "actual": "Caio Borralho",
+        "correct": true,
+        "confidence": 60.0,
+        "primary_signal": null
+      },
+      {
+        "fight": "Rob Font vs Raul Rosas Jr.",
+        "predicted": "Raul Rosas Jr.",
+        "actual": "Raul Rosas Jr.",
+        "correct": true,
+        "confidence": 71.2,
+        "primary_signal": null
+      },
+      {
+        "fight": "Drew Dober vs Michael Johnson",
+        "predicted": "Drew Dober",
+        "actual": "Drew Dober",
+        "correct": true,
+        "confidence": 62.4,
+        "primary_signal": null
+      },
+      {
+        "fight": "Gregory Rodrigues vs Brunno Ferreira",
+        "predicted": "Brunno Ferreira",
+        "actual": "Gregory Rodrigues",
+        "correct": false,
+        "confidence": 59.4,
+        "primary_signal": null
+      },
+      {
+        "fight": "Cody Garbrandt vs Xiao Long",
+        "predicted": "Xiao Long",
+        "actual": "Cody Garbrandt",
+        "correct": false,
+        "confidence": 67.9,
+        "primary_signal": null
+      },
+      {
+        "fight": "Donte Johnson vs Cody Brundage",
+        "predicted": "Donte Johnson",
+        "actual": "Donte Johnson",
+        "correct": true,
+        "confidence": 90.1,
+        "primary_signal": null
+      },
+      {
+        "fight": "Ricky Turcios vs Alberto Montes",
+        "predicted": "Ricky Turcios",
+        "actual": "Alberto Montes",
+        "correct": false,
+        "confidence": 63.1,
+        "primary_signal": null
+      },
+      {
+        "fight": "Cody Durden vs Nyamjargal Tumendemberel",
+        "predicted": "Nyamjargal Tumendemberel",
+        "actual": "Nyamjargal Tumendemberel",
+        "correct": true,
+        "confidence": 85.0,
+        "primary_signal": null
+      },
+      {
+        "fight": "Sumudaerji vs Jesus Aguilar",
+        "predicted": "Sumudaerji",
+        "actual": "Sumudaerji",
+        "correct": true,
+        "confidence": 70.0,
+        "primary_signal": null
+      },
+      {
+        "fight": "Rafael Tobias vs Diyar Nurgozhay",
+        "predicted": "Diyar Nurgozhay",
+        "actual": "Diyar Nurgozhay",
+        "correct": true,
+        "confidence": 69.7,
+        "primary_signal": null
+      }
+    ]
+  }
+]
