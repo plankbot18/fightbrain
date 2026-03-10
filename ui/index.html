@@ -2890,6 +2890,7 @@
     let _valuePicks = [];
     let _oddsPending = [];
     let _valueSortKey = null;
+    let _valueEventFilter = '';
     let _valueSortDir = 'desc';
 
     async function loadValuePicks() {
@@ -2929,6 +2930,11 @@
 
     function renderValuePicks() {
       let picks = [..._valuePicks];
+
+      // Event filter
+      if (_valueEventFilter) {
+        picks = picks.filter(p => p.event === _valueEventFilter);
+      }
 
       // Sort if needed
       if (_valueSortKey) {
@@ -2976,6 +2982,25 @@
           </button>`;
         }).join('')}
       </div>`;
+
+      // Event filter dropdown — sorted by date (use _upcomingEvents order which matches CSV order)
+      const allValueEvents = _valuePicks.map(p => p.event).filter(Boolean);
+      // Get unique events, preserving order from _upcomingEvents (date-sorted) where possible
+      const upcomingOrder = Object.keys(_upcomingEvents || {});
+      const uniqueValueEvents = [...new Set([
+        ...upcomingOrder.filter(e => allValueEvents.includes(e)),
+        ...allValueEvents.filter(e => !upcomingOrder.includes(e))
+      ])];
+
+      if (uniqueValueEvents.length > 1) {
+        html += `<div style="margin-bottom:14px;">
+          <select onchange="_valueEventFilter=this.value;renderValuePicks();"
+            style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid ${_valueEventFilter?'#D91A1A':'#e5e7eb'};font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#111;background:#fff;cursor:pointer;outline:none;appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%23888%22 d=%22M6 8L1 3h10z%22/></svg>');background-repeat:no-repeat;background-position:right 14px center;">
+            <option value="">All Events (${uniqueValueEvents.length})</option>
+            ${uniqueValueEvents.map(e => `<option value="${e}" ${_valueEventFilter===e?'selected':''}>${e.replace('UFC Fight Night: ','').replace('UFC ','')}</option>`).join('')}
+          </select>
+        </div>`;
+      }
 
       function renderValueCard(pick) {
         const pickName = pick.best_bet || pick.predicted_winner;
