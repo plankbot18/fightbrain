@@ -1259,7 +1259,7 @@
 
       // Value pick info
       let valueLine = '';
-      if (valuePick) {
+      if (valuePick && valuePick.tier !== 'SKIP') {
         const odds = valuePick.book_odds_american;
         const oddsStr = odds != null ? (odds > 0 ? `+${odds}` : `${odds}`) : '';
         const edgeStr = valuePick.edge != null ? `+${valuePick.edge}%` : '';
@@ -1355,7 +1355,7 @@
             <div style="font-size:11px;color:#aaa;font-family:'Inter',sans-serif;">${stake}</div>
           </div>
           <div style="text-align:right;">
-            ${valueLine || `<span style="font-size:11px;color:#555;font-family:'Inter',sans-serif;">No value edge flagged</span>`}
+            ${valueLine}
           </div>
         </div>
 
