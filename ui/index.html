@@ -560,8 +560,34 @@
         <div class="skeleton" style="height:56px;"></div>
       </div>
       <div id="upcoming-controls" class="hidden">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-3"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center;">
+          <!-- Confidence tier filter -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="setTierFilter('')" id="filter-tier-all"
+              style="font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid #D91A1A;background:#D91A1A;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;">ALL</button>
+            <button onclick="setTierFilter('lock')" id="filter-tier-lock"
+              style="font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;font-family:'Inter',sans-serif;">🔒 LOCK</button>
+            <button onclick="setTierFilter('strong')" id="filter-tier-strong"
+              style="font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;font-family:'Inter',sans-serif;">STRONG</button>
+            <button onclick="setTierFilter('medium')" id="filter-tier-medium"
+              style="font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;font-family:'Inter',sans-serif;">MEDIUM</button>
+            <button onclick="setTierFilter('lean')" id="filter-tier-lean"
+              style="font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;font-family:'Inter',sans-serif;">LEAN</button>
+          </div>
+          <!-- Weight class filter -->
+          <select id="filter-weight-class" onchange="setWeightFilter(this.value)"
+            style="font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;font-family:'Inter',sans-serif;">
+            <option value="">All Weight Classes</option>
+            <option value="Heavyweight">Heavyweight</option>
+            <option value="Light Heavyweight">Light Heavyweight</option>
+            <option value="Middleweight">Middleweight</option>
+            <option value="Welterweight">Welterweight</option>
+            <option value="Lightweight">Lightweight</option>
+            <option value="Featherweight">Featherweight</option>
+            <option value="Bantamweight">Bantamweight</option>
+            <option value="Flyweight">Flyweight</option>
+            <option value="Women">Women's</option>
+          </select>
         </div>
       </div>
       <div id="upcoming-event-view" class="hidden"></div>
@@ -940,6 +966,16 @@
         </div>`;
       }
 
+      // Previous meeting
+      const pm = report.previous_meeting;
+      if (pm && pm.winner) {
+        const loser = pm.winner === report.fighter1 ? report.fighter2 : report.fighter1;
+        html += `<div style="margin-top:10px;padding:10px 14px;background:#f0f4ff;border-radius:10px;border-left:3px solid #6366f1;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#4338ca;letter-spacing:0.05em;margin-bottom:4px;">LAST TIME THEY MET</div>
+          <div style="font-size:13px;color:#3730a3;">${pm.winner} def. ${loser} · ${pm.method}${pm.round ? ' R' + pm.round : ''} · ${pm.event}</div>
+        </div>`;
+      }
+
       // Data quality note only — stat blocks removed
       if (report.data_quality_note) {
         html += `<div style="font-size:11px;color:#b45309;margin-top:8px;">⚠ ${report.data_quality_note}</div>`;
@@ -955,6 +991,28 @@
     let _selectedEvent = '';
     let _upcomingView = 'event';
     let _searchQuery = '';
+    let _tierFilter = '';
+    let _weightFilter = '';
+
+    function setTierFilter(tier) {
+      _tierFilter = tier;
+      // Update button styles
+      ['all','lock','strong','medium','lean'].forEach(t => {
+        const btn = document.getElementById('filter-tier-' + t);
+        if (!btn) return;
+        const active = (tier === '' && t === 'all') || tier === t;
+        btn.style.background = active ? '#D91A1A' : '#fff';
+        btn.style.color = active ? '#fff' : '#555';
+        btn.style.borderColor = active ? '#D91A1A' : '#ddd';
+      });
+      renderUpcomingView();
+    }
+
+    function setWeightFilter(wc) {
+      _weightFilter = wc;
+      renderUpcomingView();
+    }
+
     let _methodPredictions = {};
     let _valuePicksData = null;
 
@@ -1001,6 +1059,23 @@
       if (_searchQuery) {
         const q = _searchQuery.toLowerCase();
         fights = fights.filter(f => f.f1.toLowerCase().includes(q) || f.f2.toLowerCase().includes(q));
+      }
+      if (_tierFilter) {
+        fights = fights.filter(f => {
+          const conf = parseFloat(f.conf) || 0;
+          if (_tierFilter === 'lock') return conf >= 85;
+          if (_tierFilter === 'strong') return conf >= 75 && conf < 85;
+          if (_tierFilter === 'medium') return conf >= 65 && conf < 75;
+          if (_tierFilter === 'lean') return conf < 65;
+          return true;
+        });
+      }
+      if (_weightFilter) {
+        fights = fights.filter(f => {
+          const wc = (f.weight_class || f.event || '').toLowerCase();
+          if (_weightFilter === 'Women') return wc.includes('women') || wc.includes("women's");
+          return wc.includes(_weightFilter.toLowerCase());
+        });
       }
       return fights;
     }
@@ -1123,6 +1198,29 @@
       return html;
     }
 
+    // ===== PERSONAL PICK TRACKER =====
+    function getTailedPicks() {
+      try { return JSON.parse(localStorage.getItem('fightbrain_tailed') || '[]'); } catch { return []; }
+    }
+    function saveTailedPicks(picks) {
+      localStorage.setItem('fightbrain_tailed', JSON.stringify(picks));
+    }
+    function isTailed(f1, f2) {
+      return getTailedPicks().some(p => p.f1 === f1 && p.f2 === f2);
+    }
+    function toggleTailPick(f1, f2, winner, conf, btn) {
+      let picks = getTailedPicks();
+      const idx = picks.findIndex(p => p.f1 === f1 && p.f2 === f2);
+      if (idx >= 0) {
+        picks.splice(idx, 1);
+        if (btn) { btn.textContent = '+ Tail'; btn.style.color = '#777'; btn.style.borderColor = '#ddd'; btn.style.background = 'none'; }
+      } else {
+        picks.push({ f1, f2, winner, conf, tailedAt: Date.now(), result: null });
+        if (btn) { btn.textContent = '✓ Tailed'; btn.style.color = '#16a34a'; btn.style.borderColor = '#16a34a'; btn.style.background = '#f0fdf4'; }
+      }
+      saveTailedPicks(picks);
+    }
+
     function stakeLabel(conf) {
       if (conf >= 85) return '2u LOCK';
       if (conf >= 75) return '1.5u STRONG';
@@ -1170,6 +1268,11 @@
         if (btn) btn.textContent = 'Full Analysis ↓';
         setTimeout(() => { el.style.display = 'none'; }, 350);
       } else {
+        // Render content once on first open — cache to avoid re-render
+        if (!el.dataset.rendered) {
+          el.dataset.rendered = 'true';
+          // content already injected via renderExpandedContent at card build time
+        }
         el.style.display = 'block';
         el.style.maxHeight = '0';
         el.style.opacity = '0';
@@ -1250,6 +1353,19 @@
       const isF1 = f.winner === f.f1;
       const fullId = 'full-' + (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
       const valuePick = findValuePick(f.f1, f.f2);
+
+      // Post-fight result overlay — check picks_log for a resolved result
+      const resolvedPick = (_allPicks || []).find(p =>
+        (p.fighter1 === f.f1 && p.fighter2 === f.f2) ||
+        (p.fighter1 === f.f2 && p.fighter2 === f.f1)
+      );
+      const hasResult = resolvedPick && resolvedPick.result && resolvedPick.result !== 'pending';
+      const resultWin = hasResult && resolvedPick.result === 'correct';
+      const resultBanner = hasResult ? `
+        <div style="background:${resultWin ? '#16a34a' : '#ef4444'};color:#fff;padding:6px 18px;display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;">
+          ${resultWin ? '✅' : '❌'} ${resultWin ? 'CORRECT' : 'WRONG'} — Actual winner: ${resolvedPick.actual_winner || '?'}
+          ${resolvedPick.actual_method ? `<span style="opacity:0.8;">by ${resolvedPick.actual_method}</span>` : ''}
+        </div>` : '';
       const methodKey = f.f1 + ' vs ' + f.f2;
       const methodData = _methodPredictions[methodKey] || _methodPredictions[f.f2 + ' vs ' + f.f1]
         || { decision_pct: f.decision_pct || 0, ko_pct: f.ko_pct || 0, sub_pct: f.sub_pct || 0,
@@ -1262,14 +1378,18 @@
       // Stake label
       const stake = stakeLabel(f.conf);
 
-      // Value pick info
+      // Value pick info + upset alert
       let valueLine = '';
+      let upsetAlert = false;
       if (valuePick && valuePick.tier !== 'SKIP') {
         const odds = valuePick.book_odds_american;
         const oddsStr = odds != null ? (odds > 0 ? `+${odds}` : `${odds}`) : '';
         const edgeStr = valuePick.edge != null ? `+${valuePick.edge}%` : '';
         const tierColor = valuePick.tier === 'STRONG' ? '#D91A1A' : '#b45309';
+        // Upset alert: model backs the underdog (positive American odds = underdog)
+        if (odds != null && odds > 0) upsetAlert = true;
         valueLine = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          ${upsetAlert ? `<span style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.05em;color:#f59e0b;border:1px solid #f59e0b;border-radius:4px;padding:1px 8px;">⚡ UPSET ALERT</span>` : ''}
           <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.05em;color:${tierColor};border:1px solid ${tierColor};border-radius:4px;padding:1px 7px;">${valuePick.tier} VALUE</span>
           ${edgeStr ? `<span style="font-size:12px;color:#16a34a;font-weight:600;">Edge ${edgeStr}</span>` : ''}
           ${oddsStr ? `<span style="font-size:12px;color:#888;">Book: ${oddsStr}</span>` : ''}
@@ -1376,6 +1496,8 @@
           </div>
         </div>
 
+        ${resultBanner}
+
         <!-- METHOD + H2H + EXPAND -->
         <div style="padding:16px 18px 14px;">
           ${methodBar}
@@ -1384,6 +1506,11 @@
             <button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn"
               style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;">
               Full Analysis ↓
+            </button>
+            <button onclick="toggleTailPick('${f.f1}','${f.f2}','${f.winner}',${f.conf},this)"
+              id="tail-${fullId}"
+              style="font-size:12px;background:none;border:1px solid #ddd;border-radius:12px;padding:2px 10px;cursor:pointer;font-family:'Inter',sans-serif;color:#777;">
+              ${isTailed(f.f1, f.f2) ? '✓ Tailed' : '+ Tail'}
             </button>
             ${f.data_quality_flag === 'LOW_DATA' ? '<span style="font-size:10px;color:#f59e0b;border:1px solid #f59e0b;border-radius:4px;padding:1px 6px;">LOW DATA</span>' : ''}
           </div>
@@ -1433,7 +1560,35 @@
       });
       let html = '';
       for (const [event, card] of Object.entries(events)) {
-        html += `<div class="mb-8"><h2 class="section-title" style="font-size:32px;margin-bottom:16px;">${event}</h2><div>`;
+        // Event summary stats
+        const picks = card.filter(f => {
+          const vp = findValuePick(f.f1, f.f2);
+          return vp && vp.tier !== 'SKIP';
+        });
+        const locks = card.filter(f => parseFloat(f.conf) >= 85).length;
+        const eventShort = event.replace(/UFC (Fight Night|[0-9]+):?\s*/i, '').replace(/\s*\(.*\)/, '').trim();
+        html += `<div class="mb-10">
+          <div style="background:linear-gradient(135deg,#111 0%,#1a1a1a 100%);border-radius:14px;padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.12em;font-family:'Inter',sans-serif;">UFC Event</div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fff;letter-spacing:0.04em;line-height:1.1;">${eventShort || event}</div>
+            </div>
+            <div style="display:flex;gap:20px;">
+              <div style="text-align:center;">
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#D91A1A;line-height:1;">${card.length}</div>
+                <div style="font-size:10px;color:#888;font-family:'Inter',sans-serif;">FIGHTS</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#fff;line-height:1;">${picks.length}</div>
+                <div style="font-size:10px;color:#888;font-family:'Inter',sans-serif;">PICKS</div>
+              </div>
+              ${locks > 0 ? `<div style="text-align:center;">
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#f59e0b;line-height:1;">🔒 ${locks}</div>
+                <div style="font-size:10px;color:#888;font-family:'Inter',sans-serif;">LOCKS</div>
+              </div>` : ''}
+            </div>
+          </div>
+          <div>`;
         card.forEach(f => { html += renderFightCard(f, false); });
         html += '</div></div>';
       }
@@ -1668,6 +1823,35 @@
           </div>`;
         });
         html += '</div>';
+
+        // Calibration bar chart — actual win rate by tier
+        const tierData = ['lock','strong','medium','lean'].map(tier => {
+          const t = record.by_tier[tier] || { wins:0, losses:0, total:0 };
+          const expected = tier === 'lock' ? 85 : tier === 'strong' ? 79 : tier === 'medium' ? 70 : 62;
+          const actual = t.total > 0 ? Math.round(t.wins / t.total * 100) : null;
+          return { tier, expected, actual, total: t.total };
+        }).filter(d => d.total > 0);
+
+        if (tierData.length > 0) {
+          html += `<div style="margin-bottom:24px;">
+            <div style="font-size:11px;color:#888;margin-bottom:10px;font-family:'Inter',sans-serif;">Calibration: Actual hit rate vs model confidence</div>`;
+          tierData.forEach(d => {
+            const barW = d.actual || 0;
+            const expW = d.expected;
+            const color = d.actual >= d.expected ? '#16a34a' : '#ef4444';
+            html += `<div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:#777;margin-bottom:3px;">
+                <span>${d.tier.toUpperCase()} (${d.total} picks)</span>
+                <span style="color:${color};font-weight:600;">${d.actual}% actual vs ${d.expected}% expected</span>
+              </div>
+              <div style="height:8px;background:#f0f0f0;border-radius:4px;position:relative;overflow:visible;">
+                <div style="height:100%;width:${barW}%;background:${color};border-radius:4px;transition:width 0.5s;"></div>
+                <div style="position:absolute;top:-1px;height:10px;width:2px;background:#111;left:${expW}%;opacity:0.4;"></div>
+              </div>
+            </div>`;
+          });
+          html += `<div style="font-size:10px;color:#bbb;margin-top:4px;">│ = expected confidence level</div></div>`;
+        }
       }
 
       // By Event
