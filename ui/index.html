@@ -2698,7 +2698,11 @@
         let running = 0;
         const pnlPoints = chronoPicks.map((p,i) => {
           const stake = p.recommended_units || 1;
-          running += p.result === 'correct' ? stake : -stake;
+          const odds = p.book_odds_american;
+          const profit = p.result === 'correct'
+            ? (odds ? (odds < 0 ? stake*(100/Math.abs(odds)) : stake*(odds/100)) : stake)
+            : -stake;
+          running += profit;
           return { i: i+1, pnl: running, win: p.result === 'correct' };
         });
         const pnlVals = pnlPoints.map(p=>p.pnl);
