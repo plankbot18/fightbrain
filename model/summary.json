@@ -1,10 +1,10 @@
 {
-  "wins": 7,
-  "losses": 4,
-  "accuracy": 63.6,
-  "pnl": 0.13,
-  "roi": 1.2,
-  "updated_at": "2026-03-09T23:44:26.898657+00:00",
+  "wins": 8,
+  "losses": 3,
+  "accuracy": 72.7,
+  "pnl": 0.91,
+  "roi": 8.2,
+  "updated_at": "2026-03-10T22:37:51.322078+00:00",
   "events": [
     "UFC 326: Holloway vs. Oliveira 2"
   ]
