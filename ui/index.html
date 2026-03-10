@@ -2598,9 +2598,16 @@
         const decided = picks.filter(p => p.result !== null);
         const pending = picks.filter(p => p.result === null);
         document.getElementById('record-loading').classList.add('hidden');
-        renderRecord();
+        try {
+          renderRecord();
+        } catch(renderErr) {
+          console.error('renderRecord error:', renderErr);
+          document.getElementById('record-content').innerHTML =
+            `<div style="color:#ef4444;font-family:Inter,sans-serif;padding:12px;">Render error: ${renderErr.message}</div>`;
+        }
       } catch (e) {
-        document.getElementById('record-loading').textContent = 'Failed to load picks log.';
+        console.error('loadRecord fetch error:', e);
+        document.getElementById('record-loading').textContent = 'Failed to load picks log: ' + e.message;
       }
     }
 
