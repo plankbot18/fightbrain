@@ -536,7 +536,7 @@
   <!-- Tab Bar -->
   <nav class="tab-bar">
     <div class="tab-bar-inner">
-      <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active">Upcoming Picks</button>
+      <button onclick="showTab('upcoming')" id="tab-upcoming" class="tab-active">Fight Card</button>
       <button onclick="showTab('value')" id="tab-value" class="tab-inactive">Value Picks</button>
       <button onclick="showTab('record')" id="tab-record" class="tab-inactive">Picks Record</button>
       <button onclick="showTab('archive')" id="tab-archive" class="tab-inactive">Archive</button>
@@ -562,10 +562,6 @@
       <div id="upcoming-controls" class="hidden">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3"></div>
-          <div class="flex gap-2">
-            <button class="view-toggle-btn active" id="view-event-btn" onclick="setUpcomingView('event')">Event View</button>
-            <button class="view-toggle-btn" id="view-grid-btn" onclick="setUpcomingView('grid')">Full Grid</button>
-          </div>
         </div>
       </div>
       <div id="upcoming-event-view" class="hidden"></div>
@@ -1242,8 +1238,140 @@
     }
 
     function renderFightCard(f, large) {
-      // Grid view uses same poster card
-      return renderFightRow(f);
+      return renderFeedCard(f);
+    }
+
+    function renderFeedCard(f) {
+      const isF1 = f.winner === f.f1;
+      const fullId = 'full-' + (f.f1 + f.f2).replace(/[^a-zA-Z0-9]/g, '');
+      const valuePick = findValuePick(f.f1, f.f2);
+      const methodKey = f.f1 + ' vs ' + f.f2;
+      const methodData = _methodPredictions[methodKey] || _methodPredictions[f.f2 + ' vs ' + f.f1]
+        || { decision_pct: f.decision_pct || 0, ko_pct: f.ko_pct || 0, sub_pct: f.sub_pct || 0,
+             method_label: f.predicted_method || '', finish_label: '' };
+
+      // Fighter images
+      const f1ImgSrc = getFighterImg(f.f1) || getFighterFallback(f.f1);
+      const f2ImgSrc = getFighterImg(f.f2) || getFighterFallback(f.f2);
+
+      // Stake label
+      const stake = stakeLabel(f.conf);
+
+      // Value pick info
+      let valueLine = '';
+      if (valuePick) {
+        const odds = valuePick.book_odds_american;
+        const oddsStr = odds != null ? (odds > 0 ? `+${odds}` : `${odds}`) : '';
+        const edgeStr = valuePick.edge != null ? `+${valuePick.edge}%` : '';
+        const tierColor = valuePick.tier === 'STRONG' ? '#D91A1A' : '#b45309';
+        valueLine = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.05em;color:${tierColor};border:1px solid ${tierColor};border-radius:4px;padding:1px 7px;">${valuePick.tier} VALUE</span>
+          ${edgeStr ? `<span style="font-size:12px;color:#16a34a;font-weight:600;">Edge ${edgeStr}</span>` : ''}
+          ${oddsStr ? `<span style="font-size:12px;color:#888;">Book: ${oddsStr}</span>` : ''}
+        </div>`;
+      }
+
+      // H2H mini stats (3 rows — always visible)
+      let h2hMini = '';
+      if (_fighterProfiles && _fighterProfiles.fighters) {
+        const byName = {};
+        for (const p of Object.values(_fighterProfiles.fighters)) { byName[p.name] = p.stats || {}; }
+        const sv = (s, k) => { const v = s[k]; return (v && typeof v === 'object') ? (v.value ?? 0) : (v ?? 0); };
+        const s1 = byName[f.f1] || {}; const s2 = byName[f.f2] || {};
+        const statRows = [
+          { label: 'Strikes/min', v1: sv(s1,'slpm'), v2: sv(s2,'slpm'), unit: '', higher: true },
+          { label: 'Str Accuracy', v1: sv(s1,'str_acc'), v2: sv(s2,'str_acc'), unit: '%', higher: true },
+          { label: 'Str Defense', v1: sv(s1,'str_def'), v2: sv(s2,'str_def'), unit: '%', higher: true },
+        ].filter(r => r.v1 > 0 || r.v2 > 0);
+
+        if (statRows.length) {
+          const f1Last = f.f1.split(' ').pop();
+          const f2Last = f.f2.split(' ').pop();
+          h2hMini = `<div style="margin-top:14px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:11px;font-weight:700;color:${isF1?'#D91A1A':'#888'};">${f1Last}</span>
+              <span style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;">Head to Head</span>
+              <span style="font-size:11px;font-weight:700;color:${!isF1?'#D91A1A':'#888'};">${f2Last}</span>
+            </div>`;
+          statRows.forEach(r => {
+            const total = r.v1 + r.v2;
+            const f1share = total > 0 ? (r.v1 / total * 100) : 50;
+            const f2share = total > 0 ? (r.v2 / total * 100) : 50;
+            const f1wins = r.higher ? r.v1 >= r.v2 : r.v1 <= r.v2;
+            const f1fmt = Number.isInteger(r.v1) ? r.v1 : parseFloat(r.v1).toFixed(1);
+            const f2fmt = Number.isInteger(r.v2) ? r.v2 : parseFloat(r.v2).toFixed(1);
+            h2hMini += `<div class="h2h-row" data-f1share="${f1share}" data-f2share="${f2share}" style="margin-bottom:6px;">
+              <div class="h2h-stat-f1 ${f1wins?'h2h-winner':''}">${f1fmt}${r.unit}</div>
+              <div class="h2h-bar-wrap">
+                <div class="h2h-bar-inner">
+                  <div class="h2h-bar-f1" style="width:0%;background:${f1wins?'#D91A1A':'#CBD5E1'};"></div>
+                  <div class="h2h-bar-f2" style="width:0%;background:${!f1wins?'#D91A1A':'#CBD5E1'};"></div>
+                </div>
+                <div class="h2h-label">${r.label}</div>
+              </div>
+              <div class="h2h-stat-f2 ${!f1wins?'h2h-winner':''}">${f2fmt}${r.unit}</div>
+            </div>`;
+          });
+          h2hMini += '</div>';
+        }
+      }
+
+      // Method bar
+      const methodBar = renderMethodBar(methodData);
+
+      // Expanded content
+      const expandedContent = renderExpandedContent(f);
+
+      return `<div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.07);margin-bottom:20px;overflow:hidden;border:1px solid #f0f0f0;">
+
+        <!-- BANNER: fighter portraits -->
+        <div style="background:#0d0d0d;display:flex;align-items:flex-end;justify-content:space-between;min-height:160px;position:relative;overflow:hidden;">
+          <!-- F1 side -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;padding:16px 12px 0;position:relative;${isF1?'border-left:3px solid #D91A1A;':''}" >
+            <img src="${f1ImgSrc}" alt="${f.f1}" style="height:130px;width:auto;object-fit:contain;object-position:bottom;${isF1?'':'filter:grayscale(90%) brightness(0.55);'}" onerror="this.src='${getFighterFallback(f.f1)}'" loading="lazy">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.04em;color:${isF1?'#fff':'#555'};padding:6px 0 10px;line-height:1;">${f.f1}</div>
+          </div>
+          <!-- VS -->
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#333;padding:0 6px;align-self:center;flex-shrink:0;">VS</div>
+          <!-- F2 side -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:flex-end;padding:16px 12px 0;position:relative;${!isF1?'border-right:3px solid #D91A1A;':''}">
+            <img src="${f2ImgSrc}" alt="${f.f2}" style="height:130px;width:auto;object-fit:contain;object-position:bottom;${!isF1?'':'filter:grayscale(90%) brightness(0.55);'}" onerror="this.src='${getFighterFallback(f.f2)}'" loading="lazy">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.04em;color:${!isF1?'#fff':'#555'};padding:6px 0 10px;text-align:right;line-height:1;">${f.f2}</div>
+          </div>
+        </div>
+
+        <!-- PREDICTION STRIP -->
+        <div style="background:#111;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div>
+            <span style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.1em;font-family:'Inter',sans-serif;">Model Pick</span>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1.1;">${f.winner}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#D91A1A;line-height:1;">${f.conf}%</div>
+            <div style="font-size:11px;color:#aaa;font-family:'Inter',sans-serif;">${stake}</div>
+          </div>
+          <div style="text-align:right;">
+            ${valueLine || `<span style="font-size:11px;color:#555;font-family:'Inter',sans-serif;">No value edge flagged</span>`}
+          </div>
+        </div>
+
+        <!-- METHOD + H2H + EXPAND -->
+        <div style="padding:16px 18px 14px;">
+          ${methodBar}
+          ${h2hMini}
+          <div style="margin-top:14px;border-top:1px solid #f5f5f5;padding-top:10px;display:flex;align-items:center;gap:12px;">
+            <button onclick="toggleFullAnalysis('${fullId}')" id="${fullId}-btn"
+              style="font-size:12px;color:#D91A1A;background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;font-weight:600;">
+              Full Analysis ↓
+            </button>
+            ${f.data_quality_flag === 'LOW_DATA' ? '<span style="font-size:10px;color:#f59e0b;border:1px solid #f59e0b;border-radius:4px;padding:1px 6px;">LOW DATA</span>' : ''}
+          </div>
+          <div id="${fullId}" data-open="false" style="display:none;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.3s ease;" class="space-y-4 mt-3 pt-3">
+            ${expandedContent}
+          </div>
+        </div>
+
+      </div>`;
     }
 
     function renderUpcomingView() {
@@ -1266,7 +1394,7 @@
         return;
       }
       let html = `<h2 class="section-title" style="font-size:32px;margin-bottom:16px;">${_selectedEvent}</h2><div>`;
-      filtered.forEach(f => { html += renderFightRow(f); });
+      filtered.forEach(f => { html += renderFeedCard(f); });
       html += '</div>';
       container.innerHTML = html;
     }
