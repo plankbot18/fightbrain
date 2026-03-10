@@ -521,7 +521,7 @@
     <div class="site-header-inner">
       <div class="site-logo">FIGHTBRAIN<sup>MMA</sup></div>
       <div id="uiFreshness" style="font-family:'Inter',sans-serif;font-size:10px;color:#aaa;white-space:nowrap;"></div>
-      <div class="header-center">
+      <div class="header-center" id="header-center-wrap">
         <select id="event-selector" class="event-selector" onchange="selectEvent(this.value)"></select>
       </div>
       <div id="search-bar-wrapper">
@@ -842,15 +842,13 @@
         if (btn) btn.className = t === name ? 'tab-active' : (btn.classList.contains('tab-secondary') ? 'tab-inactive tab-secondary' : 'tab-inactive');
       });
       // Show/hide search bar (only for upcoming)
+      // Show/hide header controls based on tab
       const sbw = document.getElementById('search-bar-wrapper');
-      if (sbw) {
-        sbw.style.display = '';
-        const si = document.getElementById('fight-search');
-        if (si) {
-          si.placeholder = name === 'upcoming' ? 'Search fighters...' : name === 'simulator' ? 'Search & simulate...' : 'Search fighters...';
-          si.dataset.tab = name;
-        }
-      }
+      const hdrCenter = document.getElementById('header-center-wrap');
+      if (sbw) sbw.style.display = name === 'upcoming' ? '' : 'none';
+      if (hdrCenter) hdrCenter.style.display = name === 'upcoming' ? '' : 'none';
+      const si = document.getElementById('fight-search');
+      if (si) si.dataset.tab = name;
       if (name === 'model') {
         if (!window._chartLoaded) loadChartJS().then(() => loadFeatureChart());
         // Populate live record stats
