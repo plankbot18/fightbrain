@@ -1028,23 +1028,28 @@
     function renderMethodBar(methodData) {
       if (!methodData) return '';
       const decPct = parseFloat(methodData.decision_pct) || 0;
-      const koPct = parseFloat(methodData.ko_pct) || 0;
-      const subPct = parseFloat(methodData.sub_pct) || 0;
-      const total = decPct + koPct + subPct;
-      const decW = total > 0 ? (decPct / total * 100) : 33;
-      const koW = total > 0 ? (koPct / total * 100) : 33;
-      const subW = total > 0 ? (subPct / total * 100) : 34;
-      return `<div>
-        <div class="text-xs text-gray-500 mb-1.5">Method of Victory</div>
-        <div class="flex rounded-lg overflow-hidden text-xs font-medium text-white" style="height:36px">
-          <div style="background:#999999;width:${decW}%" class="analysis-method-bar">${decPct >= 5 ? decPct + '% DEC' : ''}</div>
-          <div style="background:#D91A1A;width:${koW}%" class="analysis-method-bar">${koPct >= 5 ? koPct + '% KO' : ''}</div>
-          <div style="background:#8B0000;width:${subW}%" class="analysis-method-bar">${subPct >= 5 ? subPct + '% SUB' : ''}</div>
+      const koPct  = parseFloat(methodData.ko_pct)       || 0;
+      const subPct = parseFloat(methodData.sub_pct)       || 0;
+      if (decPct + koPct + subPct === 0) return '';
+
+      // Find dominant method
+      const methods = [
+        { label: 'DECISION',   pct: decPct, color: '#888' },
+        { label: 'KO / TKO',   pct: koPct,  color: '#D91A1A' },
+        { label: 'SUBMISSION', pct: subPct,  color: '#8B0000' },
+      ];
+      methods.sort((a, b) => b.pct - a.pct);
+      const dominant = methods[0];
+      const secondaries = methods.slice(1).filter(m => m.pct >= 5);
+      const secondaryStr = secondaries.map(m => `<span>${m.label} ${m.pct}%</span>`).join('<span style="margin:0 6px;color:#ddd;">·</span>');
+
+      return `<div style="margin-bottom:2px;">
+        <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.1em;font-family:'Inter',sans-serif;margin-bottom:4px;">Method of Victory</div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;color:${dominant.color};line-height:1;letter-spacing:0.03em;">${dominant.label}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#ccc;line-height:1;">${dominant.pct}%</div>
         </div>
-        <div class="flex justify-between text-xs mt-1">
-          <span style="color:#D91A1A">${(methodData.finish_label && methodData.finish_label !== 'undefined') ? methodData.finish_label : ''}</span>
-          <span class="text-gray-500">${(methodData.method_label && methodData.method_label !== 'undefined') ? methodData.method_label : ''}</span>
-        </div>
+        ${secondaryStr ? `<div style="font-size:11px;color:#bbb;margin-top:3px;font-family:'Inter',sans-serif;">${secondaryStr}</div>` : ''}
       </div>`;
     }
 
