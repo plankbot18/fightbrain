@@ -3,15 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FightBrain — UFC Picks · 75% Win Rate</title>
-  <meta property="og:title" content="FightBrain — UFC Predictions Powered by ML" />
-  <meta property="og:description" content="Machine learning UFC picks. 63.6% win rate. 7-4 record. +2 flat units. Every pick public and tracked." />
+  <title>FightBrain — UFC Predictions & Picks Powered by ML</title>
+  <meta name="description" content="FightBrain uses machine learning to predict UFC fight outcomes. 63.6% win rate. Every pick publicly logged before the event. Free UFC picks every fight week.">
+  <meta name="keywords" content="UFC picks, UFC predictions, MMA picks, UFC ML predictions, UFC machine learning, fight predictions, UFC betting picks">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://plankbot18.github.io/fightbrain/">
+  <meta property="og:title" content="FightBrain — UFC Predictions Powered by Machine Learning" />
+  <meta property="og:description" content="ML-powered UFC picks. 63.6% win rate. Every pick publicly logged before the event on GitHub. Free, every fight week." />
   <meta property="og:url" content="https://plankbot18.github.io/fightbrain/" />
   <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://plankbot18.github.io/fightbrain/og-image.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="FightBrain — UFC Picks" />
-  <meta name="twitter:description" content="63.6% win rate. 7-4 record. ML-powered UFC predictions. Every fight week." />
-  <meta name="description" content="FightBrain: ML-powered UFC picks. 63.6% win rate. 7-4 record. Every pick tracked. Every pick is public and tracked.">
+  <meta name="twitter:title" content="FightBrain — ML UFC Picks" />
+  <meta name="twitter:description" content="Machine learning UFC predictions. 63.6% win rate. Every pick tracked publicly. Free every fight week." />
+  <meta name="twitter:image" content="https://plankbot18.github.io/fightbrain/og-image.jpg" />
   <meta name="theme-color" content="#111111">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -446,11 +451,42 @@
     </div>
   </section>
 
+  <!-- HOW IT WORKS -->
+  <section style="background:#111;padding:80px 24px;" class="max-md:!py-12">
+    <div class="max-w-4xl mx-auto">
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:white;text-align:center;line-height:1;margin-bottom:8px;">HOW IT WORKS</h2>
+      <p style="font-family:'Inter',sans-serif;font-size:15px;color:#666;text-align:center;margin-bottom:48px;">Three steps. No spin. No retroactive changes.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;" class="max-md:!grid-cols-1">
+        <div style="text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#D91A1A;line-height:1;margin-bottom:12px;">01</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;margin-bottom:8px;">MODEL RUNS</div>
+          <p style="font-family:'Inter',sans-serif;font-size:14px;color:#888;line-height:1.7;">Before each event, the XGBoost model analyzes both fighters — striking stats, grappling, Elo rating, recent form, age decline. Outputs a win probability for every fight on the card.</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#D91A1A;line-height:1;margin-bottom:12px;">02</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;margin-bottom:8px;">PICKS LOCKED</div>
+          <p style="font-family:'Inter',sans-serif;font-size:14px;color:#888;line-height:1.7;">When the model's confidence exceeds what the bookmaker implies, it becomes a pick. Every pick is committed to GitHub before the first fight — publicly timestamped, impossible to alter.</p>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#D91A1A;line-height:1;margin-bottom:12px;">03</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;margin-bottom:8px;">RESULTS TRACKED</div>
+          <p style="font-family:'Inter',sans-serif;font-size:14px;color:#888;line-height:1.7;">After the event, results are logged fight by fight. Win rate, P&L, ROI — all updated automatically. The full record is public. Every win and every loss is in there.</p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:40px;">
+        <a href="https://github.com/plankbot18/fightbrain/commits/main/picks/picks_log.json" target="_blank"
+          style="font-family:'Inter',sans-serif;font-size:13px;color:#666;text-decoration:none;border-bottom:1px solid #444;padding-bottom:2px;">
+          View the public pick history on GitHub ↗
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- SECTION 6: COMMUNITY CTA -->
   <section style="background:#FAF7F2;padding:72px 24px;border-top:1px solid #E5DDD5;text-align:center;" class="max-md:!py-10">
     <div class="max-w-2xl mx-auto">
-      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:#111111;line-height:1;margin-bottom:12px;">GET PICKS DELIVERED EVERY FIGHT WEEK</h2>
-      <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;margin-bottom:28px;">Every prediction includes model confidence, edge vs the bookmaker, and a full matchup breakdown. Public record. No subscription required.</p>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:#111111;line-height:1;margin-bottom:12px;">GET PICKS BEFORE FIGHT NIGHT</h2>
+      <p style="font-family:'Inter',sans-serif;font-size:16px;color:#777777;margin-bottom:28px;">Model picks, matchup breakdowns, and value edges — delivered before each event. Free. No subscription required.</p>
       <!-- Email capture -->
       <form id="emailForm" onsubmit="submitEmail(event)" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto;">
         <input id="emailInput" type="email" placeholder="Enter your email for fight week picks" required
@@ -859,7 +895,7 @@
       }
       document.getElementById('emailForm').style.display = 'none';
       msg.style.color = '#16a34a';
-      msg.textContent = '✓ You\'re on the list — picks delivered every fight week.';
+      msg.textContent = '✓ Saved — we\'ll send picks before each event. No spam, no subscriptions.';
     }
   </script>
 

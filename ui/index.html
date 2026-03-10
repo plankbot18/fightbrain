@@ -493,7 +493,7 @@
       #countdown-banner { font-size: 11px; gap: 6px; padding: 6px 8px; flex-wrap: wrap; justify-content: center; }
       #countdown-banner .cd-val { font-size: 16px; }
 
-      #radarChart { max-width: 100% !important; }
+
 
       .outcomes-side-by-side { flex-direction: column !important; }
       .outcomes-side-by-side .w-px { display: none; }
@@ -665,8 +665,9 @@
         </div>
       </div>
       <div class="model-card mt-6">
-        <h3 class="text-lg font-semibold mb-4 text-gray-900">Top Features by Importance</h3>
-        <div style="max-height:400px"><canvas id="featureChart"></canvas></div>
+        <h3 class="text-lg font-semibold mb-2 text-gray-900">Top Features by Importance</h3>
+        <p style="font-size:12px;color:#aaa;margin-bottom:16px;font-family:'Inter',sans-serif;">How much each factor contributed to model predictions. Longer bar = more influential.</p>
+        <div style="max-height:500px"><canvas id="featureChart"></canvas></div>
       </div>
     </section>
 
@@ -776,59 +777,112 @@
       const contentEl = document.getElementById('archive-content');
       try {
         const picks = _allPicks || await fetch('../picks/picks_log.json').then(r => r.json());
-        const resolved = picks.filter(p => p.result !== null);
+        const resolved = picks.filter(p => p.result && p.result !== 'pending');
         if (!resolved.length) {
           loadingEl.textContent = 'No archived picks yet.';
           return;
         }
-        // Group by event (preserve order, most recent first)
+
+        // Group by event, sorted most recent first
         const byEvent = {};
         resolved.forEach(p => { if (!byEvent[p.event]) byEvent[p.event] = []; byEvent[p.event].push(p); });
-        const events = Object.keys(byEvent).reverse();
+        const events = Object.keys(byEvent).reverse(); // most recent first
+
+        // Cumulative P&L chart data (chronological = oldest first)
+        const chronoPicks = [...resolved].sort((a, b) =>
+          new Date(a.event_date || 0) - new Date(b.event_date || 0));
+        let running = 0;
+        const pnlPoints = chronoPicks.map((p, i) => {
+          const stake = p.recommended_units || 1;
+          running += p.result === 'correct' ? stake : -stake;
+          return { i: i + 1, pnl: running, win: p.result === 'correct' };
+        });
+        const maxPnl = Math.max(...pnlPoints.map(p => p.pnl), 0.1);
+        const minPnl = Math.min(...pnlPoints.map(p => p.pnl), -0.1);
+        const range = maxPnl - minPnl || 1;
+        const chartH = 80, chartW = 400;
+        const toY = v => chartH - ((v - minPnl) / range) * chartH;
+        const toX = i => (i / pnlPoints.length) * chartW;
+        const zeroY = toY(0);
+
+        let pathD = pnlPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(p.pnl)}`).join(' ');
+        const finalColor = running >= 0 ? '#16a34a' : '#ef4444';
 
         let html = '';
+
+        // Cumulative P&L mini chart
+        if (pnlPoints.length > 1) {
+          const pnlStr = (running >= 0 ? '+' : '') + running.toFixed(2) + 'u';
+          html += `<div style="background:#fff;border-radius:14px;padding:20px 22px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#111;letter-spacing:0.04em;">CUMULATIVE P&L</div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:${finalColor};">${pnlStr}</div>
+            </div>
+            <svg viewBox="0 0 ${chartW} ${chartH + 4}" style="width:100%;height:${chartH + 4}px;overflow:visible;">
+              <line x1="0" y1="${zeroY}" x2="${chartW}" y2="${zeroY}" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4,3"/>
+              <polyline points="${pnlPoints.map((p,i) => `${toX(i)},${toY(p.pnl)}`).join(' ')}" fill="none" stroke="${finalColor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+              ${pnlPoints.map((p, i) => `<circle cx="${toX(i)}" cy="${toY(p.pnl)}" r="3" fill="${p.win ? '#16a34a' : '#ef4444'}"/>`).join('')}
+            </svg>
+            <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:#888;font-family:'Inter',sans-serif;">
+              <span>● Win</span><span style="color:#ef4444;">● Loss</span>
+              <span style="margin-left:auto;">${resolved.length} picks · ${events.length} event${events.length !== 1 ? 's' : ''}</span>
+            </div>
+          </div>`;
+        }
+
         events.forEach(ev => {
-          const picks = byEvent[ev];
-          const wins = picks.filter(p => p.result === 'correct').length;
-          const losses = picks.filter(p => p.result === 'wrong').length;
-          const unitPnl = picks.reduce((sum, p) => {
+          const evPicks = byEvent[ev];
+          const wins = evPicks.filter(p => p.result === 'correct').length;
+          const losses = evPicks.filter(p => p.result === 'wrong' || p.result === 'incorrect').length;
+          const acc = evPicks.length > 0 ? Math.round(wins / evPicks.length * 100) : 0;
+          const unitPnl = evPicks.reduce((sum, p) => {
             const stake = p.recommended_units || 1;
             return sum + (p.result === 'correct' ? stake : -stake);
           }, 0);
           const pnlStr = (unitPnl >= 0 ? '+' : '') + unitPnl.toFixed(1) + 'u';
+          // Best pick and worst miss for event summary
+          const bestPick = evPicks.filter(p => p.result === 'correct' && p.confidence >= 80)[0];
+          const bigUpset = evPicks.find(p => p.result === 'incorrect' && p.confidence >= 75);
 
-          html += `<div style="margin-bottom:32px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #D91A1A;padding-bottom:8px;margin-bottom:12px;">
-              <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#111;letter-spacing:1px;">${ev}</div>
-              <div style="font-family:'Inter',sans-serif;font-size:13px;color:#555;">
-                ${wins}W–${losses}L &nbsp;·&nbsp; <span style="color:${unitPnl >= 0 ? '#16a34a' : '#dc2626'};font-weight:600;">${pnlStr}</span>
+          html += `<div style="background:#fff;border-radius:14px;margin-bottom:20px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div>
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#111;letter-spacing:0.04em;">${ev}</div>
+                <div style="font-size:12px;color:#888;margin-top:2px;font-family:'Inter',sans-serif;">
+                  ${wins}W–${losses}L · ${acc}% accuracy ·
+                  <span style="color:${unitPnl >= 0 ? '#16a34a' : '#ef4444'};font-weight:600;">${pnlStr}</span>
+                  ${bestPick ? `· Best: <strong>${bestPick.predicted_winner}</strong> ✅` : ''}
+                  ${bigUpset ? `· Missed: <strong>${bigUpset.predicted_winner}</strong> ❌` : ''}
+                </div>
               </div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:${acc >= 60 ? '#D91A1A' : '#aaa'};">${acc}%</div>
             </div>
             <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;font-family:'Inter',sans-serif;font-size:13px;">
               <thead>
-                <tr style="color:#888;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;border-bottom:1px solid #eee;">
-                  <th style="text-align:left;padding:6px 8px;">Fight</th>
-                  <th style="text-align:left;padding:6px 8px;">Predicted</th>
-                  <th style="text-align:center;padding:6px 8px;">Result</th>
-                  <th style="text-align:left;padding:6px 8px;">Actual Winner</th>
-                  <th style="text-align:left;padding:6px 8px;">Method</th>
-                  <th style="text-align:right;padding:6px 8px;">Stake</th>
+                <tr style="color:#aaa;text-transform:uppercase;font-size:10px;letter-spacing:0.06em;background:#fafafa;">
+                  <th style="text-align:left;padding:8px 12px;">Fight</th>
+                  <th style="text-align:left;padding:8px 12px;">Pick</th>
+                  <th style="text-align:center;padding:8px 6px;"></th>
+                  <th style="text-align:left;padding:8px 12px;">Result</th>
+                  <th style="text-align:right;padding:8px 12px;">Stake</th>
                 </tr>
               </thead>
               <tbody>`;
 
-          picks.forEach(p => {
-            const icon = p.result === 'correct' ? '✅' : '❌';
-            const method = p.method || '—';
+          evPicks.forEach(p => {
+            const win = p.result === 'correct';
             const stake = (p.recommended_units || 1) + 'u';
-            html += `<tr style="border-bottom:1px solid #f5f5f5;">
-              <td style="padding:8px;color:#333;">${p.fight}</td>
-              <td style="padding:8px;"><strong>${p.predicted_winner}</strong> <span style="color:#888;">(${p.confidence}%)</span></td>
-              <td style="padding:8px;text-align:center;">${icon}</td>
-              <td style="padding:8px;color:#333;">${p.actual_winner || '—'}</td>
-              <td style="padding:8px;color:#888;">${method}</td>
-              <td style="padding:8px;text-align:right;color:#888;">${stake}</td>
+            const pnlPick = win ? +(p.recommended_units || 1) : -(p.recommended_units || 1);
+            const pnlPickStr = (pnlPick >= 0 ? '+' : '') + pnlPick.toFixed(1) + 'u';
+            html += `<tr style="border-bottom:1px solid #f7f7f7;">
+              <td style="padding:8px 12px;color:#444;font-size:12px;">${p.fight || (p.fighter1 + ' vs ' + p.fighter2)}</td>
+              <td style="padding:8px 12px;"><span style="font-weight:600;color:#111;">${p.predicted_winner}</span> <span style="color:#bbb;font-size:11px;">${p.confidence}%</span></td>
+              <td style="padding:8px 6px;text-align:center;">
+                <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:${win ? '#dcfce7' : '#fee2e2'};color:${win ? '#15803d' : '#b91c1c'};">${win ? 'WIN' : 'LOSS'}</span>
+              </td>
+              <td style="padding:8px 12px;font-size:12px;color:#555;">${p.actual_winner || '—'}${p.actual_method ? ' · ' + p.actual_method : ''}</td>
+              <td style="padding:8px 12px;text-align:right;font-size:12px;color:${pnlPick >= 0 ? '#16a34a' : '#ef4444'};font-weight:600;">${pnlPickStr}</td>
             </tr>`;
           });
 
@@ -839,6 +893,7 @@
         contentEl.innerHTML = html;
       } catch(e) {
         loadingEl.textContent = 'Failed to load archive.';
+        console.error(e);
       }
     }
 
@@ -849,8 +904,30 @@
       return { bar: 'bg-orange-500', text: 'text-orange-600' };
     }
 
+    // Plain-English labels for model features
+    const FEATURE_LABELS = {
+      'slpm': 'Strikes landed per minute',
+      'str_acc': 'Striking accuracy',
+      'str_def': 'Striking defense',
+      'td_avg': 'Takedown average',
+      'td_def': 'Takedown defense',
+      'sub_avg': 'Submission attempts',
+      'elo': 'Competition history rating',
+      'win_rate': 'Career win rate',
+      'win_rate_last3': 'Win rate (last 3 fights)',
+      'age': 'Fighter age',
+      'age_poly': 'Age decline curve',
+      'reach': 'Reach advantage',
+      'stance': 'Stance matchup',
+      'sos': 'Strength of schedule',
+      'ko_rate': 'KO finish rate',
+      'sub_rate': 'Submission finish rate',
+      'form_score': 'Recent form score',
+      'trajectory': 'Career trajectory',
+    };
     function formatFeatureName(raw) {
-      return raw.replace('diff_', '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const clean = raw.replace('diff_', '').replace(/^f[12]_/, '');
+      return FEATURE_LABELS[clean] || clean.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
 
     function parseCSVLine(line) {
@@ -2044,6 +2121,15 @@
 
       let html = '';
 
+      // Explanation header
+      html += `<div style="background:#f8f8f8;border-radius:12px;padding:14px 18px;margin-bottom:20px;border-left:3px solid #D91A1A;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#D91A1A;letter-spacing:0.05em;margin-bottom:6px;">WHAT IS VALUE?</div>
+        <div style="font-size:12px;color:#555;line-height:1.6;font-family:'Inter',sans-serif;">
+          <strong>Edge %</strong> = model's win probability minus the market's implied probability. Positive edge means the model sees more chance of winning than the bookmakers price in.<br>
+          <strong>STRONG</strong> picks = edge ≥ 8% · <strong>LEAN</strong> picks = edge 4–8%. Only fights where the model disagrees meaningfully with the market.
+        </div>
+      </div>`;
+
       // Sort controls
       html += `<div class="flex items-center gap-4 mb-6 text-xs text-gray-500">
         <span>Sort by:</span>
@@ -2089,6 +2175,13 @@
               ${pick.recommended_units ? `<span style="font-size:11px;color:#888;">${pick.recommended_units}u stake</span>` : ''}
               ${pick.bookmaker ? `<span style="font-size:10px;color:#666;">via ${pick.bookmaker}</span>` : ''}
             </div>
+            ${pick.market_implied != null ? `<div style="margin-top:10px;padding:8px 10px;background:#f9f9f9;border-radius:8px;font-size:11px;font-family:'Inter',sans-serif;display:flex;gap:12px;align-items:center;">
+              <span style="color:#888;">Model: <strong style="color:#111;">${pick.confidence}%</strong></span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#888;">Market: <strong style="color:#555;">${pick.market_implied}%</strong></span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#16a34a;font-weight:600;">+${pick.edge}% edge</span>
+            </div>` : ''}
             ${fadeNote}
           </div>
         </div>`;
