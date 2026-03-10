@@ -886,10 +886,18 @@
         // Cumulative P&L chart data (chronological = oldest first)
         const chronoPicks = [...resolved].sort((a, b) =>
           new Date(a.event_date || 0) - new Date(b.event_date || 0));
+        // Odds-adjusted P&L: win = stake × actual payout (based on American odds), loss = -stake
+        function oddsProfit(stake, americanOdds) {
+          if (!americanOdds) return stake; // fallback: flat
+          return americanOdds < 0 ? stake * (100 / Math.abs(americanOdds)) : stake * (americanOdds / 100);
+        }
         let running = 0;
         const pnlPoints = chronoPicks.map((p, i) => {
           const stake = p.recommended_units || 1;
-          running += p.result === 'correct' ? stake : -stake;
+          const profit = p.result === 'correct'
+            ? oddsProfit(stake, p.book_odds_american)
+            : -stake;
+          running += profit;
           return { i: i + 1, pnl: running, win: p.result === 'correct' };
         });
         const maxPnl = Math.max(...pnlPoints.map(p => p.pnl), 0.1);
@@ -920,7 +928,7 @@
             </svg>
             <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:#888;font-family:'Inter',sans-serif;">
               <span>● Win</span><span style="color:#ef4444;">● Loss</span>
-              <span style="margin-left:auto;">${resolved.length} picks · ${events.length} event${events.length !== 1 ? 's' : ''}</span>
+              <span style="margin-left:auto;">${resolved.length} picks · odds-adjusted</span>
             </div>
           </div>`;
         }
