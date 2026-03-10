@@ -315,7 +315,7 @@
         <span style="color:#ddd;">·</span>
         <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#111;">7–4</strong> record</span>
         <span style="color:#ddd;">·</span>
-        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;"><strong style="color:#D91A1A;">+3u</strong> tiered</span>
+        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#999;" id="heroPnlStrip"><strong style="color:#D91A1A;" id="heroPnlVal">--</strong> <span id="heroPnlLabel">odds-adj</span></span>
       </div>
     </div>
 
@@ -841,9 +841,18 @@
           document.getElementById('recordHighConf').textContent = record.by_tier.lock.accuracy + '%';
         }
 
-        // Hero record banner — lead with record + accuracy, show units as tertiary
+        // Hero stat strip (mobile CTA)
+        const heroPnlVal = document.getElementById('heroPnlVal');
+        const heroPnlLabel = document.getElementById('heroPnlLabel');
         const hasOdds = u.odds_adjusted !== null && u.odds_adjusted !== undefined;
         const displayUnits = hasOdds ? u.odds_adjusted : (u.pnl !== undefined ? u.pnl : (o.wins - o.losses));
+        if (heroPnlVal) {
+          heroPnlVal.textContent = (displayUnits >= 0 ? '+' : '') + displayUnits.toFixed(2) + 'u';
+          heroPnlVal.style.color = displayUnits >= 0 ? '#D91A1A' : '#ef4444';
+        }
+        if (heroPnlLabel) heroPnlLabel.textContent = hasOdds ? 'odds-adj' : 'flat units';
+
+        // Hero record banner — lead with record + accuracy, show units as tertiary
         const displayROI = hasOdds ? u.odds_roi : (u.roi !== undefined ? u.roi : 0);
         const accuracy = o.total > 0 ? (o.wins / o.total * 100).toFixed(1) : '--';
 
