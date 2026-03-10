@@ -2589,16 +2589,8 @@
           if (el) el.textContent = 'Data: ' + fs;
         }
 
-        // Populate event filter dropdown
-        const events = [...new Set(_allPicks.map(p => p.event))];
-        const filterEl = document.getElementById('record-event-filter');
-        events.forEach(ev => {
-          const opt = document.createElement('option');
-          opt.value = ev;
-          opt.textContent = ev;
-          filterEl.appendChild(opt);
-        });
-        document.getElementById('record-filter').classList.remove('hidden');
+        // (Event filter removed — replaced by event-grouped pick tables)
+
 
         const picks = picksRes;
         const record = recordRes;
