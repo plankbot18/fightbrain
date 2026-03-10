@@ -1730,8 +1730,8 @@
       const probStr = (prob * 100).toFixed(1) + '%';
       const kellyB = dec - 1;
       const kellyRaw = Math.max(0, (prob * kellyB - (1-prob)) / kellyB);
-      const halfKelly = kellyRaw / 2;
-      const kellyColor = kellyRaw > 0.02 ? '#16a34a' : '#888';
+      const parlayKelly = Math.min(kellyRaw / 4, 0.05); // ¼ Kelly, hard cap 5%
+      const kellyColor = parlayKelly > 0.01 ? '#16a34a' : '#888';
       result.innerHTML =
         '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">' +
           '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">Parlay odds</div>' +
@@ -1740,8 +1740,8 @@
           '<div style="font-size:18px;font-weight:700;color:#111;">' + probStr + '</div></div>' +
           '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">EV</div>' +
           '<div style="font-size:18px;font-weight:700;color:' + evColor + ';">' + evStr + '</div></div>' +
-          '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">½ Kelly</div>' +
-          '<div style="font-size:18px;font-weight:700;color:' + kellyColor + ';">' + (halfKelly*100).toFixed(1) + '%</div></div>' +
+          '<div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">¼ Kelly (max 5%)</div>' +
+          '<div style="font-size:18px;font-weight:700;color:' + kellyColor + ';">' + (parlayKelly*100).toFixed(1) + '%</div></div>' +
         '</div>' +
         '<div style="font-size:11px;color:#bbb;margin-top:6px;">' + selected.length + ' legs · ' + dec.toFixed(2) + 'x payout · ' + (1/prob).toFixed(1) + ':1 true odds</div>';
     }
@@ -1776,8 +1776,8 @@
       const p = conf / 100;
       const q = 1 - p;
       const kelly = Math.max(0, (b * p - q) / b);
-      const halfKelly = kelly / 2;
-      const kellyColor = kelly > 0.05 ? '#16a34a' : kelly > 0 ? '#b45309' : '#888';
+      const halfKelly = Math.min(kelly / 2, 0.10); // ½ Kelly, hard cap 10% for single bets
+      const kellyColor = halfKelly > 0.03 ? '#16a34a' : halfKelly > 0 ? '#b45309' : '#888';
 
       el.innerHTML = `
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
@@ -1806,8 +1806,8 @@
           </div>
         </div>
         <div style="margin-top:8px;font-size:11px;color:#555;">
-          Full Kelly: ${(kelly*100).toFixed(1)}% · Half Kelly (recommended): ${(halfKelly*100).toFixed(1)}% of bankroll
-          ${kelly === 0 ? ' · Model says skip — negative edge.' : ''}
+          Full Kelly: ${(kelly*100).toFixed(1)}% · ½ Kelly (capped at 10%): ${(halfKelly*100).toFixed(1)}% of bankroll
+          ${kelly === 0 ? ' · Negative edge — model says skip.' : ' · Parlays use ¼ Kelly capped at 5%.'}
         </div>`;
     }
 
@@ -2909,7 +2909,7 @@
             const prob = (combo.prob * 100).toFixed(1);
             const kellyB = combo.odds - 1;
             const kellyRaw = Math.max(0, (combo.prob * kellyB - (1-combo.prob)) / kellyB);
-            const halfK = (kellyRaw/2*100).toFixed(1);
+            const parlayKelly = Math.min(kellyRaw / 4, 0.05); // ¼ Kelly, hard cap 5% for parlays
             const badge = ['🔥 BEST EV', '2ND', '3RD'][idx];
             const badgeBg = idx === 0 ? '#D91A1A' : '#555';
             return '<div style="background:#fff;border-radius:12px;padding:14px 16px;border:1px solid ' + (idx===0?'#D91A1A':'#e5e7eb') + ';box-shadow:0 1px 4px rgba(0,0,0,0.06);">' +
@@ -2938,7 +2938,7 @@
               '<div style="display:flex;gap:16px;font-size:11px;color:#aaa;flex-wrap:wrap;">' +
                 '<span>Win prob: <strong style="color:#555;">' + prob + '%</strong></span>' +
                 '<span>Payout: <strong style="color:#555;">' + combo.odds.toFixed(2) + 'x</strong></span>' +
-                '<span>½ Kelly: <strong style="color:' + (kellyRaw>0?'#16a34a':'#888') + ';">' + halfK + '% of bankroll</strong></span>' +
+                '<span>¼ Kelly (max 5%): <strong style="color:' + (parlayKelly>0?'#16a34a':'#888') + ';">' + (parlayKelly*100).toFixed(1) + '%</strong></span>' +
               '</div>' +
             '</div>';
           }).join('')}
