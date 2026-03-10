@@ -2445,8 +2445,9 @@
           running += p.result === 'correct' ? stake : -stake;
           return { i: i+1, pnl: running, win: p.result === 'correct' };
         });
-        const maxP = Math.max(...pnlPoints.map(p=>p.pnl), 0.1);
-        const minP = Math.min(...pnlPoints.map(p=>p.pnl), -0.1);
+        const pnlVals = pnlPoints.map(p=>p.pnl);
+        const maxP = pnlVals.length ? Math.max(...pnlVals, 0.1) : 0.1;
+        const minP = pnlVals.length ? Math.min(...pnlVals, -0.1) : -0.1;
         const rng = maxP - minP || 1;
         const CW = 400, CH = 72;
         const tx = i => (i / pnlPoints.length) * CW;
