@@ -1542,6 +1542,21 @@
       if (f1 === f2) { el.innerHTML = '<div style="color:#888;font-family:Inter,sans-serif;font-size:13px;padding:8px 0;">Select two different fighters.</div>'; return; }
       if (!_simData) { el.innerHTML = '<div style="color:#888;font-family:Inter,sans-serif;font-size:13px;padding:8px 0;">Data still loading…</div>'; return; }
 
+      // Weight class check
+      const meta1 = (_simData.fighter_meta || {})[f1];
+      const meta2 = (_simData.fighter_meta || {})[f2];
+      if (meta1 && meta2 && meta1.w && meta2.w && Math.abs(meta1.w - meta2.w) > 10) {
+        el.innerHTML = `<div style="background:#fff8e1;border:1px solid #fde68a;border-radius:12px;padding:16px 18px;font-family:'Inter',sans-serif;">
+          <div style="font-size:14px;font-weight:700;color:#b45309;margin-bottom:6px;">⚠ Different weight classes</div>
+          <div style="font-size:13px;color:#78350f;line-height:1.5;">
+            <strong>${f1}</strong> competes at <strong>${meta1.wc || meta1.w + ' lbs'}</strong><br>
+            <strong>${f2}</strong> competes at <strong>${meta2.wc || meta2.w + ' lbs'}</strong>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:#b45309;">This matchup would never occur in the UFC. The model isn't calibrated for cross-weight-class comparisons — results would be unreliable.</div>
+        </div>`;
+        return;
+      }
+
       // Look up — try both orderings
       const key1 = f1 + '::' + f2;
       const key2 = f2 + '::' + f1;
