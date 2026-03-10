@@ -82,6 +82,9 @@
       transition: color 0.2s, border-color 0.2s; flex-shrink: 0;
       min-height: 48px;
     }
+    @media (max-width: 480px) {
+      .tab-bar-inner button { font-size: 12px; padding: 14px 12px; }
+    }
     .tab-bar-inner button:hover { color: #111; }
     .tab-divider { color: #ddd; padding: 0 4px; align-self: center; font-size: 14px; }
     .full-analysis-btn:hover { text-decoration: underline; opacity: 0.8; }
@@ -1362,6 +1365,11 @@
       const secondaries = methods.slice(1).filter(m => m.pct >= 5);
       const secondaryStr = secondaries.map(m => `<span>${m.label} ${m.pct}%</span>`).join('<span style="margin:0 6px;color:#ddd;">·</span>');
 
+      // method_label now says "[winner] wins by [method]" — show it as context
+      const methodNote = methodData.method_label && !methodData.method_label.includes('most likely')
+        ? `<div style="font-size:11px;color:#888;margin-top:4px;font-family:'Inter',sans-serif;font-style:italic;">${methodData.method_label}</div>`
+        : '';
+
       return `<div style="margin-bottom:2px;">
         <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.1em;font-family:'Inter',sans-serif;margin-bottom:4px;">Method of Victory</div>
         <div style="display:flex;align-items:baseline;gap:8px;">
@@ -1369,6 +1377,7 @@
           <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#ccc;line-height:1;">${dominant.pct}%</div>
         </div>
         ${secondaryStr ? `<div style="font-size:11px;color:#bbb;margin-top:3px;font-family:'Inter',sans-serif;">${secondaryStr}</div>` : ''}
+        ${methodNote}
       </div>`;
     }
 
@@ -1960,29 +1969,6 @@
       if (conf >= 65) return '1u MEDIUM';
       return '0.5u LEAN';
     }
-
-    function sharePick(f1, f2, winner, conf, event) {
-      const loser = winner === f1 ? f2 : f1;
-      const eventShort = event.replace(/UFC (Fight Night|[0-9]+):?\s*/i, '').replace(/\s*\(.*\)/, '').trim();
-      const text = `🧠 FightBrain ML Pick\n\n${winner} to win vs ${loser}\n${conf.toFixed(1)}% model confidence\n${eventShort ? eventShort + ' · ' : ''}Every pick tracked publicly\n\nhttps://fightbrain.io/`;
-      navigator.clipboard.writeText(text).then(() => showToast('Pick copied — ready to post!')).catch(() => {
-        // Fallback for older browsers
-        const ta = document.createElement('textarea');
-        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
-        document.body.appendChild(ta); ta.select();
-        document.execCommand('copy'); document.body.removeChild(ta);
-        showToast('Pick copied — ready to post!');
-      });
-    }
-
-    function showToast(msg) {
-      let t = document.getElementById('share-toast');
-      if (!t) {
-        t = document.createElement('div');
-        t.id = 'share-toast';
-        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:white;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:12px 24px;border-radius:100px;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;';
-        document.body.appendChild(t);
-      }
       t.textContent = msg;
       t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
       clearTimeout(t._timer);
@@ -2286,11 +2272,13 @@
             </button>
             ${f.data_quality_flag === 'LOW_DATA' ? '<span style="font-size:10px;color:#f59e0b;border:1px solid #f59e0b;border-radius:4px;padding:1px 6px;cursor:help;" title="Fewer than 5 UFC fights on record — model confidence is lower than usual">LOW DATA</span>' : ''}
             ${(()=>{
-              const mp = _methodPredictions && _methodPredictions[f.f1+' vs '+f.f2];
-              if (!mp || !mp.predicted_method) return '';
-              const m = mp.predicted_method;
-              if (m.includes('KO')) return '<span style="font-size:10px;color:#ef4444;border:1px solid #ef4444;border-radius:4px;padding:1px 6px;">KO likely</span>';
-              if (m.includes('Sub')) return '<span style="font-size:10px;color:#7c3aed;border:1px solid #7c3aed;border-radius:4px;padding:1px 6px;">Sub likely</span>';
+              const mp = _methodPredictions && (_methodPredictions[f.f1+' vs '+f.f2] || _methodPredictions[f.f2+' vs '+f.f1]);
+              if (!mp) return '';
+              const m = mp.method_label || mp.predicted_method || '';
+              const ko  = mp.ko_pct  ? parseFloat(mp.ko_pct)  : 0;
+              const sub = mp.sub_pct ? parseFloat(mp.sub_pct) : 0;
+              if (ko >= 30)  return '<span style="font-size:10px;color:#ef4444;border:1px solid #ef4444;border-radius:4px;padding:1px 6px;">KO likely</span>';
+              if (sub >= 25) return '<span style="font-size:10px;color:#7c3aed;border:1px solid #7c3aed;border-radius:4px;padding:1px 6px;">Sub likely</span>';
               return '';
             })()}
             ${(()=>{
@@ -2300,6 +2288,11 @@
             })()}
           </div>
           <div id="${fullId}" data-open="false" style="display:none;max-height:0;opacity:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.3s ease;" class="space-y-4 mt-3 pt-3">
+            ${(()=>{
+              const mp = _methodPredictions && (_methodPredictions[f.f1+' vs '+f.f2] || _methodPredictions[f.f2+' vs '+f.f1]);
+              if (!mp || !mp.narrative) return '';
+              return `<div style="font-size:13px;color:#555;line-height:1.7;padding:10px 14px;background:#fafafa;border-radius:8px;border-left:3px solid #D91A1A;margin-bottom:8px;font-family:'Inter',sans-serif;">${mp.narrative}</div>`;
+            })()}
             ${expandedContent}
           </div>
         </div>

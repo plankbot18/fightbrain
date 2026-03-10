@@ -913,27 +913,6 @@
   </script>
 
   <script>
-    function landingSharePick(winner, loser, conf) {
-      const text = `🧠 FightBrain ML Pick\n\n${winner} to win vs ${loser}\n${conf ? conf.toFixed(1) + '% model confidence\n' : ''}Every pick tracked publicly\n\nhttps://fightbrain.io/`;
-      navigator.clipboard.writeText(text).then(() => landingToast('Pick copied — ready to post!')).catch(() => {
-        const ta = document.createElement('textarea');
-        ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;';
-        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-        landingToast('Pick copied — ready to post!');
-      });
-    }
-    function landingToast(msg) {
-      let t = document.getElementById('landing-toast');
-      if (!t) {
-        t = document.createElement('div'); t.id = 'landing-toast';
-        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:white;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:12px 24px;border-radius:100px;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;';
-        document.body.appendChild(t);
-      }
-      t.textContent = msg;
-      t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
-      clearTimeout(t._timer);
-      t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(10px)'; }, 2800);
-    }
   </script>
 
   <!-- Unit tracker count-up animation (reads data-count-to from live_record JS) -->
