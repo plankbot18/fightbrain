@@ -1396,17 +1396,33 @@
         </div>`;
       }
 
-      // H2H mini stats (3 rows — always visible)
+      // H2H mini stats — always visible on card
       let h2hMini = '';
       if (_fighterProfiles && _fighterProfiles.fighters) {
         const byName = {};
-        for (const p of Object.values(_fighterProfiles.fighters)) { byName[p.name] = p.stats || {}; }
+        const byNameFull = {};
+        for (const p of Object.values(_fighterProfiles.fighters)) {
+          byName[p.name] = p.stats || {};
+          byNameFull[p.name] = p;
+        }
         const sv = (s, k) => { const v = s[k]; return (v && typeof v === 'object') ? (v.value ?? 0) : (v ?? 0); };
         const s1 = byName[f.f1] || {}; const s2 = byName[f.f2] || {};
+        const p1 = byNameFull[f.f1] || {}; const p2 = byNameFull[f.f2] || {};
+
+        // Parse reach: "70\"" → 70
+        const parseReach = r => r ? parseFloat(r.toString().replace(/[^0-9.]/g,'')) : 0;
+        const r1reach = parseReach(p1.reach); const r2reach = parseReach(p2.reach);
+        const r1age = parseFloat(p1.age) || 0; const r2age = parseFloat(p2.age) || 0;
+
         const statRows = [
-          { label: 'Strikes/min', v1: sv(s1,'slpm'), v2: sv(s2,'slpm'), unit: '', higher: true },
-          { label: 'Str Accuracy', v1: sv(s1,'str_acc'), v2: sv(s2,'str_acc'), unit: '%', higher: true },
-          { label: 'Str Defense', v1: sv(s1,'str_def'), v2: sv(s2,'str_def'), unit: '%', higher: true },
+          { label: 'Strikes/min',   v1: sv(s1,'slpm'),    v2: sv(s2,'slpm'),    unit: '',   higher: true },
+          { label: 'Str Accuracy',  v1: sv(s1,'str_acc'), v2: sv(s2,'str_acc'), unit: '%',  higher: true },
+          { label: 'Str Defense',   v1: sv(s1,'str_def'), v2: sv(s2,'str_def'), unit: '%',  higher: true },
+          { label: 'TD Avg/15min',  v1: sv(s1,'td_avg'),  v2: sv(s2,'td_avg'),  unit: '',   higher: true },
+          { label: 'TD Defense',    v1: sv(s1,'td_def'),  v2: sv(s2,'td_def'),  unit: '%',  higher: true },
+          { label: 'Sub Attempts',  v1: sv(s1,'sub_avg'), v2: sv(s2,'sub_avg'), unit: '/15m', higher: true },
+          ...(r1reach > 0 || r2reach > 0 ? [{ label: 'Reach', v1: r1reach, v2: r2reach, unit: '"', higher: true }] : []),
+          ...(r1age > 0 || r2age > 0 ? [{ label: 'Age', v1: r1age, v2: r2age, unit: '', higher: false }] : []),
         ].filter(r => r.v1 > 0 || r.v2 > 0);
 
         if (statRows.length) {
@@ -1423,8 +1439,10 @@
             const f1share = total > 0 ? (r.v1 / total * 100) : 50;
             const f2share = total > 0 ? (r.v2 / total * 100) : 50;
             const f1wins = r.higher ? r.v1 >= r.v2 : r.v1 <= r.v2;
-            const f1fmt = Number.isInteger(r.v1) ? r.v1 : parseFloat(r.v1).toFixed(1);
-            const f2fmt = Number.isInteger(r.v2) ? r.v2 : parseFloat(r.v2).toFixed(1);
+            // Format: Age → integer, Reach → integer, others → 1dp
+            const fmt = v => r.label === 'Age' || r.label === 'Reach' ? Math.round(v) : (Number.isInteger(v) ? v : parseFloat(v).toFixed(1));
+            const f1fmt = fmt(r.v1);
+            const f2fmt = fmt(r.v2);
             // Set widths directly — no animation needed, bars visible on load
             h2hMini += `<div class="h2h-row" style="margin-bottom:6px;">
               <div class="h2h-stat-f1 ${f1wins?'h2h-winner':''}">${f1fmt}${r.unit}</div>
