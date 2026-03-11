@@ -1969,11 +1969,6 @@
       if (conf >= 65) return '1u MEDIUM';
       return '0.5u LEAN';
     }
-      t.textContent = msg;
-      t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
-      clearTimeout(t._timer);
-      t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(10px)'; }, 2800);
-    }
 
     function toggleFullAnalysis(id) {
       const el = document.getElementById(id);
