@@ -693,7 +693,7 @@
 
         <!-- Disclaimer -->
         <div style="margin-top:32px;font-size:11px;color:#bbb;font-family:'Inter',sans-serif;text-align:center;line-height:1.6;">
-          Predictions based on career stats, Elo ratings, recent form, and strength of schedule.<br>
+          Predictions based on career stats, recent form, finishing ability, and strength of schedule.<br>
           Only fighters who have competed in the last 12 months are available.
         </div>
       </div>
@@ -705,7 +705,7 @@
       <div style="background:#111;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#888;letter-spacing:0.1em;margin-bottom:12px;">HOW FIGHTBRAIN WORKS</div>
         <p style="color:#e2e8f0;font-size:15px;line-height:1.7;margin-bottom:12px;">
-          FightBrain is an ensemble machine learning model trained on 10,000+ UFC fights going back to 2010. It combines gradient boosting and logistic regression, tuned with Bayesian optimization and calibrated for accurate probabilities. Before each event, it analyzes 68 signals per fighter — striking efficiency, grappling control, KO power, Elo rating, recent form, and style archetype matchup dynamics — then outputs a win probability.
+          FightBrain is an ensemble machine learning model trained on 8,500+ UFC fights going back to 2010. It combines gradient boosting and logistic regression, tuned with Bayesian optimization and calibrated for accurate probabilities. Before each event, it analyzes 68 signals per fighter — striking efficiency, grappling control, KO power, momentum, recent form, and style archetype matchup dynamics — then outputs a win probability.
         </p>
         <p style="color:#aaa;font-size:14px;line-height:1.7;margin-bottom:12px;">
           When the model's confidence meaningfully exceeds what the bookmaker implies (the "edge"), that becomes a pick. The bigger the edge, the higher the stake: LEAN 0.5u · MEDIUM 1u · STRONG 1.5u · LOCK 2u.
@@ -752,7 +752,7 @@
             <li>Takedown offense, accuracy &amp; defense differentials</li>
             <li>Submission attempt rate &amp; finish rate</li>
             <li>Knockdown rate (power signal)</li>
-            <li>Elo rating + momentum (updates after every fight)</li>
+            <li>Momentum rating (updates dynamically after every fight)</li>
             <li>Recent form &amp; strength of schedule</li>
             <li>Age curve, prime years flag, fighter experience</li>
             <li>Days since last fight (freshness)</li>
