@@ -770,9 +770,9 @@
       <!-- Calibration scatter: model confidence vs actual win rate -->
       <div class="model-card mt-6" id="calib-scatter-card" style="display:none;">
         <h3 class="text-lg font-semibold mb-1 text-gray-900">Confidence Calibration</h3>
-        <p style="font-size:12px;color:#aaa;margin-bottom:16px;font-family:'Inter',sans-serif;">Each dot = one pick. A well-calibrated model clusters near the diagonal.</p>
-        <div id="calib-scatter" style="position:relative;height:200px;"></div>
-        <div style="font-size:10px;color:#bbb;margin-top:8px;">● Correct &nbsp; ● Wrong &nbsp; — Ideal calibration</div>
+        <p style="font-size:12px;color:#aaa;margin-bottom:16px;font-family:'Inter',sans-serif;">Actual win rate by confidence band. A well-calibrated model trends upward — higher confidence = higher actual win rate.</p>
+        <div id="calib-scatter" style="position:relative;height:180px;"></div>
+        <div style="font-size:10px;color:#bbb;margin-top:8px;">Bar height = actual win rate &nbsp;·&nbsp; (n) = picks in band &nbsp;·&nbsp; — Ideal trend</div>
       </div>
     </section>
 
@@ -1824,32 +1824,63 @@
       const el = document.getElementById('calib-scatter');
       if (!card || !el) return;
       card.style.display = '';
-      const W = el.offsetWidth || 300, H = 200;
-      const pad = {l:30,r:10,t:10,b:24};
-      const iW = W - pad.l - pad.r, iH = H - pad.t - pad.b;
-      const tx = c => pad.l + ((c - 50) / 50) * iW;
-      const ty = v => pad.t + (1 - v) * iH;
-      let svgDots = decided.map(p => {
+
+      // Bin picks by confidence range and show actual win rate per bin
+      const bins = [
+        { label: '50–64%', lo: 50, hi: 65, picks: [] },
+        { label: '65–74%', lo: 65, hi: 75, picks: [] },
+        { label: '75–84%', lo: 75, hi: 85, picks: [] },
+        { label: '85%+',   lo: 85, hi: 101, picks: [] },
+      ];
+      decided.forEach(p => {
         const c = parseFloat(p.confidence);
-        const win = p.result === 'correct';
-        const x = tx(c) + (Math.random()-0.5)*4;
-        const y = ty(win ? 1 : 0) + (Math.random()-0.5)*8;
-        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${win?'#16a34a':'#ef4444'}" fill-opacity="0.7"/>`;
-      }).join('');
-      // Ideal calibration line: from (50%, 50%) to (100%, 100%)
-      const lineX1 = tx(50), lineX2 = tx(100), lineY1 = ty(0.5), lineY2 = ty(1);
-      // Axes labels
-      const xLabels = [50,60,70,80,90,100].map(v =>
-        `<text x="${tx(v)}" y="${H-4}" font-size="9" fill="#bbb" text-anchor="middle">${v}%</text>`).join('');
-      el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;overflow:visible;">
-        <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+iH}" stroke="#eee" stroke-width="1"/>
-        <line x1="${pad.l}" y1="${pad.t+iH}" x2="${W-pad.r}" y2="${pad.t+iH}" stroke="#eee" stroke-width="1"/>
-        <line x1="${lineX1}" y1="${lineY1}" x2="${lineX2}" y2="${lineY2}" stroke="#D91A1A" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>
-        ${svgDots}
-        ${xLabels}
-        <text x="${pad.l-4}" y="${ty(1)}" font-size="9" fill="#bbb" text-anchor="end">W</text>
-        <text x="${pad.l-4}" y="${ty(0)}" font-size="9" fill="#bbb" text-anchor="end">L</text>
-      </svg>`;
+        const bin = bins.find(b => c >= b.lo && c < b.hi);
+        if (bin) bin.picks.push(p.result === 'correct');
+      });
+
+      const W = el.offsetWidth || 300, H = 180;
+      const pad = {l: 36, r: 14, t: 16, b: 32};
+      const iW = W - pad.l - pad.r, iH = H - pad.t - pad.b;
+      const activeBins = bins.filter(b => b.picks.length > 0);
+      if (!activeBins.length) return;
+
+      const barW = Math.min(48, iW / bins.length - 10);
+      const bx = i => pad.l + (i + 0.5) * (iW / bins.length);
+      const ty = v => pad.t + (1 - v) * iH;
+
+      // Axes
+      let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;overflow:visible;">`;
+      svg += `<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+iH}" stroke="#e5e7eb" stroke-width="1"/>`;
+      svg += `<line x1="${pad.l}" y1="${pad.t+iH}" x2="${W-pad.r}" y2="${pad.t+iH}" stroke="#e5e7eb" stroke-width="1"/>`;
+      // Y-axis gridlines + labels
+      [0, 0.25, 0.5, 0.75, 1].forEach(v => {
+        const y = ty(v);
+        svg += `<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#f0f0f0" stroke-width="1"/>`;
+        svg += `<text x="${pad.l-4}" y="${y+3}" font-size="9" fill="#bbb" text-anchor="end">${Math.round(v*100)}%</text>`;
+      });
+      // Ideal diagonal reference line
+      svg += `<line x1="${pad.l}" y1="${ty(0.5)}" x2="${W-pad.r}" y2="${ty(1)}" stroke="#D91A1A" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.35"/>`;
+
+      // Bars per bin
+      bins.forEach((bin, i) => {
+        const cx = bx(i);
+        if (!bin.picks.length) {
+          svg += `<text x="${cx}" y="${H-6}" font-size="9" fill="#ccc" text-anchor="middle">${bin.label}</text>`;
+          return;
+        }
+        const winRate = bin.picks.filter(Boolean).length / bin.picks.length;
+        const barH = Math.max(2, winRate * iH);
+        const barY = pad.t + iH - barH;
+        const color = winRate >= 0.5 ? '#16a34a' : '#ef4444';
+        const halfW = barW / 2;
+        svg += `<rect x="${(cx-halfW).toFixed(1)}" y="${barY.toFixed(1)}" width="${barW}" height="${barH.toFixed(1)}" rx="3" fill="${color}" fill-opacity="0.75"/>`;
+        svg += `<text x="${cx}" y="${(barY-4).toFixed(1)}" font-size="10" font-weight="600" fill="${color}" text-anchor="middle">${Math.round(winRate*100)}%</text>`;
+        svg += `<text x="${cx}" y="${(barY+barH+11).toFixed(1)}" font-size="9" fill="#888" text-anchor="middle">${bin.label}</text>`;
+        svg += `<text x="${cx}" y="${H-4}" font-size="8" fill="#bbb" text-anchor="middle">(${bin.picks.length})</text>`;
+      });
+
+      svg += '</svg>';
+      el.innerHTML = svg;
     }
 
     function updateParlayBuilder() {
@@ -2913,13 +2944,13 @@
     // ===== FEATURE CHART =====
     async function loadFeatureChart() {
       try {
-        const res = await fetch('../model/feature_importance.csv');
-        const text = await res.text();
-        const lines = text.trim().split('\n').slice(1);
-        const data = lines.map(l => {
-          const [name, val] = l.split(',');
-          return { name: formatFeatureName(name), value: parseFloat(val) };
-        }).sort((a, b) => a.value - b.value);
+        const res = await fetch('../model/shap_importance.json');
+        if (!res.ok) throw new Error('shap_importance.json not found');
+        const json = await res.json();
+        const data = json
+          .map(d => ({ name: formatFeatureName(d.feature), value: d.shap }))
+          .sort((a, b) => a.value - b.value)
+          .slice(-15); // top 15
 
         new Chart(document.getElementById('featureChart'), {
           type: 'bar',
