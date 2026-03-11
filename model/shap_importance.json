@@ -1,82 +1,82 @@
 [
   {
     "feature": "diff_win_rate",
-    "shap": 0.49307897686958313
+    "shap": 0.7093614935874939
   },
   {
     "feature": "diff_slpm_z",
-    "shap": 0.22492092847824097
-  },
-  {
-    "feature": "diff_td_def",
-    "shap": 0.15202994644641876
+    "shap": 0.2994750738143921
   },
   {
     "feature": "diff_sapm",
-    "shap": 0.1421874314546585
+    "shap": 0.2482064813375473
   },
   {
-    "feature": "f2_weighted_td_avg",
-    "shap": 0.10310061275959015
-  },
-  {
-    "feature": "f1_elo",
-    "shap": 0.09765639156103134
-  },
-  {
-    "feature": "diff_finish_rate",
-    "shap": 0.09003788977861404
+    "feature": "diff_td_def",
+    "shap": 0.2229393571615219
   },
   {
     "feature": "diff_tdavg_z",
-    "shap": 0.0846700370311737
+    "shap": 0.17513616383075714
   },
   {
-    "feature": "diff_str_acc",
-    "shap": 0.0834040716290474
-  },
-  {
-    "feature": "f2_days_since",
-    "shap": 0.07749970257282257
-  },
-  {
-    "feature": "diff_slpm",
-    "shap": 0.07695561647415161
-  },
-  {
-    "feature": "f1_fights_count",
-    "shap": 0.07299333810806274
-  },
-  {
-    "feature": "f2_elo",
-    "shap": 0.07115081697702408
-  },
-  {
-    "feature": "age_factor_diff",
-    "shap": 0.06979458779096603
-  },
-  {
-    "feature": "f1_weighted_td_avg",
-    "shap": 0.0671466812491417
+    "feature": "f2_weighted_td_avg",
+    "shap": 0.16058821976184845
   },
   {
     "feature": "f2_elo_momentum",
-    "shap": 0.06539120525121689
+    "shap": 0.16002270579338074
   },
   {
-    "feature": "diff_strike_eff",
-    "shap": 0.06179714575409889
+    "feature": "diff_slpm",
+    "shap": 0.15777458250522614
   },
   {
-    "feature": "f1_elo_momentum",
-    "shap": 0.055820442736148834
+    "feature": "diff_finish_rate",
+    "shap": 0.15430058538913727
   },
   {
     "feature": "diff_grapple_eff",
-    "shap": 0.054252780973911285
+    "shap": 0.15143711864948273
   },
   {
-    "feature": "age_diff",
-    "shap": 0.05230820178985596
+    "feature": "diff_str_acc",
+    "shap": 0.14883145689964294
+  },
+  {
+    "feature": "f1_elo",
+    "shap": 0.14297769963741302
+  },
+  {
+    "feature": "f1_elo_momentum",
+    "shap": 0.13721561431884766
+  },
+  {
+    "feature": "f2_elo",
+    "shap": 0.12941327691078186
+  },
+  {
+    "feature": "f1_fights_count",
+    "shap": 0.11825945973396301
+  },
+  {
+    "feature": "f2_days_since",
+    "shap": 0.11485280096530914
+  },
+  {
+    "feature": "f1_weighted_td_avg",
+    "shap": 0.11080636084079742
+  },
+  {
+    "feature": "age_factor_diff",
+    "shap": 0.10404320806264877
+  },
+  {
+    "feature": "f2_fights_count",
+    "shap": 0.10386106371879578
+  },
+  {
+    "feature": "f2_sos_elo",
+    "shap": 0.09860111773014069
   }
 ]
