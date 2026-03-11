@@ -12,6 +12,7 @@
   <meta property="og:url" content="https://fightbrain.io/ui/index.html" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@FightBrainMMA" />
+  <link rel="canonical" href="https://fightbrain.io/ui/" />
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -741,7 +742,7 @@
           <h3 class="text-lg font-semibold mb-2 text-gray-900">Model Performance</h3>
           <div style="font-size:11px;color:#b45309;background:#fff8e1;border-radius:6px;padding:5px 8px;margin-bottom:10px;display:inline-block;">Backtest — held-out data, not live picks</div>
           <div class="model-stat-num" style="font-size:72px;line-height:1;margin:16px 0;">76.2%</div>
-          <p class="text-gray-500 text-sm">Accuracy on 1,477 held-out UFC bouts (2023–2026). Ensemble model: XGBoost + Logistic Regression, Optuna-tuned, isotonic calibration. 95% CI: [73.9%, 78.0%].</p>
+          <p class="text-gray-500 text-sm">Accuracy on 1,477 held-out UFC bouts (2023–2026). FightBrain Model: gradient boosting + logistic regression ensemble, Optuna-tuned, isotonic calibration. 95% CI: [73.9%, 78.0%].</p>
         </div>
         <div class="model-card">
           <h3 class="text-lg font-semibold mb-2 text-gray-900">What The Model Sees</h3>
@@ -1070,6 +1071,21 @@
       'sub_rate': 'Submission finish rate',
       'form_score': 'Recent form score',
       'trajectory': 'Career trajectory',
+    
+      'slpm_z': 'Strike Volume (Z-score)',
+      'tdavg_z': 'TD Volume (Z-score)',
+      'strdef_z': 'Strike Def (Z-score)',
+      'sapm': 'Strikes Absorbed/Min',
+      'weighted_td_avg': 'Weighted TD Avg',
+      'weighted_slpm': 'Weighted Strike Vol',
+      'days_since': 'Inactivity (days)',
+      'age_factor_diff': 'Age Factor Edge',
+      'finish_rate': 'Finish Rate',
+      'career_finish_rate': 'Career Finish Rate',
+      'finish_rate_last5': 'Finish Rate (Last 5)',
+      'kd_rate': 'Knockdown Rate',
+      'consec_losses': 'Consecutive Losses',
+      'prime': 'Prime Years Flag',
     };
     function formatFeatureName(raw) {
       const clean = raw.replace('diff_', '').replace(/^f[12]_/, '');
